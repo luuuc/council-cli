@@ -151,6 +151,16 @@ Use exported markdown in:
 - **Web interfaces** - Paste into any AI chat
 - **Sharing** - Send council to a colleague
 
+### `council mcp`
+
+Starts an MCP server for Claude Desktop integration.
+
+```bash
+council mcp
+```
+
+See [Use with Claude Desktop](#use-with-claude-desktop) for setup instructions.
+
 ## Configuration
 
 ```yaml
@@ -213,6 +223,91 @@ red_flags:
 
 You are channeling David Heinemeier Hansson...
 ```
+
+## Integrations
+
+### Use with Claude Desktop
+
+Connect your council to Claude Desktop via MCP (Model Context Protocol).
+
+**1. Configure Claude Desktop**
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "council": {
+      "command": "council",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+**2. Restart Claude Desktop**
+
+Your council is now available. Claude can:
+- List your experts with `list_experts`
+- Get expert details with `get_expert`
+- Consult all experts with `consult_council`
+- Use the `/council` prompt template
+
+**Example conversation:**
+
+```
+You: Review this code with my council
+
+Claude: [Uses consult_council tool]
+        Let me consult your expert council...
+
+        DHH says: The service object here is unnecessary...
+        Kent Beck says: I don't see tests for this...
+        Sandi Metz says: This class has too many responsibilities...
+```
+
+### Use with ChatGPT
+
+Create a Custom GPT with your council's expertise.
+
+**1. Export your council**
+
+```bash
+council export | pbcopy  # macOS
+council export | xclip   # Linux
+```
+
+**2. Create a Custom GPT**
+
+1. Go to [ChatGPT](https://chat.openai.com) → Explore GPTs → Create
+2. Name it "My Council" (or any name you prefer)
+3. In Instructions, paste:
+
+```markdown
+You have access to an expert council. When reviewing work, consult these experts:
+
+[PASTE YOUR COUNCIL EXPORT HERE]
+
+When the user asks for a review:
+1. Consider each expert's perspective
+2. Identify issues each would raise
+3. Synthesize into actionable feedback
+```
+
+4. Save and publish (private or public)
+
+**3. Use your GPT**
+
+Start a chat with your Custom GPT and ask it to review code, architecture decisions, or any work relevant to your council's expertise.
+
+### Use with Other AI Tools
+
+The `council export` command outputs portable markdown that works anywhere:
+
+- **Gemini** - Paste into custom instructions
+- **Perplexity** - Start conversations with council context
+- **Local LLMs** - Include in system prompts
+- **API integrations** - Use as context in your applications
 
 ## Why This Pattern?
 
