@@ -1,0 +1,29 @@
+.PHONY: build test clean install
+
+VERSION ?= dev
+COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
+LDFLAGS := -ldflags="-s -w -X 'github.com/luuuc/council-cli/internal/cmd.version=$(VERSION)' -X 'github.com/luuuc/council-cli/internal/cmd.commit=$(COMMIT)'"
+
+build:
+	go build $(LDFLAGS) -o bin/council ./cmd/council
+
+test:
+	go test -v ./...
+
+clean:
+	rm -rf bin/
+
+install: build
+	cp bin/council /usr/local/bin/council
+
+# Development
+run:
+	go run ./cmd/council $(ARGS)
+
+# Cross-compilation
+build-all:
+	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o bin/council-darwin-amd64 ./cmd/council
+	GOOS=darwin GOARCH=arm64 go build $(LDFLAGS) -o bin/council-darwin-arm64 ./cmd/council
+	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o bin/council-linux-amd64 ./cmd/council
+	GOOS=linux GOARCH=arm64 go build $(LDFLAGS) -o bin/council-linux-arm64 ./cmd/council
+	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o bin/council-windows-amd64.exe ./cmd/council
