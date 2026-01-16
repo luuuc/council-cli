@@ -135,6 +135,22 @@ council sync claude         # Sync to specific target
 council sync --dry-run      # Preview changes
 ```
 
+### `council export`
+
+Exports your council as portable markdown for use anywhere.
+
+```bash
+council export              # Output to stdout
+council export | pbcopy     # Copy to clipboard (macOS)
+council export | xclip      # Copy to clipboard (Linux)
+council export > council.md # Save to file
+```
+
+Use exported markdown in:
+- **Desktop AI apps** - Claude Desktop, ChatGPT, Gemini custom instructions
+- **Web interfaces** - Paste into any AI chat
+- **Sharing** - Send council to a colleague
+
 ## Configuration
 
 ```yaml
