@@ -12,15 +12,15 @@ func TestScan(t *testing.T) {
 	dir := t.TempDir()
 
 	// Create some Ruby files
-	os.WriteFile(filepath.Join(dir, "app.rb"), []byte("class App\nend"), 0644)
-	os.WriteFile(filepath.Join(dir, "test.rb"), []byte("class Test\nend"), 0644)
+	_ = os.WriteFile(filepath.Join(dir, "app.rb"), []byte("class App\nend"), 0644)
+	_ = os.WriteFile(filepath.Join(dir, "test.rb"), []byte("class Test\nend"), 0644)
 
 	// Create a Gemfile
 	gemfile := `source 'https://rubygems.org'
 gem "rails", "~> 8.0"
 gem "minitest"
 `
-	os.WriteFile(filepath.Join(dir, "Gemfile"), []byte(gemfile), 0644)
+	_ = os.WriteFile(filepath.Join(dir, "Gemfile"), []byte(gemfile), 0644)
 
 	// Run detection
 	d, err := Scan(dir)

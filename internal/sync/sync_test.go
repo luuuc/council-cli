@@ -148,17 +148,17 @@ func TestSyncClaude(t *testing.T) {
 
 	// Change to temp directory
 	origDir, _ := os.Getwd()
-	os.Chdir(tmpDir)
-	defer os.Chdir(origDir)
+	_ = os.Chdir(tmpDir)
+	defer func() { _ = os.Chdir(origDir) }()
 
 	// Create council structure with an expert
-	os.MkdirAll(config.Path(config.ExpertsDir), 0755)
+	_ = os.MkdirAll(config.Path(config.ExpertsDir), 0755)
 	testExpert := &expert.Expert{
 		ID:    "test",
 		Name:  "Test Expert",
 		Focus: "Testing",
 	}
-	testExpert.Save()
+	_ = testExpert.Save()
 
 	cfg := config.Default()
 	experts := []*expert.Expert{testExpert}
@@ -209,8 +209,8 @@ func TestSyncCursor(t *testing.T) {
 
 	// Change to temp directory
 	origDir, _ := os.Getwd()
-	os.Chdir(tmpDir)
-	defer os.Chdir(origDir)
+	_ = os.Chdir(tmpDir)
+	defer func() { _ = os.Chdir(origDir) }()
 
 	cfg := config.Default()
 	experts := []*expert.Expert{
@@ -232,10 +232,10 @@ func TestSyncCursor(t *testing.T) {
 	}
 
 	// Clean up
-	os.Remove(".cursorrules")
+	_ = os.Remove(".cursorrules")
 
 	// Test with .cursor directory
-	os.MkdirAll(".cursor", 0755)
+	_ = os.MkdirAll(".cursor", 0755)
 	err = syncCursor(experts, cfg, false)
 	if err != nil {
 		t.Errorf("syncCursor() with .cursor error = %v", err)
@@ -257,8 +257,8 @@ func TestSyncWindsurf(t *testing.T) {
 
 	// Change to temp directory
 	origDir, _ := os.Getwd()
-	os.Chdir(tmpDir)
-	defer os.Chdir(origDir)
+	_ = os.Chdir(tmpDir)
+	defer func() { _ = os.Chdir(origDir) }()
 
 	cfg := config.Default()
 	experts := []*expert.Expert{
@@ -294,8 +294,8 @@ func TestSyncGeneric(t *testing.T) {
 
 	// Change to temp directory
 	origDir, _ := os.Getwd()
-	os.Chdir(tmpDir)
-	defer os.Chdir(origDir)
+	_ = os.Chdir(tmpDir)
+	defer func() { _ = os.Chdir(origDir) }()
 
 	cfg := config.Default()
 	experts := []*expert.Expert{
@@ -331,11 +331,11 @@ func TestSyncAllNoExperts(t *testing.T) {
 
 	// Change to temp directory
 	origDir, _ := os.Getwd()
-	os.Chdir(tmpDir)
-	defer os.Chdir(origDir)
+	_ = os.Chdir(tmpDir)
+	defer func() { _ = os.Chdir(origDir) }()
 
 	// Create empty council structure
-	os.MkdirAll(config.Path(config.ExpertsDir), 0755)
+	_ = os.MkdirAll(config.Path(config.ExpertsDir), 0755)
 
 	cfg := config.Default()
 
@@ -380,8 +380,8 @@ func TestFileExistsAndDirExists(t *testing.T) {
 
 	// Change to temp directory
 	origDir, _ := os.Getwd()
-	os.Chdir(tmpDir)
-	defer os.Chdir(origDir)
+	_ = os.Chdir(tmpDir)
+	defer func() { _ = os.Chdir(origDir) }()
 
 	// Test non-existent
 	if fs.FileExists("nonexistent.txt") {
@@ -392,8 +392,8 @@ func TestFileExistsAndDirExists(t *testing.T) {
 	}
 
 	// Create a file and directory
-	os.WriteFile("test.txt", []byte("content"), 0644)
-	os.MkdirAll("testdir", 0755)
+	_ = os.WriteFile("test.txt", []byte("content"), 0644)
+	_ = os.MkdirAll("testdir", 0755)
 
 	if !fs.FileExists("test.txt") {
 		t.Error("fs.FileExists() should return true for existing file")
@@ -418,18 +418,18 @@ func TestGenerateAgentFile(t *testing.T) {
 
 	// Change to temp directory
 	origDir, _ := os.Getwd()
-	os.Chdir(tmpDir)
-	defer os.Chdir(origDir)
+	_ = os.Chdir(tmpDir)
+	defer func() { _ = os.Chdir(origDir) }()
 
 	// Create council structure with an expert
-	os.MkdirAll(config.Path(config.ExpertsDir), 0755)
+	_ = os.MkdirAll(config.Path(config.ExpertsDir), 0755)
 	testExpert := &expert.Expert{
 		ID:    "test",
 		Name:  "Test Expert",
 		Focus: "Testing",
 		Body:  "# Test Expert\n\nCustom body content.",
 	}
-	testExpert.Save()
+	_ = testExpert.Save()
 
 	// Test generateAgentFile reads from disk
 	result := generateAgentFile(testExpert)
@@ -452,8 +452,8 @@ func TestSyncOpenCode(t *testing.T) {
 
 	// Change to temp directory
 	origDir, _ := os.Getwd()
-	os.Chdir(tmpDir)
-	defer os.Chdir(origDir)
+	_ = os.Chdir(tmpDir)
+	defer func() { _ = os.Chdir(origDir) }()
 
 	cfg := config.Default()
 	experts := []*expert.Expert{

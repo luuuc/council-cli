@@ -35,7 +35,7 @@ func TestExtractExpertID(t *testing.T) {
 func TestNewServer(t *testing.T) {
 	s := NewServer()
 	if s == nil {
-		t.Error("NewServer() returned nil")
+		t.Fatal("NewServer() returned nil")
 	}
 	if s.mcp == nil {
 		t.Error("NewServer().mcp is nil")
@@ -53,17 +53,17 @@ func setupTestCouncil(t *testing.T) (cleanup func()) {
 
 	// Change to temp directory
 	origDir, _ := os.Getwd()
-	os.Chdir(tmpDir)
+	_ = os.Chdir(tmpDir)
 
 	// Create the council directory structure
-	os.MkdirAll(config.Path(config.ExpertsDir), 0755)
+	_ = os.MkdirAll(config.Path(config.ExpertsDir), 0755)
 
 	// Create config
 	cfg := config.Default()
-	cfg.Save()
+	_ = cfg.Save()
 
 	return func() {
-		os.Chdir(origDir)
+		_ = os.Chdir(origDir)
 		os.RemoveAll(tmpDir)
 	}
 }
@@ -77,8 +77,8 @@ func TestHandleListExperts_NoCouncil(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	origDir, _ := os.Getwd()
-	os.Chdir(tmpDir)
-	defer os.Chdir(origDir)
+	_ = os.Chdir(tmpDir)
+	defer func() { _ = os.Chdir(origDir) }()
 
 	s := NewServer()
 	ctx := context.Background()
@@ -126,7 +126,7 @@ func TestHandleListExperts_WithExperts(t *testing.T) {
 		Name:  "Test Expert",
 		Focus: "Testing MCP handlers",
 	}
-	testExpert.Save()
+	_ = testExpert.Save()
 
 	s := NewServer()
 	ctx := context.Background()
@@ -185,7 +185,7 @@ func TestHandleGetExpert_Found(t *testing.T) {
 		Principles: []string{"Write tests first"},
 		RedFlags:   []string{"No tests"},
 	}
-	testExpert.Save()
+	_ = testExpert.Save()
 
 	s := NewServer()
 	ctx := context.Background()
@@ -241,14 +241,14 @@ func TestHandleConsultCouncil_WithExperts(t *testing.T) {
 		Name:  "Expert One",
 		Focus: "Area One",
 	}
-	expert1.Save()
+	_ = expert1.Save()
 
 	expert2 := &expert.Expert{
 		ID:    "expert-2",
 		Name:  "Expert Two",
 		Focus: "Area Two",
 	}
-	expert2.Save()
+	_ = expert2.Save()
 
 	s := NewServer()
 	ctx := context.Background()
@@ -315,7 +315,7 @@ func TestHandleExpertResource_Found(t *testing.T) {
 		Focus: "Testing",
 		Body:  "# Test Expert\n\nBody content.",
 	}
-	testExpert.Save()
+	_ = testExpert.Save()
 
 	s := NewServer()
 	ctx := context.Background()
@@ -371,7 +371,7 @@ func TestHandleCouncilPrompt_WithContent(t *testing.T) {
 		Name:  "Test Expert",
 		Focus: "Testing",
 	}
-	testExpert.Save()
+	_ = testExpert.Save()
 
 	s := NewServer()
 	ctx := context.Background()

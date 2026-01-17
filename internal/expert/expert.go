@@ -190,7 +190,7 @@ func formatYAMLError(content string, err error) error {
 				context.WriteString("  - Missing dash (-) for list items\n")
 			}
 
-			return fmt.Errorf(context.String())
+			return fmt.Errorf("%s", context.String())
 		}
 	}
 

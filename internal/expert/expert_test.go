@@ -133,11 +133,11 @@ func TestSave(t *testing.T) {
 
 	// Change to temp directory and set up council structure
 	origDir, _ := os.Getwd()
-	os.Chdir(tmpDir)
-	defer os.Chdir(origDir)
+	_ = os.Chdir(tmpDir)
+	defer func() { _ = os.Chdir(origDir) }()
 
 	// Create the council directory structure
-	os.MkdirAll(config.Path(config.ExpertsDir), 0755)
+	_ = os.MkdirAll(config.Path(config.ExpertsDir), 0755)
 
 	tests := []struct {
 		name    string
@@ -318,12 +318,12 @@ func TestListWithWarnings(t *testing.T) {
 
 	// Change to temp directory
 	origDir, _ := os.Getwd()
-	os.Chdir(tmpDir)
-	defer os.Chdir(origDir)
+	_ = os.Chdir(tmpDir)
+	defer func() { _ = os.Chdir(origDir) }()
 
 	// Create the council directory structure
 	expertsDir := config.Path(config.ExpertsDir)
-	os.MkdirAll(expertsDir, 0755)
+	_ = os.MkdirAll(expertsDir, 0755)
 
 	// Create a valid expert file
 	validExpert := &Expert{
@@ -331,11 +331,11 @@ func TestListWithWarnings(t *testing.T) {
 		Name:  "Valid Expert",
 		Focus: "Testing",
 	}
-	validExpert.Save()
+	_ = validExpert.Save()
 
 	// Create an invalid expert file
 	invalidPath := filepath.Join(expertsDir, "invalid.md")
-	os.WriteFile(invalidPath, []byte("not valid frontmatter"), 0644)
+	_ = os.WriteFile(invalidPath, []byte("not valid frontmatter"), 0644)
 
 	result, err := ListWithWarnings()
 	if err != nil {
@@ -365,11 +365,11 @@ func TestExistsAndDelete(t *testing.T) {
 
 	// Change to temp directory
 	origDir, _ := os.Getwd()
-	os.Chdir(tmpDir)
-	defer os.Chdir(origDir)
+	_ = os.Chdir(tmpDir)
+	defer func() { _ = os.Chdir(origDir) }()
 
 	// Create the council directory structure
-	os.MkdirAll(config.Path(config.ExpertsDir), 0755)
+	_ = os.MkdirAll(config.Path(config.ExpertsDir), 0755)
 
 	// Test that non-existent expert doesn't exist
 	if Exists("nonexistent") {
@@ -382,7 +382,7 @@ func TestExistsAndDelete(t *testing.T) {
 		Name:  "Test Expert",
 		Focus: "Testing",
 	}
-	expert.Save()
+	_ = expert.Save()
 
 	// Test that it now exists
 	if !Exists("test") {

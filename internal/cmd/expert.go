@@ -19,7 +19,7 @@ func init() {
 	rootCmd.AddCommand(removeCmd)
 
 	addCmd.Flags().StringVar(&addFocus, "focus", "", "Expert's focus area (required)")
-	addCmd.MarkFlagRequired("focus")
+	_ = addCmd.MarkFlagRequired("focus")
 }
 
 var listCmd = &cobra.Command{
