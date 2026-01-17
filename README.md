@@ -4,7 +4,7 @@ AI-agnostic expert council setup for coding assistants.
 
 Tired of generic AI code reviews that feel like talking to a wall? Getting the same bland suggestions over and over? Want your AI to actually challenge you like a real mentor would?
 
-**Council CLI is here for you.** Build your own expert council and make AI code review feel sharp, opinionated, and actually useful again.
+The Council Pattern is here for you. Build your own expert council and make AI code review feel sharp, opinionated, and actually useful again.
 
 ## 30-Second Start
 
@@ -87,7 +87,7 @@ make install
 
 ## Integrations
 
-### Claude Code / Cursor / Windsurf
+### Claude Code / Cursor / Windsurf / OpenCode
 
 After `council sync`, your experts are available as slash commands:
 
@@ -102,6 +102,7 @@ council sync --dry-run # Preview changes
 | `claude` | `.claude/agents/`, `.claude/commands/` | Claude Code |
 | `cursor` | `.cursor/rules/` or `.cursorrules` | Cursor |
 | `windsurf` | `.windsurfrules` | Windsurf |
+| `opencode` | `.opencode/agent/` | OpenCode |
 | `generic` | `AGENTS.md` | Any AI tool |
 
 ### Claude Desktop (MCP)
@@ -244,6 +245,7 @@ ai:
 targets:
   - claude
   - cursor
+  - opencode
 
 # Command generation
 council:

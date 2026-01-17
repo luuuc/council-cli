@@ -347,7 +347,7 @@ func TestSyncAllNoExperts(t *testing.T) {
 
 func TestTargetsRegistry(t *testing.T) {
 	// Verify all expected targets are registered
-	expectedTargets := []string{"claude", "cursor", "windsurf", "generic"}
+	expectedTargets := []string{"claude", "cursor", "windsurf", "generic", "opencode"}
 
 	for _, name := range expectedTargets {
 		target, ok := Targets[name]
@@ -439,6 +439,123 @@ func TestGenerateAgentFile(t *testing.T) {
 	}
 	if !strings.Contains(result, "Custom body content") {
 		t.Error("generateAgentFile() should contain custom body")
+	}
+}
+
+func TestSyncOpenCode(t *testing.T) {
+	// Create a temp directory for testing
+	tmpDir, err := os.MkdirTemp("", "council-sync-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Change to temp directory
+	origDir, _ := os.Getwd()
+	os.Chdir(tmpDir)
+	defer os.Chdir(origDir)
+
+	cfg := config.Default()
+	experts := []*expert.Expert{
+		{
+			ID:         "test",
+			Name:       "Test Expert",
+			Focus:      "Testing",
+			Philosophy: "Test philosophy.",
+			Principles: []string{"Principle 1"},
+			RedFlags:   []string{"Red flag 1"},
+		},
+	}
+
+	// Test dry run
+	err = syncOpenCode(experts, cfg, true)
+	if err != nil {
+		t.Errorf("syncOpenCode() dry run error = %v", err)
+	}
+
+	// Verify nothing was created in dry run
+	if _, err := os.Stat(".opencode/agent"); !os.IsNotExist(err) {
+		t.Error("syncOpenCode() dry run should not create directories")
+	}
+
+	// Test actual sync
+	err = syncOpenCode(experts, cfg, false)
+	if err != nil {
+		t.Errorf("syncOpenCode() error = %v", err)
+	}
+
+	// Verify agent file was created
+	agentPath := ".opencode/agent/test.md"
+	if _, err := os.Stat(agentPath); os.IsNotExist(err) {
+		t.Errorf("syncOpenCode() did not create agent file at %s", agentPath)
+	}
+
+	// Read and verify content
+	content, _ := os.ReadFile(agentPath)
+	contentStr := string(content)
+
+	// Verify OpenCode-specific frontmatter format
+	if !strings.Contains(contentStr, "description: Testing") {
+		t.Error("OpenCode agent should have description in frontmatter")
+	}
+	if !strings.Contains(contentStr, "mode: subagent") {
+		t.Error("OpenCode agent should have mode: subagent in frontmatter")
+	}
+	if !strings.Contains(contentStr, "Test Expert") {
+		t.Error("OpenCode agent should contain expert name")
+	}
+	if !strings.Contains(contentStr, "Test philosophy.") {
+		t.Error("OpenCode agent should contain philosophy")
+	}
+	if !strings.Contains(contentStr, "Principle 1") {
+		t.Error("OpenCode agent should contain principles")
+	}
+	if !strings.Contains(contentStr, "Red flag 1") {
+		t.Error("OpenCode agent should contain red flags")
+	}
+}
+
+func TestGenerateOpenCodeAgent(t *testing.T) {
+	e := &expert.Expert{
+		ID:         "kent-beck",
+		Name:       "Kent Beck",
+		Focus:      "TDD and clean code",
+		Philosophy: "Test-driven development leads to better design.",
+		Principles: []string{"Red-green-refactor", "Simple design"},
+		RedFlags:   []string{"No tests", "Complex mocking"},
+	}
+
+	result := generateOpenCodeAgent(e)
+
+	// Verify frontmatter structure
+	if !strings.HasPrefix(result, "---\n") {
+		t.Error("generateOpenCodeAgent() should start with YAML frontmatter delimiter")
+	}
+	if !strings.Contains(result, "description: TDD and clean code") {
+		t.Error("generateOpenCodeAgent() should have description matching focus")
+	}
+	if !strings.Contains(result, "mode: subagent") {
+		t.Error("generateOpenCodeAgent() should have mode: subagent")
+	}
+
+	// Verify body content
+	if !strings.Contains(result, "# Kent Beck") {
+		t.Error("generateOpenCodeAgent() should have expert name as heading")
+	}
+	if !strings.Contains(result, "channeling Kent Beck") {
+		t.Error("generateOpenCodeAgent() should have channeling intro")
+	}
+	if !strings.Contains(result, "## Philosophy") {
+		t.Error("generateOpenCodeAgent() should have Philosophy section")
+	}
+	if !strings.Contains(result, "## Principles") {
+		t.Error("generateOpenCodeAgent() should have Principles section")
+	}
+	if !strings.Contains(result, "## Red Flags") {
+		t.Error("generateOpenCodeAgent() should have Red Flags section")
+	}
+	if !strings.Contains(result, "## Review Style") {
+		t.Error("generateOpenCodeAgent() should have Review Style section")
 	}
 }
 

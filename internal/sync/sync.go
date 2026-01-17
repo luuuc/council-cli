@@ -69,6 +69,12 @@ var Targets = map[string]*Target{
 		Sync:     syncGeneric,
 		Check:    func() bool { return fs.FileExists("AGENTS.md") },
 	},
+	"opencode": {
+		Name:     "OpenCode",
+		Location: ".opencode/agent/",
+		Sync:     syncOpenCode,
+		Check:    func() bool { return fs.DirExists(".opencode") || fs.FileExists("opencode.json") },
+	},
 }
 
 // SyncAll syncs to all configured targets
@@ -230,6 +236,83 @@ func syncGeneric(experts []*expert.Expert, cfg *config.Config, dryRun bool) erro
 	}
 
 	return nil
+}
+
+// OpenCode sync
+func syncOpenCode(experts []*expert.Expert, cfg *config.Config, dryRun bool) error {
+	// Create .opencode/agent directory
+	agentDir := ".opencode/agent"
+	if !dryRun {
+		if err := os.MkdirAll(agentDir, 0755); err != nil {
+			return err
+		}
+	}
+
+	// Sync each expert as an agent file
+	for _, e := range experts {
+		path := filepath.Join(agentDir, e.ID+".md")
+		content := generateOpenCodeAgent(e)
+
+		if dryRun {
+			fmt.Printf("  Would create: %s\n", path)
+		} else {
+			if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+				return err
+			}
+			fmt.Printf("  Created: %s\n", path)
+		}
+	}
+
+	return nil
+}
+
+// generateOpenCodeAgent creates OpenCode agent file content
+func generateOpenCodeAgent(e *expert.Expert) string {
+	var parts []string
+
+	// OpenCode uses different frontmatter format
+	parts = append(parts, "---")
+	parts = append(parts, fmt.Sprintf("description: %s", e.Focus))
+	parts = append(parts, "mode: subagent")
+	parts = append(parts, "---")
+	parts = append(parts, "")
+	parts = append(parts, fmt.Sprintf("# %s", e.Name))
+	parts = append(parts, "")
+	parts = append(parts, fmt.Sprintf("You are channeling %s, known for expertise in %s.", e.Name, e.Focus))
+	parts = append(parts, "")
+
+	if e.Philosophy != "" {
+		parts = append(parts, "## Philosophy")
+		parts = append(parts, "")
+		parts = append(parts, strings.TrimSpace(e.Philosophy))
+		parts = append(parts, "")
+	}
+
+	if len(e.Principles) > 0 {
+		parts = append(parts, "## Principles")
+		parts = append(parts, "")
+		for _, p := range e.Principles {
+			parts = append(parts, fmt.Sprintf("- %s", p))
+		}
+		parts = append(parts, "")
+	}
+
+	if len(e.RedFlags) > 0 {
+		parts = append(parts, "## Red Flags")
+		parts = append(parts, "")
+		parts = append(parts, "Watch for these patterns:")
+		for _, r := range e.RedFlags {
+			parts = append(parts, fmt.Sprintf("- %s", r))
+		}
+		parts = append(parts, "")
+	}
+
+	parts = append(parts, "## Review Style")
+	parts = append(parts, "")
+	parts = append(parts, "When reviewing code, focus on your area of expertise. Be direct and specific.")
+	parts = append(parts, "Explain your reasoning. Suggest concrete improvements.")
+
+	return strings.Join(parts, "\n")
 }
 
 // generateAgentFile creates Claude Code agent file content

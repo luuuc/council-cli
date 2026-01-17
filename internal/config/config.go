@@ -43,7 +43,7 @@ func Default() *Config {
 			Command: "claude",
 			Timeout: 120,
 		},
-		Targets: []string{"claude", "cursor"},
+		Targets: []string{"claude", "cursor", "opencode"},
 		Council: CouncilConfig{
 			IncludeCouncilCommand: true,
 		},
