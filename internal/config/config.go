@@ -21,7 +21,6 @@ type Config struct {
 	AI      AIConfig      `yaml:"ai"`
 	Targets []string      `yaml:"targets"`
 	Council CouncilConfig `yaml:"council"`
-	Stack   *StackConfig  `yaml:"stack,omitempty"`
 }
 
 // AIConfig holds AI CLI configuration
@@ -34,15 +33,6 @@ type AIConfig struct {
 // CouncilConfig holds council generation options
 type CouncilConfig struct {
 	IncludeCouncilCommand bool `yaml:"include_council_command"`
-	IncludeExpertCommands bool `yaml:"include_expert_commands"`
-}
-
-// StackConfig holds detected project stack info
-type StackConfig struct {
-	Languages  []string `yaml:"languages,omitempty"`
-	Frameworks []string `yaml:"frameworks,omitempty"`
-	Testing    []string `yaml:"testing,omitempty"`
-	Patterns   []string `yaml:"patterns,omitempty"`
 }
 
 // Default returns a default configuration
@@ -56,7 +46,6 @@ func Default() *Config {
 		Targets: []string{"claude", "cursor"},
 		Council: CouncilConfig{
 			IncludeCouncilCommand: true,
-			IncludeExpertCommands: true,
 		},
 	}
 }
