@@ -31,12 +31,17 @@ var listCmd = &cobra.Command{
 			return fmt.Errorf("council not initialized: run 'council init' first")
 		}
 
-		experts, err := expert.List()
+		result, err := expert.ListWithWarnings()
 		if err != nil {
 			return err
 		}
 
-		if len(experts) == 0 {
+		// Display any warnings about files that couldn't be loaded
+		for _, warning := range result.Warnings {
+			fmt.Fprintf(os.Stderr, "Warning: %s\n", warning)
+		}
+
+		if len(result.Experts) == 0 {
 			fmt.Println("No experts in the council yet.")
 			fmt.Println()
 			fmt.Println("Add experts with:")
@@ -47,7 +52,7 @@ var listCmd = &cobra.Command{
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 		fmt.Fprintln(w, "ID\tNAME\tFOCUS")
-		for _, e := range experts {
+		for _, e := range result.Experts {
 			fmt.Fprintf(w, "%s\t%s\t%s\n", e.ID, e.Name, e.Focus)
 		}
 		w.Flush()
@@ -77,20 +82,6 @@ var showCmd = &cobra.Command{
 		fmt.Printf("ID:    %s\n", e.ID)
 		fmt.Printf("Name:  %s\n", e.Name)
 		fmt.Printf("Focus: %s\n", e.Focus)
-
-		if len(e.Triggers.Paths) > 0 {
-			fmt.Println("\nPaths:")
-			for _, p := range e.Triggers.Paths {
-				fmt.Printf("  %s\n", p)
-			}
-		}
-
-		if len(e.Triggers.Keywords) > 0 {
-			fmt.Println("\nKeywords:")
-			for _, k := range e.Triggers.Keywords {
-				fmt.Printf("  %s\n", k)
-			}
-		}
 
 		if len(e.Principles) > 0 {
 			fmt.Println("\nPrinciples:")
@@ -166,7 +157,7 @@ var removeCmd = &cobra.Command{
 			return err
 		}
 
-		if !expert.Confirm(fmt.Sprintf("Remove %s from the council?", e.Name)) {
+		if !Confirm(fmt.Sprintf("Remove %s from the council?", e.Name)) {
 			fmt.Println("Cancelled.")
 			return nil
 		}

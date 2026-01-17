@@ -17,14 +17,16 @@ import (
 )
 
 var (
-	setupApply  bool
-	setupOutput string
-	setupYes    bool
+	setupApply       bool
+	setupOutput      string
+	setupYes         bool
+	setupInteractive bool
 )
 
 func init() {
 	rootCmd.AddCommand(setupCmd)
 	setupCmd.Flags().BoolVar(&setupApply, "apply", false, "Send prompt to AI and apply suggestions")
+	setupCmd.Flags().BoolVarP(&setupInteractive, "interactive", "i", false, "Interactive setup without external AI")
 	setupCmd.Flags().StringVarP(&setupOutput, "output", "o", "", "Write prompt to file instead of stdout")
 	setupCmd.Flags().BoolVarP(&setupYes, "yes", "y", false, "Skip confirmation when applying")
 }
@@ -35,9 +37,16 @@ var setupCmd = &cobra.Command{
 	Long: `Scans your project, detects the tech stack, and generates a prompt
 for an AI assistant to suggest appropriate expert personas.
 
-Without --apply, outputs the prompt for you to copy to any AI.
-With --apply, sends the prompt to the configured AI CLI and creates experts.`,
+Modes:
+  (default)       Output prompt for you to copy to any AI
+  --interactive   Guided setup with built-in suggestions (no external AI needed)
+  --apply         Send prompt to configured AI CLI and create experts`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// Interactive mode - no external AI needed
+		if setupInteractive {
+			return InteractiveSetup()
+		}
+
 		dir, err := os.Getwd()
 		if err != nil {
 			return err
@@ -78,6 +87,7 @@ With --apply, sends the prompt to the configured AI CLI and creates experts.`,
 		fmt.Println()
 		fmt.Println("Then run: council setup --apply < response.yaml")
 		fmt.Println("Or use:   council setup --apply  (to send to configured AI)")
+		fmt.Println("Or try:   council setup --interactive  (no AI needed)")
 
 		return nil
 	},
@@ -169,7 +179,7 @@ func applyResponse(data []byte) error {
 
 	// Confirm
 	if !setupYes {
-		if !expert.Confirm("Apply this council?") {
+		if !Confirm("Apply this council?") {
 			fmt.Println("Cancelled.")
 			return nil
 		}

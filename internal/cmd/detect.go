@@ -30,6 +30,11 @@ var detectCmd = &cobra.Command{
 			return err
 		}
 
+		// Display any warnings about files that couldn't be accessed
+		for _, warning := range d.Warnings {
+			fmt.Fprintf(os.Stderr, "Warning: %s\n", warning)
+		}
+
 		if detectJSON {
 			data, err := d.JSON()
 			if err != nil {

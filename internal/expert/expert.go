@@ -1,7 +1,6 @@
 package expert
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"os"
@@ -14,12 +13,40 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Pre-compiled regex for ID generation
+var idRegexp = regexp.MustCompile(`[^a-z0-9]+`)
+
+// Pre-compiled template for expert body generation
+var bodyTemplate = template.Must(template.New("body").Parse(`# {{.Name}} - {{.Focus}}
+
+You are channeling {{.Name}}, known for expertise in {{.Focus}}.
+
+{{if .Philosophy}}## Philosophy
+
+{{.Philosophy}}
+{{end}}
+{{if .Principles}}## Principles
+
+{{range .Principles}}- {{.}}
+{{end}}
+{{end}}
+{{if .RedFlags}}## Red Flags
+
+Watch for these patterns:
+{{range .RedFlags}}- {{.}}
+{{end}}
+{{end}}
+## Review Style
+
+When reviewing code, focus on your area of expertise. Be direct and specific.
+Explain your reasoning. Suggest concrete improvements.
+`))
+
 // Expert represents an expert persona
 type Expert struct {
 	ID         string   `yaml:"id"`
 	Name       string   `yaml:"name"`
 	Focus      string   `yaml:"focus"`
-	Triggers   Triggers `yaml:"triggers,omitempty"`
 	Philosophy string   `yaml:"philosophy,omitempty"`
 	Principles []string `yaml:"principles,omitempty"`
 	RedFlags   []string `yaml:"red_flags,omitempty"`
@@ -28,15 +55,15 @@ type Expert struct {
 	Body string `yaml:"-"`
 }
 
-// Triggers defines when an expert should be consulted
-type Triggers struct {
-	Paths    []string `yaml:"paths,omitempty"`
-	Keywords []string `yaml:"keywords,omitempty"`
-}
-
 // ExpertSuggestions is the expected AI response format
 type ExpertSuggestions struct {
 	Experts []Expert `yaml:"experts"`
+}
+
+// ListResult contains the result of listing experts, including any warnings
+type ListResult struct {
+	Experts  []*Expert
+	Warnings []string
 }
 
 // Path returns the file path for this expert
@@ -74,33 +101,11 @@ func (e *Expert) Save() error {
 }
 
 func (e *Expert) generateBody() string {
-	tmpl := `# {{.Name}} - {{.Focus}}
-
-You are channeling {{.Name}}, known for expertise in {{.Focus}}.
-
-{{if .Philosophy}}## Philosophy
-
-{{.Philosophy}}
-{{end}}
-{{if .Principles}}## Principles
-
-{{range .Principles}}- {{.}}
-{{end}}
-{{end}}
-{{if .RedFlags}}## Red Flags
-
-Watch for these patterns:
-{{range .RedFlags}}- {{.}}
-{{end}}
-{{end}}
-## Review Style
-
-When reviewing code, focus on your area of expertise. Be direct and specific.
-Explain your reasoning. Suggest concrete improvements.
-`
-	t, _ := template.New("body").Parse(tmpl)
 	var buf bytes.Buffer
-	t.Execute(&buf, e)
+	if err := bodyTemplate.Execute(&buf, e); err != nil {
+		// Fallback to simple format if template fails
+		return fmt.Sprintf("# %s - %s\n\nExpert in %s.", e.Name, e.Focus, e.Focus)
+	}
 	return strings.TrimSpace(buf.String())
 }
 
@@ -126,12 +131,12 @@ func Parse(data []byte) (*Expert, error) {
 
 	// Split frontmatter and body
 	if !strings.HasPrefix(content, "---") {
-		return nil, fmt.Errorf("missing frontmatter")
+		return nil, fmt.Errorf("missing frontmatter: file must start with '---'")
 	}
 
 	parts := strings.SplitN(content[3:], "---", 2)
 	if len(parts) < 2 {
-		return nil, fmt.Errorf("invalid frontmatter format")
+		return nil, fmt.Errorf("invalid frontmatter: missing closing '---'")
 	}
 
 	frontmatter := strings.TrimSpace(parts[0])
@@ -139,41 +144,100 @@ func Parse(data []byte) (*Expert, error) {
 
 	var e Expert
 	if err := yaml.Unmarshal([]byte(frontmatter), &e); err != nil {
-		return nil, fmt.Errorf("failed to parse frontmatter: %w", err)
+		return nil, formatYAMLError(frontmatter, err)
 	}
 
 	e.Body = body
 	return &e, nil
 }
 
+// formatYAMLError provides helpful context for YAML parsing errors
+func formatYAMLError(content string, err error) error {
+	errStr := err.Error()
+	lines := strings.Split(content, "\n")
+
+	// Try to extract line number from yaml error (format: "yaml: line N: ...")
+	if strings.Contains(errStr, "line") {
+		// Parse line number
+		var lineNum int
+		if _, scanErr := fmt.Sscanf(errStr, "yaml: line %d:", &lineNum); scanErr == nil && lineNum > 0 && lineNum <= len(lines) {
+			// Show context around the error
+			start := lineNum - 2
+			if start < 0 {
+				start = 0
+			}
+			end := lineNum + 1
+			if end > len(lines) {
+				end = len(lines)
+			}
+
+			var context strings.Builder
+			context.WriteString(fmt.Sprintf("YAML error at line %d:\n\n", lineNum))
+			for i := start; i < end; i++ {
+				marker := "  "
+				if i == lineNum-1 {
+					marker = "> "
+				}
+				context.WriteString(fmt.Sprintf("  %s%d: %s\n", marker, i+1, lines[i]))
+			}
+			context.WriteString(fmt.Sprintf("\nError: %s", errStr))
+
+			// Add common fix suggestions
+			if strings.Contains(errStr, "did not find expected") {
+				context.WriteString("\n\nHint: Check for:\n")
+				context.WriteString("  - Missing or extra spaces in indentation\n")
+				context.WriteString("  - Special characters that need quoting (: @ # etc)\n")
+				context.WriteString("  - Missing dash (-) for list items\n")
+			}
+
+			return fmt.Errorf(context.String())
+		}
+	}
+
+	// Fallback to original error with generic hint
+	return fmt.Errorf("failed to parse YAML: %w\n\nHint: Check indentation and special characters", err)
+}
+
 // List returns all experts in the council
 func List() ([]*Expert, error) {
+	result, err := ListWithWarnings()
+	if err != nil {
+		return nil, err
+	}
+	return result.Experts, nil
+}
+
+// ListWithWarnings returns all experts with any warnings about files that couldn't be loaded
+func ListWithWarnings() (*ListResult, error) {
 	dir := config.Path(config.ExpertsDir)
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, nil
+			return &ListResult{}, nil
 		}
 		return nil, err
 	}
 
-	var experts []*Expert
+	result := &ListResult{
+		Experts:  []*Expert{},
+		Warnings: []string{},
+	}
+
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
 			continue
 		}
-		if entry.Name() == ".gitkeep" {
+
+		path := filepath.Join(dir, entry.Name())
+		e, err := LoadFile(path)
+		if err != nil {
+			result.Warnings = append(result.Warnings, fmt.Sprintf("could not load %s: %v", entry.Name(), err))
 			continue
 		}
-
-		e, err := LoadFile(filepath.Join(dir, entry.Name()))
-		if err != nil {
-			continue // Skip invalid files
-		}
-		experts = append(experts, e)
+		result.Experts = append(result.Experts, e)
 	}
 
-	return experts, nil
+	return result, nil
 }
 
 // Delete removes an expert from the council
@@ -198,8 +262,7 @@ func ToID(name string) string {
 	id := strings.ToLower(name)
 
 	// Replace spaces and special chars with hyphens
-	re := regexp.MustCompile(`[^a-z0-9]+`)
-	id = re.ReplaceAllString(id, "-")
+	id = idRegexp.ReplaceAllString(id, "-")
 
 	// Remove leading/trailing hyphens
 	id = strings.Trim(id, "-")
@@ -231,11 +294,3 @@ func ParseAIResponse(data []byte) ([]Expert, error) {
 	return suggestions.Experts, nil
 }
 
-// Confirm asks user for confirmation
-func Confirm(prompt string) bool {
-	fmt.Print(prompt + " [Y/n] ")
-	reader := bufio.NewReader(os.Stdin)
-	response, _ := reader.ReadString('\n')
-	response = strings.TrimSpace(strings.ToLower(response))
-	return response == "" || response == "y" || response == "yes"
-}

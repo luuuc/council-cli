@@ -10,7 +10,30 @@ import (
 
 	"github.com/luuuc/council-cli/internal/config"
 	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council-cli/internal/fs"
 )
+
+// Pre-compiled template for council command generation
+var councilCommandTemplate = template.Must(template.New("council").Parse(`# Code Review Council
+
+Convene the council to review: $ARGUMENTS
+
+## Council Members
+
+{{range .}}
+### {{.Name}}
+**Focus**: {{.Focus}}
+{{end}}
+
+## Instructions
+
+Review the code from each expert's perspective. For each expert:
+1. State the expert's name
+2. Provide their assessment focused on their domain
+3. Note any concerns or suggestions
+
+At the end, synthesize the key points and provide actionable recommendations.
+`))
 
 // Target represents a sync target
 type Target struct {
@@ -26,25 +49,25 @@ var Targets = map[string]*Target{
 		Name:     "Claude Code",
 		Location: ".claude/",
 		Sync:     syncClaude,
-		Check:    func() bool { return dirExists(".claude") },
+		Check:    func() bool { return fs.DirExists(".claude") },
 	},
 	"cursor": {
 		Name:     "Cursor",
 		Location: ".cursor/rules/ or .cursorrules",
 		Sync:     syncCursor,
-		Check:    func() bool { return dirExists(".cursor") || fileExists(".cursorrules") },
+		Check:    func() bool { return fs.DirExists(".cursor") || fs.FileExists(".cursorrules") },
 	},
 	"windsurf": {
 		Name:     "Windsurf",
 		Location: ".windsurfrules",
 		Sync:     syncWindsurf,
-		Check:    func() bool { return fileExists(".windsurfrules") },
+		Check:    func() bool { return fs.FileExists(".windsurfrules") },
 	},
 	"generic": {
 		Name:     "Generic",
 		Location: "AGENTS.md",
 		Sync:     syncGeneric,
-		Check:    func() bool { return fileExists("AGENTS.md") },
+		Check:    func() bool { return fs.FileExists("AGENTS.md") },
 	},
 }
 
@@ -149,7 +172,7 @@ func syncClaude(experts []*expert.Expert, cfg *config.Config, dryRun bool) error
 func syncCursor(experts []*expert.Expert, cfg *config.Config, dryRun bool) error {
 	// Prefer .cursor/rules/ if .cursor exists, otherwise .cursorrules
 	var path string
-	if dirExists(".cursor") {
+	if fs.DirExists(".cursor") {
 		rulesDir := ".cursor/rules"
 		if !dryRun {
 			if err := os.MkdirAll(rulesDir, 0755); err != nil {
@@ -222,29 +245,11 @@ func generateAgentFile(e *expert.Expert) string {
 
 // generateCouncilCommand creates the /council slash command
 func generateCouncilCommand(experts []*expert.Expert) string {
-	tmpl := `# Code Review Council
-
-Convene the council to review: $ARGUMENTS
-
-## Council Members
-
-{{range .}}
-### {{.Name}}
-**Focus**: {{.Focus}}
-{{end}}
-
-## Instructions
-
-Review the code from each expert's perspective. For each expert:
-1. State the expert's name
-2. Provide their assessment focused on their domain
-3. Note any concerns or suggestions
-
-At the end, synthesize the key points and provide actionable recommendations.
-`
-	t, _ := template.New("council").Parse(tmpl)
 	var buf bytes.Buffer
-	t.Execute(&buf, experts)
+	if err := councilCommandTemplate.Execute(&buf, experts); err != nil {
+		// Fallback to simple format if template fails
+		return "# Code Review Council\n\nConvene the council to review: $ARGUMENTS\n"
+	}
 	return buf.String()
 }
 
@@ -302,14 +307,6 @@ func generateAgentsMd(experts []*expert.Expert) string {
 		parts = append(parts, fmt.Sprintf("### %s", e.Name))
 		parts = append(parts, fmt.Sprintf("- **ID**: %s", e.ID))
 		parts = append(parts, fmt.Sprintf("- **Focus**: %s", e.Focus))
-
-		if len(e.Triggers.Paths) > 0 {
-			parts = append(parts, fmt.Sprintf("- **Paths**: %s", strings.Join(e.Triggers.Paths, ", ")))
-		}
-		if len(e.Triggers.Keywords) > 0 {
-			parts = append(parts, fmt.Sprintf("- **Keywords**: %s", strings.Join(e.Triggers.Keywords, ", ")))
-		}
-
 		parts = append(parts, "")
 
 		if e.Philosophy != "" {
@@ -329,13 +326,3 @@ func generateAgentsMd(experts []*expert.Expert) string {
 	return strings.Join(parts, "\n")
 }
 
-// Helper functions
-func fileExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
-}
-
-func dirExists(path string) bool {
-	info, err := os.Stat(path)
-	return err == nil && info.IsDir()
-}

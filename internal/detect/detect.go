@@ -2,11 +2,56 @@ package detect
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/luuuc/council-cli/internal/fs"
 )
+
+// sourceExts defines which file extensions are considered source files
+var sourceExts = map[string]bool{
+	".go": true, ".rs": true, ".rb": true, ".py": true, ".js": true,
+	".ts": true, ".tsx": true, ".jsx": true, ".vue": true, ".svelte": true,
+	".java": true, ".kt": true, ".scala": true, ".swift": true,
+	".c": true, ".cpp": true, ".h": true, ".hpp": true,
+	".cs": true, ".fs": true, ".php": true, ".ex": true, ".exs": true,
+	".erl": true, ".hrl": true, ".clj": true, ".cljs": true,
+	".html": true, ".erb": true, ".haml": true, ".slim": true,
+	".css": true, ".scss": true, ".sass": true, ".less": true,
+}
+
+// extToLang maps file extensions to language names
+var extToLang = map[string]string{
+	".go":     "Go",
+	".rs":     "Rust",
+	".rb":     "Ruby",
+	".py":     "Python",
+	".js":     "JavaScript",
+	".ts":     "TypeScript",
+	".tsx":    "TypeScript",
+	".jsx":    "JavaScript",
+	".vue":    "Vue",
+	".svelte": "Svelte",
+	".java":   "Java",
+	".kt":     "Kotlin",
+	".scala":  "Scala",
+	".swift":  "Swift",
+	".c":      "C",
+	".cpp":    "C++",
+	".cs":     "C#",
+	".php":    "PHP",
+	".ex":     "Elixir",
+	".exs":    "Elixir",
+	".erl":    "Erlang",
+	".clj":    "Clojure",
+	".erb":    "Ruby",
+	".html":   "HTML",
+	".css":    "CSS",
+	".scss":   "CSS",
+}
 
 // Detection holds the detected project stack
 type Detection struct {
@@ -14,6 +59,7 @@ type Detection struct {
 	Frameworks []Framework `json:"frameworks" yaml:"frameworks"`
 	Testing    []string    `json:"testing" yaml:"testing"`
 	Patterns   []string    `json:"patterns" yaml:"patterns"`
+	Warnings   []string    `json:"warnings,omitempty" yaml:"warnings,omitempty"`
 }
 
 // Language represents a detected language with percentage
@@ -64,6 +110,7 @@ func Scan(dir string) (*Detection, error) {
 		Frameworks: []Framework{},
 		Testing:    []string{},
 		Patterns:   []string{},
+		Warnings:   []string{},
 	}
 
 	// Count files by extension for language detection
@@ -72,7 +119,13 @@ func Scan(dir string) (*Detection, error) {
 
 	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
-			return nil // Skip errors
+			// Collect warning instead of silently skipping
+			relPath, _ := filepath.Rel(dir, path)
+			if relPath == "" {
+				relPath = path
+			}
+			d.Warnings = append(d.Warnings, fmt.Sprintf("could not access %s: %v", relPath, err))
+			return nil // Continue scanning
 		}
 
 		// Skip hidden directories and common non-source directories
@@ -143,55 +196,17 @@ func Scan(dir string) (*Detection, error) {
 }
 
 func isSourceFile(ext string) bool {
-	sourceExts := map[string]bool{
-		".go": true, ".rs": true, ".rb": true, ".py": true, ".js": true,
-		".ts": true, ".tsx": true, ".jsx": true, ".vue": true, ".svelte": true,
-		".java": true, ".kt": true, ".scala": true, ".swift": true,
-		".c": true, ".cpp": true, ".h": true, ".hpp": true,
-		".cs": true, ".fs": true, ".php": true, ".ex": true, ".exs": true,
-		".erl": true, ".hrl": true, ".clj": true, ".cljs": true,
-		".html": true, ".erb": true, ".haml": true, ".slim": true,
-		".css": true, ".scss": true, ".sass": true, ".less": true,
-	}
 	return sourceExts[ext]
 }
 
 func extToLanguage(ext string) string {
-	mapping := map[string]string{
-		".go":     "Go",
-		".rs":     "Rust",
-		".rb":     "Ruby",
-		".py":     "Python",
-		".js":     "JavaScript",
-		".ts":     "TypeScript",
-		".tsx":    "TypeScript",
-		".jsx":    "JavaScript",
-		".vue":    "Vue",
-		".svelte": "Svelte",
-		".java":   "Java",
-		".kt":     "Kotlin",
-		".scala":  "Scala",
-		".swift":  "Swift",
-		".c":      "C",
-		".cpp":    "C++",
-		".cs":     "C#",
-		".php":    "PHP",
-		".ex":     "Elixir",
-		".exs":    "Elixir",
-		".erl":    "Erlang",
-		".clj":    "Clojure",
-		".erb":    "Ruby",
-		".html":   "HTML",
-		".css":    "CSS",
-		".scss":   "CSS",
-	}
-	return mapping[ext]
+	return extToLang[ext]
 }
 
 func (d *Detection) detectFrameworks(dir string) {
 	// Ruby/Rails
-	if fileExists(dir, "Gemfile") {
-		content := readFile(dir, "Gemfile")
+	if fs.FileExistsIn(dir, "Gemfile") {
+		content := fs.ReadFileIn(dir, "Gemfile")
 		if strings.Contains(content, "rails") {
 			version := extractGemVersion(content, "rails")
 			d.Frameworks = append(d.Frameworks, Framework{Name: "Rails", Version: version})
@@ -202,8 +217,8 @@ func (d *Detection) detectFrameworks(dir string) {
 	}
 
 	// Node.js
-	if fileExists(dir, "package.json") {
-		content := readFile(dir, "package.json")
+	if fs.FileExistsIn(dir, "package.json") {
+		content := fs.ReadFileIn(dir, "package.json")
 		var pkg map[string]interface{}
 		if json.Unmarshal([]byte(content), &pkg) == nil {
 			deps := mergeDeps(pkg)
@@ -234,12 +249,12 @@ func (d *Detection) detectFrameworks(dir string) {
 	}
 
 	// Python
-	if fileExists(dir, "requirements.txt") || fileExists(dir, "pyproject.toml") {
+	if fs.FileExistsIn(dir, "requirements.txt") || fs.FileExistsIn(dir, "pyproject.toml") {
 		var content string
-		if fileExists(dir, "requirements.txt") {
-			content = readFile(dir, "requirements.txt")
+		if fs.FileExistsIn(dir, "requirements.txt") {
+			content = fs.ReadFileIn(dir, "requirements.txt")
 		} else {
-			content = readFile(dir, "pyproject.toml")
+			content = fs.ReadFileIn(dir, "pyproject.toml")
 		}
 
 		if strings.Contains(content, "django") || strings.Contains(content, "Django") {
@@ -254,8 +269,8 @@ func (d *Detection) detectFrameworks(dir string) {
 	}
 
 	// Go
-	if fileExists(dir, "go.mod") {
-		content := readFile(dir, "go.mod")
+	if fs.FileExistsIn(dir, "go.mod") {
+		content := fs.ReadFileIn(dir, "go.mod")
 		if strings.Contains(content, "gin-gonic/gin") {
 			d.Frameworks = append(d.Frameworks, Framework{Name: "Gin"})
 		}
@@ -268,8 +283,8 @@ func (d *Detection) detectFrameworks(dir string) {
 	}
 
 	// Rust
-	if fileExists(dir, "Cargo.toml") {
-		content := readFile(dir, "Cargo.toml")
+	if fs.FileExistsIn(dir, "Cargo.toml") {
+		content := fs.ReadFileIn(dir, "Cargo.toml")
 		if strings.Contains(content, "actix-web") {
 			d.Frameworks = append(d.Frameworks, Framework{Name: "Actix Web"})
 		}
@@ -282,18 +297,18 @@ func (d *Detection) detectFrameworks(dir string) {
 	}
 
 	// Swift
-	if fileExists(dir, "Package.swift") {
-		content := readFile(dir, "Package.swift")
+	if fs.FileExistsIn(dir, "Package.swift") {
+		content := fs.ReadFileIn(dir, "Package.swift")
 		if strings.Contains(content, "Vapor") {
 			d.Frameworks = append(d.Frameworks, Framework{Name: "Vapor"})
 		}
 	}
 
 	// Kotlin/Android
-	if fileExists(dir, "build.gradle.kts") || fileExists(dir, "build.gradle") {
-		content := readFile(dir, "build.gradle.kts")
+	if fs.FileExistsIn(dir, "build.gradle.kts") || fs.FileExistsIn(dir, "build.gradle") {
+		content := fs.ReadFileIn(dir, "build.gradle.kts")
 		if content == "" {
-			content = readFile(dir, "build.gradle")
+			content = fs.ReadFileIn(dir, "build.gradle")
 		}
 		if strings.Contains(content, "android") {
 			d.Frameworks = append(d.Frameworks, Framework{Name: "Android"})
@@ -306,8 +321,8 @@ func (d *Detection) detectFrameworks(dir string) {
 
 func (d *Detection) detectTesting(dir string) {
 	// Ruby
-	if fileExists(dir, "Gemfile") {
-		content := readFile(dir, "Gemfile")
+	if fs.FileExistsIn(dir, "Gemfile") {
+		content := fs.ReadFileIn(dir, "Gemfile")
 		if strings.Contains(content, "minitest") {
 			d.Testing = append(d.Testing, "Minitest")
 		}
@@ -317,8 +332,8 @@ func (d *Detection) detectTesting(dir string) {
 	}
 
 	// Node.js
-	if fileExists(dir, "package.json") {
-		content := readFile(dir, "package.json")
+	if fs.FileExistsIn(dir, "package.json") {
+		content := fs.ReadFileIn(dir, "package.json")
 		var pkg map[string]interface{}
 		if json.Unmarshal([]byte(content), &pkg) == nil {
 			deps := mergeDeps(pkg)
@@ -342,12 +357,12 @@ func (d *Detection) detectTesting(dir string) {
 	}
 
 	// Python
-	if fileExists(dir, "requirements.txt") || fileExists(dir, "pyproject.toml") {
+	if fs.FileExistsIn(dir, "requirements.txt") || fs.FileExistsIn(dir, "pyproject.toml") {
 		var content string
-		if fileExists(dir, "requirements.txt") {
-			content = readFile(dir, "requirements.txt")
+		if fs.FileExistsIn(dir, "requirements.txt") {
+			content = fs.ReadFileIn(dir, "requirements.txt")
 		} else {
-			content = readFile(dir, "pyproject.toml")
+			content = fs.ReadFileIn(dir, "pyproject.toml")
 		}
 
 		if strings.Contains(content, "pytest") {
@@ -375,7 +390,7 @@ func (d *Detection) detectTesting(dir string) {
 	}
 
 	// Rust
-	if fileExists(dir, "Cargo.toml") {
+	if fs.FileExistsIn(dir, "Cargo.toml") {
 		// Rust has built-in testing
 		if hasLanguage(d.Languages, "Rust") {
 			d.Testing = append(d.Testing, "Rust testing")
@@ -385,65 +400,45 @@ func (d *Detection) detectTesting(dir string) {
 
 func (d *Detection) detectPatterns(dir string) {
 	// Rails patterns
-	if dirExists(dir, "app/controllers") {
+	if fs.DirExistsIn(dir, "app/controllers") {
 		d.Patterns = append(d.Patterns, "MVC")
 	}
-	if dirExists(dir, "app/models/concerns") || dirExists(dir, "app/controllers/concerns") {
+	if fs.DirExistsIn(dir, "app/models/concerns") || fs.DirExistsIn(dir, "app/controllers/concerns") {
 		d.Patterns = append(d.Patterns, "Concerns")
 	}
-	if dirExists(dir, "app/jobs") {
+	if fs.DirExistsIn(dir, "app/jobs") {
 		d.Patterns = append(d.Patterns, "Background Jobs")
 	}
 
 	// API patterns
-	if dirExists(dir, "app/api") || dirExists(dir, "src/api") || dirExists(dir, "api") {
+	if fs.DirExistsIn(dir, "app/api") || fs.DirExistsIn(dir, "src/api") || fs.DirExistsIn(dir, "api") {
 		d.Patterns = append(d.Patterns, "API")
 	}
 
 	// Monorepo
-	if dirExists(dir, "packages") || fileExists(dir, "pnpm-workspace.yaml") {
+	if fs.DirExistsIn(dir, "packages") || fs.FileExistsIn(dir, "pnpm-workspace.yaml") {
 		d.Patterns = append(d.Patterns, "Monorepo")
 	}
 
 	// Microservices
-	if dirExists(dir, "services") && !dirExists(dir, "app/services") {
+	if fs.DirExistsIn(dir, "services") && !fs.DirExistsIn(dir, "app/services") {
 		d.Patterns = append(d.Patterns, "Microservices")
 	}
 
 	// Check for Tailwind
-	if fileExists(dir, "tailwind.config.js") || fileExists(dir, "tailwind.config.ts") {
+	if fs.FileExistsIn(dir, "tailwind.config.js") || fs.FileExistsIn(dir, "tailwind.config.ts") {
 		d.Patterns = append(d.Patterns, "Tailwind CSS")
 	}
 
 	// Check for Docker
-	if fileExists(dir, "Dockerfile") || fileExists(dir, "docker-compose.yml") || fileExists(dir, "docker-compose.yaml") {
+	if fs.FileExistsIn(dir, "Dockerfile") || fs.FileExistsIn(dir, "docker-compose.yml") || fs.FileExistsIn(dir, "docker-compose.yaml") {
 		d.Patterns = append(d.Patterns, "Docker")
 	}
 
 	// Check for CI/CD
-	if dirExists(dir, ".github/workflows") {
+	if fs.DirExistsIn(dir, ".github/workflows") {
 		d.Patterns = append(d.Patterns, "GitHub Actions")
 	}
-}
-
-// Helper functions
-
-func fileExists(dir, name string) bool {
-	_, err := os.Stat(filepath.Join(dir, name))
-	return err == nil
-}
-
-func dirExists(dir, name string) bool {
-	info, err := os.Stat(filepath.Join(dir, name))
-	return err == nil && info.IsDir()
-}
-
-func readFile(dir, name string) string {
-	data, err := os.ReadFile(filepath.Join(dir, name))
-	if err != nil {
-		return ""
-	}
-	return string(data)
 }
 
 func extractGemVersion(content, gem string) string {

@@ -11,6 +11,9 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 )
 
+// ExpertURIPrefix is the URI scheme prefix for expert resources
+const ExpertURIPrefix = "council://experts/"
+
 // Server wraps the MCP server with council-specific functionality
 type Server struct {
 	mcp *server.MCPServer
@@ -69,7 +72,7 @@ func (s *Server) registerTools() {
 func (s *Server) registerResources() {
 	// Dynamic resource template for individual experts
 	template := mcp.NewResourceTemplate(
-		"council://experts/{id}",
+		ExpertURIPrefix+"{id}",
 		"Expert Profile",
 		mcp.WithTemplateMIMEType("text/markdown"),
 		mcp.WithTemplateDescription("Individual expert persona from the council"),
@@ -233,9 +236,8 @@ Please review the following content from each expert's perspective:
 
 // extractExpertID extracts the expert ID from a council://experts/{id} URI
 func extractExpertID(uri string) string {
-	const prefix = "council://experts/"
-	if len(uri) > len(prefix) {
-		return uri[len(prefix):]
+	if len(uri) > len(ExpertURIPrefix) {
+		return uri[len(ExpertURIPrefix):]
 	}
 	return ""
 }

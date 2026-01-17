@@ -46,10 +46,9 @@ Suggest 5-7 expert personas for a code review council. For each expert, provide:
 
 1. A real person known for excellence in a domain relevant to this stack
 2. Their specific focus area (1 sentence)
-3. File patterns and keywords that should trigger their consultation
-4. A brief philosophy statement in their voice (2-3 paragraphs)
-5. Key principles they enforce (bullet points)
-6. Red flags they watch for (what makes them intervene)
+3. A brief philosophy statement in their voice (2-3 paragraphs)
+4. Key principles they enforce (bullet points)
+5. Red flags they watch for (what makes them intervene)
 
 ## Output Format
 
@@ -60,9 +59,6 @@ experts:
   - id: short-kebab-case-name
     name: "Full Name"
     focus: "One sentence focus area"
-    triggers:
-      paths: ["glob/patterns/**"]
-      keywords: ["relevant", "terms"]
     philosophy: |
       Multi-line philosophy statement written in first person,
       as if the expert is speaking directly to the developer.

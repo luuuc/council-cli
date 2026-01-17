@@ -19,4 +19,11 @@ coverage.txt
 Thumbs.db
 
 # Test artifacts
+.claude
+.council
 .council-test/
+.cursorrules
+
+# Development specifics
+.doc
+.shape

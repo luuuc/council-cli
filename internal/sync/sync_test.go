@@ -1,0 +1,454 @@
+package sync
+
+import (
+	"os"
+	"strings"
+	"testing"
+
+	"github.com/luuuc/council-cli/internal/config"
+	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council-cli/internal/fs"
+)
+
+func TestGenerateCouncilCommand(t *testing.T) {
+	experts := []*expert.Expert{
+		{
+			ID:    "kent-beck",
+			Name:  "Kent Beck",
+			Focus: "Test-driven development",
+		},
+		{
+			ID:    "dhh",
+			Name:  "DHH",
+			Focus: "Rails and productivity",
+		},
+	}
+
+	result := generateCouncilCommand(experts)
+
+	// Check for key elements
+	if !strings.Contains(result, "Code Review Council") {
+		t.Error("generateCouncilCommand() missing title")
+	}
+	if !strings.Contains(result, "$ARGUMENTS") {
+		t.Error("generateCouncilCommand() missing $ARGUMENTS placeholder")
+	}
+	if !strings.Contains(result, "Kent Beck") {
+		t.Error("generateCouncilCommand() missing first expert name")
+	}
+	if !strings.Contains(result, "DHH") {
+		t.Error("generateCouncilCommand() missing second expert name")
+	}
+	if !strings.Contains(result, "Test-driven development") {
+		t.Error("generateCouncilCommand() missing first expert focus")
+	}
+}
+
+func TestGenerateCouncilCommand_EmptyExperts(t *testing.T) {
+	// Test with empty expert list - should not panic
+	experts := []*expert.Expert{}
+
+	result := generateCouncilCommand(experts)
+
+	// Should still have the header and instructions
+	if !strings.Contains(result, "Code Review Council") {
+		t.Error("generateCouncilCommand() should have title even with empty experts")
+	}
+	if !strings.Contains(result, "Instructions") {
+		t.Error("generateCouncilCommand() should have instructions even with empty experts")
+	}
+}
+
+func TestGenerateCouncilCommand_SpecialCharacters(t *testing.T) {
+	// Test with special characters that might cause template issues
+	experts := []*expert.Expert{
+		{
+			ID:    "special",
+			Name:  "Expert with <html> & \"quotes\"",
+			Focus: "Testing {{templates}} and $variables",
+		},
+	}
+
+	result := generateCouncilCommand(experts)
+
+	// Should not panic and should contain the special characters
+	if !strings.Contains(result, "<html>") {
+		t.Error("generateCouncilCommand() should preserve special characters")
+	}
+}
+
+func TestGenerateCombinedRules(t *testing.T) {
+	experts := []*expert.Expert{
+		{
+			ID:         "kent-beck",
+			Name:       "Kent Beck",
+			Focus:      "TDD",
+			Philosophy: "Test first, code second.",
+			Principles: []string{"Red-green-refactor", "Simple design"},
+			RedFlags:   []string{"No tests"},
+		},
+	}
+
+	result := generateCombinedRules(experts)
+
+	if !strings.Contains(result, "Expert Council") {
+		t.Error("generateCombinedRules() missing header")
+	}
+	if !strings.Contains(result, "Kent Beck") {
+		t.Error("generateCombinedRules() missing expert name")
+	}
+	if !strings.Contains(result, "TDD") {
+		t.Error("generateCombinedRules() missing focus")
+	}
+	if !strings.Contains(result, "Test first, code second.") {
+		t.Error("generateCombinedRules() missing philosophy")
+	}
+	if !strings.Contains(result, "Red-green-refactor") {
+		t.Error("generateCombinedRules() missing principle")
+	}
+	if !strings.Contains(result, "No tests") {
+		t.Error("generateCombinedRules() missing red flag")
+	}
+}
+
+func TestGenerateAgentsMd(t *testing.T) {
+	experts := []*expert.Expert{
+		{
+			ID:         "expert-1",
+			Name:       "Expert One",
+			Focus:      "Focus one",
+			Philosophy: "Philosophy here.",
+			Principles: []string{"Principle 1"},
+		},
+	}
+
+	result := generateAgentsMd(experts)
+
+	if !strings.Contains(result, "AGENTS.md") {
+		t.Error("generateAgentsMd() missing AGENTS.md header")
+	}
+	if !strings.Contains(result, "Expert One") {
+		t.Error("generateAgentsMd() missing expert name")
+	}
+	if !strings.Contains(result, "expert-1") {
+		t.Error("generateAgentsMd() missing expert ID")
+	}
+	if !strings.Contains(result, "Philosophy here.") {
+		t.Error("generateAgentsMd() missing philosophy")
+	}
+}
+
+func TestSyncClaude(t *testing.T) {
+	// Create a temp directory for testing
+	tmpDir, err := os.MkdirTemp("", "council-sync-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Change to temp directory
+	origDir, _ := os.Getwd()
+	os.Chdir(tmpDir)
+	defer os.Chdir(origDir)
+
+	// Create council structure with an expert
+	os.MkdirAll(config.Path(config.ExpertsDir), 0755)
+	testExpert := &expert.Expert{
+		ID:    "test",
+		Name:  "Test Expert",
+		Focus: "Testing",
+	}
+	testExpert.Save()
+
+	cfg := config.Default()
+	experts := []*expert.Expert{testExpert}
+
+	// Test dry run
+	err = syncClaude(experts, cfg, true)
+	if err != nil {
+		t.Errorf("syncClaude() dry run error = %v", err)
+	}
+
+	// Verify nothing was created in dry run
+	if _, err := os.Stat(".claude/agents"); !os.IsNotExist(err) {
+		t.Error("syncClaude() dry run should not create directories")
+	}
+
+	// Test actual sync
+	err = syncClaude(experts, cfg, false)
+	if err != nil {
+		t.Errorf("syncClaude() error = %v", err)
+	}
+
+	// Verify agent file was created
+	agentPath := ".claude/agents/test.md"
+	if _, err := os.Stat(agentPath); os.IsNotExist(err) {
+		t.Errorf("syncClaude() did not create agent file at %s", agentPath)
+	}
+
+	// Verify council command was created
+	commandPath := ".claude/commands/council.md"
+	if _, err := os.Stat(commandPath); os.IsNotExist(err) {
+		t.Errorf("syncClaude() did not create council command at %s", commandPath)
+	}
+
+	// Read and verify council command content
+	content, _ := os.ReadFile(commandPath)
+	if !strings.Contains(string(content), "Test Expert") {
+		t.Error("Council command should contain expert name")
+	}
+}
+
+func TestSyncCursor(t *testing.T) {
+	// Create a temp directory for testing
+	tmpDir, err := os.MkdirTemp("", "council-sync-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Change to temp directory
+	origDir, _ := os.Getwd()
+	os.Chdir(tmpDir)
+	defer os.Chdir(origDir)
+
+	cfg := config.Default()
+	experts := []*expert.Expert{
+		{
+			ID:    "test",
+			Name:  "Test Expert",
+			Focus: "Testing",
+		},
+	}
+
+	// Test without .cursor directory (should create .cursorrules)
+	err = syncCursor(experts, cfg, false)
+	if err != nil {
+		t.Errorf("syncCursor() error = %v", err)
+	}
+
+	if _, err := os.Stat(".cursorrules"); os.IsNotExist(err) {
+		t.Error("syncCursor() should create .cursorrules when .cursor doesn't exist")
+	}
+
+	// Clean up
+	os.Remove(".cursorrules")
+
+	// Test with .cursor directory
+	os.MkdirAll(".cursor", 0755)
+	err = syncCursor(experts, cfg, false)
+	if err != nil {
+		t.Errorf("syncCursor() with .cursor error = %v", err)
+	}
+
+	rulesPath := ".cursor/rules/council.md"
+	if _, err := os.Stat(rulesPath); os.IsNotExist(err) {
+		t.Errorf("syncCursor() should create %s when .cursor exists", rulesPath)
+	}
+}
+
+func TestSyncWindsurf(t *testing.T) {
+	// Create a temp directory for testing
+	tmpDir, err := os.MkdirTemp("", "council-sync-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Change to temp directory
+	origDir, _ := os.Getwd()
+	os.Chdir(tmpDir)
+	defer os.Chdir(origDir)
+
+	cfg := config.Default()
+	experts := []*expert.Expert{
+		{
+			ID:    "test",
+			Name:  "Test Expert",
+			Focus: "Testing",
+		},
+	}
+
+	err = syncWindsurf(experts, cfg, false)
+	if err != nil {
+		t.Errorf("syncWindsurf() error = %v", err)
+	}
+
+	if _, err := os.Stat(".windsurfrules"); os.IsNotExist(err) {
+		t.Error("syncWindsurf() should create .windsurfrules")
+	}
+
+	content, _ := os.ReadFile(".windsurfrules")
+	if !strings.Contains(string(content), "Test Expert") {
+		t.Error(".windsurfrules should contain expert name")
+	}
+}
+
+func TestSyncGeneric(t *testing.T) {
+	// Create a temp directory for testing
+	tmpDir, err := os.MkdirTemp("", "council-sync-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Change to temp directory
+	origDir, _ := os.Getwd()
+	os.Chdir(tmpDir)
+	defer os.Chdir(origDir)
+
+	cfg := config.Default()
+	experts := []*expert.Expert{
+		{
+			ID:    "test",
+			Name:  "Test Expert",
+			Focus: "Testing",
+		},
+	}
+
+	err = syncGeneric(experts, cfg, false)
+	if err != nil {
+		t.Errorf("syncGeneric() error = %v", err)
+	}
+
+	if _, err := os.Stat("AGENTS.md"); os.IsNotExist(err) {
+		t.Error("syncGeneric() should create AGENTS.md")
+	}
+
+	content, _ := os.ReadFile("AGENTS.md")
+	if !strings.Contains(string(content), "Test Expert") {
+		t.Error("AGENTS.md should contain expert name")
+	}
+}
+
+func TestSyncAllNoExperts(t *testing.T) {
+	// Create a temp directory for testing
+	tmpDir, err := os.MkdirTemp("", "council-sync-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Change to temp directory
+	origDir, _ := os.Getwd()
+	os.Chdir(tmpDir)
+	defer os.Chdir(origDir)
+
+	// Create empty council structure
+	os.MkdirAll(config.Path(config.ExpertsDir), 0755)
+
+	cfg := config.Default()
+
+	err = SyncAll(cfg, false)
+	if err == nil {
+		t.Error("SyncAll() should error when no experts exist")
+	}
+}
+
+func TestTargetsRegistry(t *testing.T) {
+	// Verify all expected targets are registered
+	expectedTargets := []string{"claude", "cursor", "windsurf", "generic"}
+
+	for _, name := range expectedTargets {
+		target, ok := Targets[name]
+		if !ok {
+			t.Errorf("Target %s not found in registry", name)
+			continue
+		}
+		if target.Name == "" {
+			t.Errorf("Target %s has empty Name", name)
+		}
+		if target.Location == "" {
+			t.Errorf("Target %s has empty Location", name)
+		}
+		if target.Sync == nil {
+			t.Errorf("Target %s has nil Sync function", name)
+		}
+		if target.Check == nil {
+			t.Errorf("Target %s has nil Check function", name)
+		}
+	}
+}
+
+func TestFileExistsAndDirExists(t *testing.T) {
+	// Create a temp directory for testing
+	tmpDir, err := os.MkdirTemp("", "council-sync-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Change to temp directory
+	origDir, _ := os.Getwd()
+	os.Chdir(tmpDir)
+	defer os.Chdir(origDir)
+
+	// Test non-existent
+	if fs.FileExists("nonexistent.txt") {
+		t.Error("fs.FileExists() should return false for non-existent file")
+	}
+	if fs.DirExists("nonexistent") {
+		t.Error("fs.DirExists() should return false for non-existent directory")
+	}
+
+	// Create a file and directory
+	os.WriteFile("test.txt", []byte("content"), 0644)
+	os.MkdirAll("testdir", 0755)
+
+	if !fs.FileExists("test.txt") {
+		t.Error("fs.FileExists() should return true for existing file")
+	}
+	if !fs.DirExists("testdir") {
+		t.Error("fs.DirExists() should return true for existing directory")
+	}
+
+	// File should not be detected as directory
+	if fs.DirExists("test.txt") {
+		t.Error("fs.DirExists() should return false for file")
+	}
+}
+
+func TestGenerateAgentFile(t *testing.T) {
+	// Create a temp directory for testing
+	tmpDir, err := os.MkdirTemp("", "council-sync-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Change to temp directory
+	origDir, _ := os.Getwd()
+	os.Chdir(tmpDir)
+	defer os.Chdir(origDir)
+
+	// Create council structure with an expert
+	os.MkdirAll(config.Path(config.ExpertsDir), 0755)
+	testExpert := &expert.Expert{
+		ID:    "test",
+		Name:  "Test Expert",
+		Focus: "Testing",
+		Body:  "# Test Expert\n\nCustom body content.",
+	}
+	testExpert.Save()
+
+	// Test generateAgentFile reads from disk
+	result := generateAgentFile(testExpert)
+
+	if !strings.Contains(result, "Test Expert") {
+		t.Error("generateAgentFile() should contain expert name")
+	}
+	if !strings.Contains(result, "Custom body content") {
+		t.Error("generateAgentFile() should contain custom body")
+	}
+}
+
+func TestSyncTargetUnknown(t *testing.T) {
+	cfg := config.Default()
+	err := SyncTarget("unknown-target", cfg, false)
+	if err == nil {
+		t.Error("SyncTarget() should error for unknown target")
+	}
+	if !strings.Contains(err.Error(), "unknown target") {
+		t.Errorf("Error should mention 'unknown target', got: %v", err)
+	}
+}
