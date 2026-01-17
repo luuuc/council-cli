@@ -216,6 +216,14 @@ func (d *Detection) detectFrameworks(dir string) {
 		}
 	}
 
+	// Elixir/Phoenix
+	if fs.FileExistsIn(dir, "mix.exs") {
+		content := fs.ReadFileIn(dir, "mix.exs")
+		if strings.Contains(content, ":phoenix") {
+			d.Frameworks = append(d.Frameworks, Framework{Name: "Phoenix"})
+		}
+	}
+
 	// Node.js
 	if fs.FileExistsIn(dir, "package.json") {
 		content := fs.ReadFileIn(dir, "package.json")
@@ -395,6 +403,11 @@ func (d *Detection) detectTesting(dir string) {
 		if hasLanguage(d.Languages, "Rust") {
 			d.Testing = append(d.Testing, "Rust testing")
 		}
+	}
+
+	// Elixir - ExUnit is built-in
+	if fs.FileExistsIn(dir, "mix.exs") && hasLanguage(d.Languages, "Elixir") {
+		d.Testing = append(d.Testing, "ExUnit")
 	}
 }
 

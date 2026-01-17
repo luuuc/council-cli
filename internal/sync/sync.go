@@ -104,6 +104,19 @@ func SyncAll(cfg *config.Config, dryRun bool) error {
 	return nil
 }
 
+// writeFile writes content to path, or prints what would be written in dry-run mode
+func writeFile(path, content string, dryRun bool) error {
+	if dryRun {
+		fmt.Printf("  Would create: %s\n", path)
+		return nil
+	}
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		return err
+	}
+	fmt.Printf("  Created: %s\n", path)
+	return nil
+}
+
 // SyncTarget syncs to a specific target
 func SyncTarget(targetName string, cfg *config.Config, dryRun bool) error {
 	target, ok := Targets[targetName]
@@ -137,15 +150,8 @@ func syncClaude(experts []*expert.Expert, cfg *config.Config, dryRun bool) error
 	// Sync each expert as an agent file
 	for _, e := range experts {
 		path := filepath.Join(agentsDir, e.ID+".md")
-		content := generateAgentFile(e)
-
-		if dryRun {
-			fmt.Printf("  Would create: %s\n", path)
-		} else {
-			if err := os.WriteFile(path, []byte(content), 0644); err != nil {
-				return err
-			}
-			fmt.Printf("  Created: %s\n", path)
+		if err := writeFile(path, generateAgentFile(e), dryRun); err != nil {
+			return err
 		}
 	}
 
@@ -157,17 +163,9 @@ func syncClaude(experts []*expert.Expert, cfg *config.Config, dryRun bool) error
 				return err
 			}
 		}
-
-		councilCmd := generateCouncilCommand(experts)
 		path := filepath.Join(commandsDir, "council.md")
-
-		if dryRun {
-			fmt.Printf("  Would create: %s\n", path)
-		} else {
-			if err := os.WriteFile(path, []byte(councilCmd), 0644); err != nil {
-				return err
-			}
-			fmt.Printf("  Created: %s\n", path)
+		if err := writeFile(path, generateCouncilCommand(experts), dryRun); err != nil {
+			return err
 		}
 	}
 
@@ -190,52 +188,17 @@ func syncCursor(experts []*expert.Expert, cfg *config.Config, dryRun bool) error
 		path = ".cursorrules"
 	}
 
-	content := generateCombinedRules(experts)
-
-	if dryRun {
-		fmt.Printf("  Would create: %s\n", path)
-	} else {
-		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
-			return err
-		}
-		fmt.Printf("  Created: %s\n", path)
-	}
-
-	return nil
+	return writeFile(path, generateCombinedRules(experts), dryRun)
 }
 
 // Windsurf sync
 func syncWindsurf(experts []*expert.Expert, cfg *config.Config, dryRun bool) error {
-	content := generateCombinedRules(experts)
-	path := ".windsurfrules"
-
-	if dryRun {
-		fmt.Printf("  Would create: %s\n", path)
-	} else {
-		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
-			return err
-		}
-		fmt.Printf("  Created: %s\n", path)
-	}
-
-	return nil
+	return writeFile(".windsurfrules", generateCombinedRules(experts), dryRun)
 }
 
 // Generic AGENTS.md sync
 func syncGeneric(experts []*expert.Expert, cfg *config.Config, dryRun bool) error {
-	content := generateAgentsMd(experts)
-	path := "AGENTS.md"
-
-	if dryRun {
-		fmt.Printf("  Would create: %s\n", path)
-	} else {
-		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
-			return err
-		}
-		fmt.Printf("  Created: %s\n", path)
-	}
-
-	return nil
+	return writeFile("AGENTS.md", generateAgentsMd(experts), dryRun)
 }
 
 // OpenCode sync
@@ -251,15 +214,8 @@ func syncOpenCode(experts []*expert.Expert, cfg *config.Config, dryRun bool) err
 	// Sync each expert as an agent file
 	for _, e := range experts {
 		path := filepath.Join(agentDir, e.ID+".md")
-		content := generateOpenCodeAgent(e)
-
-		if dryRun {
-			fmt.Printf("  Would create: %s\n", path)
-		} else {
-			if err := os.WriteFile(path, []byte(content), 0644); err != nil {
-				return err
-			}
-			fmt.Printf("  Created: %s\n", path)
+		if err := writeFile(path, generateOpenCodeAgent(e), dryRun); err != nil {
+			return err
 		}
 	}
 

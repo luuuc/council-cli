@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bufio"
+	_ "embed"
 	"fmt"
 	"os"
 	"strconv"
@@ -9,7 +10,20 @@ import (
 
 	"github.com/luuuc/council-cli/internal/detect"
 	"github.com/luuuc/council-cli/internal/expert"
+	"gopkg.in/yaml.v3"
 )
+
+//go:embed suggestions.yaml
+var suggestionsYAML []byte
+
+// suggestionBank holds all expert suggestions loaded from YAML
+var suggestionBank map[string][]expert.Expert
+
+func init() {
+	if err := yaml.Unmarshal(suggestionsYAML, &suggestionBank); err != nil {
+		panic(fmt.Sprintf("failed to parse suggestions.yaml: %v", err))
+	}
+}
 
 // ExpertSuggestion represents a suggested expert with selection state
 type ExpertSuggestion struct {
@@ -167,320 +181,69 @@ func selectExperts(reader *bufio.Reader, suggestions []ExpertSuggestion) []exper
 // suggestExperts returns expert suggestions based on detected stack and intention
 func suggestExperts(d *detect.Detection, intention string) []ExpertSuggestion {
 	var suggestions []ExpertSuggestion
+	seen := make(map[string]bool)
+
+	add := func(experts []expert.Expert) {
+		for _, e := range experts {
+			if !seen[e.ID] {
+				seen[e.ID] = true
+				suggestions = append(suggestions, ExpertSuggestion{Expert: e})
+			}
+		}
+	}
+
+	// Check for frameworks first
+	hasRails := false
+	hasPhoenix := false
+	for _, fw := range d.Frameworks {
+		switch fw.Name {
+		case "Rails":
+			hasRails = true
+			add(suggestionBank["rails"])
+		case "Phoenix":
+			hasPhoenix = true
+			add(suggestionBank["phoenix"])
+		}
+	}
 
 	// Language-specific experts
 	for _, lang := range d.Languages {
 		switch lang.Name {
 		case "Go":
-			suggestions = append(suggestions, goExperts()...)
+			add(suggestionBank["go"])
 		case "Ruby":
-			suggestions = append(suggestions, rubyExperts()...)
+			if !hasRails {
+				add(suggestionBank["ruby"])
+			}
+		case "Elixir":
+			if !hasPhoenix {
+				add(suggestionBank["elixir"])
+			}
 		case "Python":
-			suggestions = append(suggestions, pythonExperts()...)
+			add(suggestionBank["python"])
 		case "TypeScript", "JavaScript":
-			suggestions = append(suggestions, jsExperts()...)
+			add(suggestionBank["javascript"])
+			add(suggestionBank["frontend"])
 		case "Rust":
-			suggestions = append(suggestions, rustExperts()...)
+			add(suggestionBank["rust"])
 		}
 	}
 
-	// Add scope/simplicity experts for code projects
+	// Add general experts for code projects
 	if intention == "code" || intention == "everything" {
-		suggestions = appendIfNotExists(suggestions, jasonFried())
-		suggestions = appendIfNotExists(suggestions, dieterRams())
+		add(suggestionBank["general"])
 	}
 
 	// Writing experts
 	if intention == "writing" {
-		suggestions = append(suggestions, writingExperts()...)
+		add(suggestionBank["writing"])
 	}
 
 	// Business experts
 	if intention == "business" {
-		suggestions = append(suggestions, businessExperts()...)
+		add(suggestionBank["business"])
+		add(suggestionBank["general"]) // Jason Fried fits business too
 	}
 
-	// Deduplicate
-	return deduplicateSuggestions(suggestions)
-}
-
-func appendIfNotExists(suggestions []ExpertSuggestion, s ExpertSuggestion) []ExpertSuggestion {
-	for _, existing := range suggestions {
-		if existing.Expert.ID == s.Expert.ID {
-			return suggestions
-		}
-	}
-	return append(suggestions, s)
-}
-
-func deduplicateSuggestions(suggestions []ExpertSuggestion) []ExpertSuggestion {
-	seen := make(map[string]bool)
-	var result []ExpertSuggestion
-	for _, s := range suggestions {
-		if !seen[s.Expert.ID] {
-			seen[s.Expert.ID] = true
-			result = append(result, s)
-		}
-	}
-	return result
-}
-
-// Expert suggestion banks
-
-func goExperts() []ExpertSuggestion {
-	return []ExpertSuggestion{
-		{Expert: expert.Expert{
-			ID:    "rob-pike",
-			Name:  "Rob Pike",
-			Focus: "Clarity, simplicity, and idiomatic Go",
-			Philosophy: `Clarity is paramount. Programs are read far more often than written.
-Go was designed to be boring on purpose - boring means predictable, maintainable.
-A little copying is better than a little dependency.`,
-			Principles: []string{
-				"Clear is better than clever",
-				"A little copying is better than a little dependency",
-				"The bigger the interface, the weaker the abstraction",
-				"Make the zero value useful",
-			},
-			RedFlags: []string{
-				"Interfaces with only one implementation",
-				"Clever code that requires explanation",
-				"Deep package hierarchies",
-			},
-		}},
-		{Expert: expert.Expert{
-			ID:    "dave-cheney",
-			Name:  "Dave Cheney",
-			Focus: "Go performance, APIs, and maintainability",
-			Philosophy: `Good code is not just correct today; it remains understandable years from now.
-APIs, once exported, are promises. Performance is a feature, but measure first.`,
-			Principles: []string{
-				"APIs are forever - design them carefully",
-				"Measure before optimizing",
-				"Prefer small, composable packages",
-				"Design for change",
-			},
-			RedFlags: []string{
-				"Exported APIs without clear rationale",
-				"Performance claims without benchmarks",
-			},
-		}},
-	}
-}
-
-func rubyExperts() []ExpertSuggestion {
-	return []ExpertSuggestion{
-		{Expert: expert.Expert{
-			ID:    "dhh",
-			Name:  "DHH",
-			Focus: "Rails doctrine and convention over configuration",
-			Philosophy: `Convention over configuration frees you to focus on what matters.
-The Majestic Monolith is underrated. Integrated systems beat distributed complexity.`,
-			Principles: []string{
-				"Convention over configuration",
-				"Programmer happiness matters",
-				"Majestic monolith over microservices",
-				"No service objects - use models and controllers",
-			},
-			RedFlags: []string{
-				"Service objects everywhere",
-				"Premature extraction to microservices",
-				"Fighting the framework",
-			},
-		}},
-		{Expert: expert.Expert{
-			ID:    "sandi-metz",
-			Name:  "Sandi Metz",
-			Focus: "Object-oriented design and practical refactoring",
-			Philosophy: `Duplication is far cheaper than the wrong abstraction.
-Small objects that do one thing lead to flexible systems.`,
-			Principles: []string{
-				"Prefer duplication over the wrong abstraction",
-				"Small objects, small methods",
-				"Depend on behavior, not data",
-				"Refactor when you understand the pattern",
-			},
-			RedFlags: []string{
-				"God objects doing everything",
-				"Premature abstraction",
-				"Methods longer than 5 lines (guideline)",
-			},
-		}},
-	}
-}
-
-func pythonExperts() []ExpertSuggestion {
-	return []ExpertSuggestion{
-		{Expert: expert.Expert{
-			ID:    "raymond-hettinger",
-			Name:  "Raymond Hettinger",
-			Focus: "Pythonic code and standard library mastery",
-			Philosophy: `There should be one obvious way to do it. Beautiful is better than ugly.
-Use the standard library. Know your data structures.`,
-			Principles: []string{
-				"Pythonic over clever",
-				"Use built-in functions and standard library",
-				"Flat is better than nested",
-				"Readability counts",
-			},
-			RedFlags: []string{
-				"Reinventing standard library features",
-				"Overly nested code",
-				"Java-style Python",
-			},
-		}},
-	}
-}
-
-func jsExperts() []ExpertSuggestion {
-	return []ExpertSuggestion{
-		{Expert: expert.Expert{
-			ID:    "dan-abramov",
-			Name:  "Dan Abramov",
-			Focus: "React patterns and JavaScript fundamentals",
-			Philosophy: `Understand the fundamentals deeply. Don't cargo-cult patterns.
-Keep components simple. State should be minimal and derived when possible.`,
-			Principles: []string{
-				"Understand before abstracting",
-				"Minimal state, derive the rest",
-				"Composition over inheritance",
-				"Keep side effects at the edges",
-			},
-			RedFlags: []string{
-				"Overusing Redux for local state",
-				"Premature optimization",
-				"Copy-paste from Stack Overflow without understanding",
-			},
-		}},
-	}
-}
-
-func rustExperts() []ExpertSuggestion {
-	return []ExpertSuggestion{
-		{Expert: expert.Expert{
-			ID:    "steve-klabnik",
-			Name:  "Steve Klabnik",
-			Focus: "Rust idioms and documentation",
-			Philosophy: `Documentation is a feature. The compiler is your friend.
-Embrace the borrow checker - it catches real bugs.`,
-			Principles: []string{
-				"Let the compiler help you",
-				"Document public APIs thoroughly",
-				"Prefer owned types for simplicity when performance allows",
-				"Use the type system to prevent bugs",
-			},
-			RedFlags: []string{
-				"Fighting the borrow checker with unsafe",
-				"Missing documentation on public items",
-				"Ignoring clippy warnings",
-			},
-		}},
-	}
-}
-
-func writingExperts() []ExpertSuggestion {
-	return []ExpertSuggestion{
-		{Expert: expert.Expert{
-			ID:    "william-zinsser",
-			Name:  "William Zinsser",
-			Focus: "Clarity and simplicity in non-fiction",
-			Philosophy: `Writing is hard work. Simplify, then simplify again.
-Every word must earn its place. Strip every sentence to its cleanest components.`,
-			Principles: []string{
-				"Simplify, simplify",
-				"Clear thinking leads to clear writing",
-				"Remove clutter ruthlessly",
-				"Write for yourself first",
-			},
-			RedFlags: []string{
-				"Unnecessary words and phrases",
-				"Passive voice when active works",
-				"Jargon that excludes readers",
-			},
-		}},
-		{Expert: expert.Expert{
-			ID:    "stephen-king",
-			Name:  "Stephen King",
-			Focus: "Practical writing craft",
-			Philosophy: `The adverb is not your friend. Show, don't tell.
-Write with the door closed, rewrite with the door open.`,
-			Principles: []string{
-				"Kill your darlings",
-				"Second draft = first draft minus 10%",
-				"Read a lot, write a lot",
-				"Avoid adverbs, especially in dialogue",
-			},
-			RedFlags: []string{
-				"Overwriting - too many adverbs and adjectives",
-				"Telling when showing would work",
-				"Passive voice sapping energy",
-			},
-		}},
-	}
-}
-
-func businessExperts() []ExpertSuggestion {
-	return []ExpertSuggestion{
-		{Expert: expert.Expert{
-			ID:    "paul-graham",
-			Name:  "Paul Graham",
-			Focus: "Startup discipline and focus",
-			Philosophy: `Make something people want. Do things that don't scale.
-Talk to users obsessively. Startups die from suicide, not murder.`,
-			Principles: []string{
-				"Make something people want",
-				"Do things that don't scale",
-				"Launch early, iterate fast",
-				"Focus on the users who love you",
-			},
-			RedFlags: []string{
-				"Building without talking to users",
-				"Premature scaling",
-				"Vanity metrics",
-			},
-		}},
-		jasonFried(),
-	}
-}
-
-func jasonFried() ExpertSuggestion {
-	return ExpertSuggestion{Expert: expert.Expert{
-		ID:    "jason-fried",
-		Name:  "Jason Fried",
-		Focus: "Scope discipline, simplicity, and shipping",
-		Philosophy: `Do less, but do it well. Half a product is better than a half-assed product.
-Every feature is a liability. Complexity is debt with interest.`,
-		Principles: []string{
-			"Do less, but do it well",
-			"Half a product, not a half-assed product",
-			"Ship something real, then iterate",
-			"Every feature is a liability",
-		},
-		RedFlags: []string{
-			"Feature requests without clear problem statements",
-			"Building for hypothetical future needs",
-			"Adding configurability instead of making decisions",
-		},
-	}}
-}
-
-func dieterRams() ExpertSuggestion {
-	return ExpertSuggestion{Expert: expert.Expert{
-		ID:    "dieter-rams",
-		Name:  "Dieter Rams",
-		Focus: "Design simplicity and essentialism",
-		Philosophy: `Less, but better. Good design is as little design as possible.
-Every element must justify its existence. Good design is honest.`,
-		Principles: []string{
-			"Less, but better",
-			"Good design is as little design as possible",
-			"Every element must earn its place",
-			"Good design is honest",
-		},
-		RedFlags: []string{
-			"Features that exist because we can",
-			"Complexity without clear benefit",
-			"Decoration over function",
-		},
-	}}
+	return suggestions
 }
