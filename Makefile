@@ -1,4 +1,4 @@
-.PHONY: build test clean install
+.PHONY: build test clean install lint ci
 
 VERSION ?= dev
 COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
@@ -15,6 +15,15 @@ clean:
 
 install: build
 	cp bin/council /usr/local/bin/council
+
+lint:
+	@command -v golangci-lint >/dev/null 2>&1 || \
+		(echo "Installing golangci-lint..." && go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest)
+	@PATH="$$PATH:$$(go env GOPATH)/bin" golangci-lint run
+
+# Run all CI checks locally before pushing
+ci: build test lint
+	@echo "All CI checks passed!"
 
 # Development
 run:
