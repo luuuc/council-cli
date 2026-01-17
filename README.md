@@ -2,6 +2,10 @@
 
 AI-agnostic expert council setup for coding assistants.
 
+Tired of generic AI code reviews that feel like talking to a wall? Getting the same bland suggestions over and over? Want your AI to actually challenge you like a real mentor would?
+
+**Council CLI is here for you.** Build your own expert council and make AI code review feel sharp, opinionated, and actually useful again.
+
 ## 30-Second Start
 
 ```bash
@@ -19,7 +23,7 @@ Your AI now has an expert council. Try `/council` in Claude Code or Cursor.
 
 ## What is a Council?
 
-Tired of generic AI code reviews? The council pattern establishes **expert personas** that represent excellence in specific domains:
+The council pattern establishes **expert personas** that represent excellence in specific domains:
 
 ```
 Your Project           council setup              AI Config Files
