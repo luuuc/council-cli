@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -11,6 +12,7 @@ import (
 )
 
 var addFocus string
+var listJSON bool
 
 func init() {
 	rootCmd.AddCommand(listCmd)
@@ -18,8 +20,19 @@ func init() {
 	rootCmd.AddCommand(addCmd)
 	rootCmd.AddCommand(removeCmd)
 
+	listCmd.Flags().BoolVar(&listJSON, "json", false, "Output in JSON format")
 	addCmd.Flags().StringVar(&addFocus, "focus", "", "Expert's focus area (required)")
 	_ = addCmd.MarkFlagRequired("focus")
+}
+
+// ExpertJSON represents an expert in JSON output format
+type ExpertJSON struct {
+	ID         string   `json:"id"`
+	Name       string   `json:"name"`
+	Focus      string   `json:"focus"`
+	Philosophy string   `json:"philosophy,omitempty"`
+	Principles []string `json:"principles,omitempty"`
+	RedFlags   []string `json:"red_flags,omitempty"`
 }
 
 var listCmd = &cobra.Command{
@@ -34,6 +47,27 @@ var listCmd = &cobra.Command{
 		result, err := expert.ListWithWarnings()
 		if err != nil {
 			return err
+		}
+
+		// JSON output mode
+		if listJSON {
+			experts := make([]ExpertJSON, 0, len(result.Experts))
+			for _, e := range result.Experts {
+				experts = append(experts, ExpertJSON{
+					ID:         e.ID,
+					Name:       e.Name,
+					Focus:      e.Focus,
+					Philosophy: e.Philosophy,
+					Principles: e.Principles,
+					RedFlags:   e.RedFlags,
+				})
+			}
+			data, err := json.MarshalIndent(experts, "", "  ")
+			if err != nil {
+				return fmt.Errorf("failed to marshal JSON: %w", err)
+			}
+			fmt.Println(string(data))
+			return nil
 		}
 
 		// Display any warnings about files that couldn't be loaded

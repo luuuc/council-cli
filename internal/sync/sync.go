@@ -23,6 +23,9 @@ var councilAddCommand string
 //go:embed templates/council-detect.md
 var councilDetectCommand string
 
+//go:embed templates/council-remove.md
+var councilRemoveCommand string
+
 // Pre-compiled template for council command generation
 var councilCommandTemplate = template.Must(template.New("council").Parse(councilCommandTemplateStr))
 
@@ -32,6 +35,7 @@ var allCommands = map[string]string{
 	"council":        "", // Uses councilCommandTemplate (dynamic, needs experts)
 	"council-add":    councilAddCommand,
 	"council-detect": councilDetectCommand,
+	"council-remove": councilRemoveCommand,
 }
 
 // Options configures sync behavior
@@ -209,6 +213,14 @@ func syncClaude(experts []*expert.Expert, cfg *config.Config, opts Options) erro
 		}
 	}
 
+	// Create /council-remove command if configured
+	if cfg.Council.HasCommand("council-remove") {
+		path := filepath.Join(commandsDir, "council-remove.md")
+		if err := writeFile(path, councilRemoveCommand, opts.DryRun); err != nil {
+			return err
+		}
+	}
+
 	// Clean up stale files if requested
 	if opts.Clean {
 		// Remove stale command files
@@ -326,10 +338,18 @@ func syncOpenCode(experts []*expert.Expert, cfg *config.Config, opts Options) er
 		}
 	}
 
+	// Create /council-remove command if configured
+	if cfg.Council.HasCommand("council-remove") {
+		path := filepath.Join(agentDir, "council-remove.md")
+		if err := writeFile(path, generateOpenCodeCommand("Remove expert from council", councilRemoveCommand), opts.DryRun); err != nil {
+			return err
+		}
+	}
+
 	// Clean up stale files if requested
 	if opts.Clean {
-		// Remove stale command files (OpenCode only supports council-add and council-detect)
-		openCodeCommands := []string{"council-add", "council-detect"}
+		// Remove stale command files (OpenCode supports council-add, council-detect, council-remove)
+		openCodeCommands := []string{"council-add", "council-detect", "council-remove"}
 		for _, cmd := range openCodeCommands {
 			if !cfg.Council.HasCommand(cmd) {
 				path := filepath.Join(agentDir, cmd+".md")

@@ -33,7 +33,7 @@ type AIConfig struct {
 // CouncilConfig holds council generation options
 type CouncilConfig struct {
 	// Commands is the list of slash commands to generate
-	// Valid values: council, council-add, council-detect
+	// Valid values: council, council-add, council-detect, council-remove
 	Commands []string `yaml:"commands"`
 }
 
@@ -57,7 +57,7 @@ func Default() *Config {
 		},
 		Targets: []string{"claude", "cursor", "opencode"},
 		Council: CouncilConfig{
-			Commands: []string{"council", "council-add", "council-detect"},
+			Commands: []string{"council", "council-add", "council-detect", "council-remove"},
 		},
 	}
 }
