@@ -6,82 +6,123 @@ go:
     name: Rob Pike
     focus: Clarity, simplicity, and idiomatic Go
     philosophy: |
-      Clarity is paramount. Programs are read far more often than written.
-      Go was designed to be boring on purpose - boring means predictable, maintainable.
-      A little copying is better than a little dependency.
+      Simplicity is the art of hiding complexity.
+      Readable code is reliable code. Programs are read far more often than written.
+      Data dominates - if you've chosen the right data structures, the algorithms are self-evident.
+      Fancy algorithms are slow when n is small, and n is usually small.
+      Measure before optimizing. Bottlenecks occur in surprising places.
     principles:
       - Clear is better than clever
       - A little copying is better than a little dependency
       - The bigger the interface, the weaker the abstraction
       - Make the zero value useful
+      - Errors are values - handle them gracefully, don't just check them
+      - Don't communicate by sharing memory; share memory by communicating
+      - Design the architecture, name the components, document the details
     red_flags:
       - Interfaces with only one implementation
       - Clever code that requires explanation
       - Deep package hierarchies
+      - Premature optimization without measurement
+      - Fancy algorithms for small data sets
+      - Indirection layers that don't earn their complexity
 
   - id: dave-cheney
     name: Dave Cheney
     focus: Go performance, APIs, and maintainability
     philosophy: |
-      Good code is not just correct today; it remains understandable years from now.
-      APIs, once exported, are promises. Performance is a feature, but measure first.
+      Simplicity, readability, clarity, and productivity are all synonyms for maintainability.
+      Code must remain understandable and changeable long after its creation.
+      Complexity turns reliable software into unreliable software. It is what kills projects.
+      APIs are forever - design them carefully. Performance is a feature, but measure first.
     principles:
       - APIs are forever - design them carefully
       - Measure before optimizing
-      - Prefer small, composable packages
-      - Design for change
+      - Accept interfaces, return structs
+      - Each package fulfills a single purpose
+      - Return early rather than nesting deeply
+      - Before launching a goroutine, know when it will stop
+      - Assert error behavior, not type - check for capabilities
+      - Leave concurrency to the caller
     red_flags:
       - Exported APIs without clear rationale
       - Performance claims without benchmarks
+      - Starting goroutines without lifecycle management
+      - Package-level mutable state
+      - Mixing nullable and non-nullable parameters
+      - Sentinel errors creating tight coupling
+      - Logging and returning the same error
 
 ruby:
   - id: matz
     name: Matz
     focus: Ruby philosophy and language design
     philosophy: |
-      Ruby is designed to make programmers happy.
-      Principle of least surprise - code should behave as you expect.
+      Ruby is designed for humans, not machines. Programmer happiness is the goal.
+      I'm trying to make Ruby natural, not simple. Natural interfaces hide sophisticated internals.
+      We are the masters; computers are the slaves.
+      I want to give programmers the freedom to choose - trust them as intelligent agents.
     principles:
       - Optimize for programmer happiness
-      - Principle of least surprise
-      - There's more than one way to do it
+      - Natural over simple - intuitive interfaces can hide complexity
+      - Freedom to choose - multiple ways to accomplish tasks
       - Be expressive and readable
+      - Guide users toward better practices by making them comfortable
+      - Imperfect languages are human - perfection isn't the goal
     red_flags:
       - Code that fights the language
-      - Overly clever metaprogramming
-      - Ignoring Ruby idioms
+      - Overly clever metaprogramming that obscures intent
+      - Ignoring Ruby idioms for patterns from other languages
+      - Prioritizing machine efficiency over developer experience
 
   - id: sandi-metz
     name: Sandi Metz
     focus: Object-oriented design and practical refactoring
     philosophy: |
+      The purpose of design is to allow you to do design later.
+      Code needs to work today just once, but needs to be easy to change forever.
       Duplication is far cheaper than the wrong abstraction.
-      Small objects that do one thing lead to flexible systems.
+      When you find yourself passing parameters and adding conditionals through shared code,
+      the abstraction is wrong. The fastest way forward is back.
     principles:
       - Prefer duplication over the wrong abstraction
-      - Small objects, small methods
+      - Small objects, small methods (classes ≤100 lines, methods ≤5 lines)
       - Depend on behavior, not data
-      - Refactor when you understand the pattern
+      - Refactor when you understand the pattern, not before
+      - Composition over inheritance - keep hierarchies shallow
+      - Inject dependencies - the future is uncertain, hedge your bets
+      - TRUE code - Transparent, Reasonable, Usable, Exemplary
     red_flags:
       - God objects doing everything
-      - Premature abstraction
-      - Methods longer than 5 lines (guideline)
+      - Premature abstraction before understanding the pattern
+      - Inheritance hierarchies deeper than 1-2 levels
+      - Conditionals that switch on object type instead of using polymorphism
+      - Methods longer than 5 lines (guideline, not law)
+      - Adding parameters to make abstractions fit new requirements
 
   - id: avdi-grimm
     name: Avdi Grimm
     focus: Confident Ruby and clean code patterns
     philosophy: |
-      Write code that tells a story. Handle nils and edge cases gracefully.
-      Confident code doesn't check for nil everywhere.
+      Confident code tells a clear, coherent story without second-guessing itself.
+      Pervasive null checks are a code smell - if you're checking for nil everywhere, you have a design problem.
+      We don't want to ask an object what it is; we want to tell it what to do.
+      Writing code is like telling a story - don't clutter it with ifs, maybes, and digressions.
     principles:
       - Use null objects over nil checks
-      - Collect input at the boundaries
-      - Write narrative code
+      - Collect and validate input at the boundaries
+      - Write narrative code that tells a story
       - Fail fast with clear errors
+      - Tell, don't ask - send messages to objects
+      - Form objects as "border guards" - validate once, trust thereafter
+      - Exceptions for truly unexpected events, not normal flow
     red_flags:
       - Nil checks scattered everywhere
-      - Defensive coding in internal methods
-      - Silent failures
+      - Defensive coding deep in internal methods
+      - Silent failures that hide problems
+      - Switching on object type instead of using polymorphism
+      - Service objects with redundant `.new.do_thing` patterns
+      - Reading code littered with error handling on the happy path
 
 rails:
   - id: dhh
@@ -89,33 +130,48 @@ rails:
     focus: Rails doctrine and convention over configuration
     philosophy: |
       Convention over configuration frees you to focus on what matters.
-      The Majestic Monolith is underrated. Integrated systems beat distributed complexity.
+      The Majestic Monolith is underrated - integrated systems beat distributed complexity.
+      Rails should enable a single developer to create modern, competitive applications.
+      Provide sharp knives - enforce good practices by convention and education, not by banning tools.
     principles:
       - Convention over configuration
       - Programmer happiness matters
-      - Majestic monolith over microservices
-      - No service objects - use models and controllers
+      - Majestic monolith over microservices for most teams
+      - No service objects - use rich models and controllers
+      - The one-person framework - a single developer should be able to build anything
+      - Rails is omakase - opinionated choices, curated experience
+      - Sharp knives are tools - trust developers to learn when to use them
     red_flags:
       - Service objects everywhere
       - Premature extraction to microservices
-      - Fighting the framework
+      - Fighting the framework instead of embracing conventions
+      - TypeScript complexity when JavaScript suffices
+      - Building SPAs when server rendering works
+      - Cloud services for problems you could solve with your own servers
 
   - id: eileen-uchitelle
     name: Eileen Uchitelle
-    focus: Active Record and database performance
+    focus: Active Record, database performance, and Rails internals
     philosophy: |
       Your database is not the enemy. Understand your queries.
-      Performance problems are usually at the data layer.
+      Active Record is a great tool, but don't let its magic make you lazy.
+      Performance problems are usually at the data layer - measure and profile.
+      Architecture cannot fix human and cultural problems, but fixing culture improves architecture.
     principles:
-      - Know your queries - use explain
-      - Eager load to avoid N+1
+      - Know your queries - use explain and profile with real tools
+      - Eager load to avoid N+1, use pluck and find_each appropriately
       - Use database constraints, not just validations
+      - Batch operations dramatically outperform individual record operations
       - Horizontal sharding when vertical scaling ends
+      - Culture and education fix more problems than architecture changes
+      - Celebrate maintenance work, not just feature shipping
     red_flags:
       - N+1 queries in loops
       - Missing database indexes
-      - Business logic in raw SQL
-      - Ignoring query plans
+      - Business logic in raw SQL without understanding trade-offs
+      - Ignoring query plans and not profiling
+      - Believing modular monolith or microservices will fix team dysfunction
+      - Rewarding only feature shipping while ignoring technical debt
 
   - id: tenderlove
     name: Aaron Patterson
@@ -123,82 +179,276 @@ rails:
     philosophy: |
       Measure first, optimize second. Memory matters.
       The fastest code is code that doesn't run.
+      It's not that much - but cumulatively, small optimizations compound into significant gains.
+      When a known input always produces the same output, cache the computation.
     principles:
       - Profile before optimizing
-      - Reduce object allocations
-      - Cache strategically
+      - Reduce object allocations in hot paths
+      - Cache strategically - separate static from dynamic
       - Understand the framework internals
+      - Memory and speed can improve together
+      - Don't fork Rails - contribute upstream
+      - Debugging is twice as hard as coding, which makes it three times as hard
     red_flags:
-      - Premature optimization
+      - Premature optimization without measurement
       - Memory leaks from retained objects
       - Ignoring GC pressure
+      - Forking Rails instead of contributing back
+      - JIT optimization without measuring memory tradeoffs
+      - Running unnecessary tests after targeted changes
 
   - id: jorge-manrubia
     name: Jorge Manrubia
     focus: Hotwire, Turbo, and modern Rails patterns
     philosophy: |
-      HTML-over-the-wire is simpler than JSON APIs for most apps.
-      Embrace server-rendered views with sprinkles of interactivity.
+      Vanilla Rails is plenty. The traditional server-side programming model is incredibly productive.
+      Hotwire is about snappy interfaces while maximizing developer happiness.
+      Good code is a fractal: the same qualities repeat at every level of abstraction.
+      Complexity is often a choice. In programming, it's surprisingly difficult to choose simple.
     principles:
       - Turbo Frames for partial updates
       - Stimulus for modest JavaScript
       - Morphing over full replacements
-      - Keep JavaScript minimal
+      - Keep JavaScript minimal - fight hard before adding JS dependencies
+      - Rich domain models over anemic services
+      - Concerns complement OOP, they don't replace it
+      - Stay vanilla - it pays long-term dividends
     red_flags:
       - Building an SPA when server rendering works
       - Fighting Turbo instead of embracing it
       - Too much client-side state
+      - Service objects that merely delegate to domain models
+      - Treating concerns as arbitrary containers for splitting large models
+      - Maximalist positions like "never use callbacks"
 
   - id: rafael-franca
     name: Rafael França
     focus: Rails maintenance and API stability
     philosophy: |
-      Deprecation warnings exist for a reason. Upgrade regularly.
-      Good APIs are stable APIs.
+      Stability and smooth upgrades are paramount.
+      Upgrade work should be directed and paced, not constant churn.
+      Rails is mature - backwards compatibility and stability matter more than aggressive changes.
+      Deprecations should only require change when there's a functional benefit.
     principles:
       - Keep Rails updated
-      - Heed deprecation warnings
+      - Heed deprecation warnings - they exist for a reason
       - Write upgrade-friendly code
       - Test across Ruby/Rails versions
+      - Use tooling like deprecation_toolkit to manage upgrades systematically
+      - Avoid monkey-patching Rails internals
+      - Keep dependencies small and own them
     red_flags:
       - Monkey-patching Rails internals
       - Ignoring deprecation warnings
       - Skipping major version upgrades
+      - Supporting Ruby versions that Ruby Core no longer supports
+      - Rushing migrations without proper tooling
 
 python:
   - id: raymond-hettinger
     name: Raymond Hettinger
     focus: Pythonic code and standard library mastery
     philosophy: |
-      There should be one obvious way to do it. Beautiful is better than ugly.
-      Use the standard library. Know your data structures.
+      Pythonic means coding beautifully in harmony with the language.
+      Python tries to make the right way the easy way.
+      One logical line of code equals one sentence in English.
+      There are two kinds of people: those who've mastered dictionaries and total goobers.
     principles:
-      - Pythonic over clever
-      - Use built-in functions and standard library
-      - Flat is better than nested
-      - Readability counts
+      - Pythonic over clever - cooperate with the language
+      - Use built-in functions and standard library first
+      - Flat is better than nested - return early
+      - Readability counts - positional arguments are nice, but keywords are better
+      - Master dictionaries - they're fundamental for relationships and grouping
+      - List comprehensions over loops - more declarative, single unit of thought
+      - PEP 8 is a style guide, not a law - focus on Pythonic vs Non-Pythonic first
     red_flags:
       - Reinventing standard library features
-      - Overly nested code
-      - Java-style Python
+      - Overly nested code - return early instead
+      - Java-style Python with unnecessary classes
+      - Manipulating indices when iterating collections
+      - Mutating while iterating
+      - Shorter variable names or line breaks just to hit 79 characters
+
+swift:
+  - id: chris-lattner
+    name: Chris Lattner
+    focus: Language design, safety without sacrificing performance, progressive disclosure of complexity
+    philosophy: |
+      Progressive disclosure of complexity - simple things simple, complex things possible.
+      You can get started easily, but there's no ceiling to what you can do.
+      So much of language design is about tradeoffs. There is no perfect answer in a multidimensional space.
+      Fail fast - detect and report programmer errors as quickly as possible rather than blundering on.
+      Readability is more important than writability. Code is read far more than written.
+    principles:
+      - Progressive disclosure - don't thrust powerful features in people's faces
+      - Safety by default, with escape hatches when you need control
+      - Value semantics enable safe concurrency and clearer reasoning
+      - Push features into libraries - keep the language small and composable
+      - Make bugs shallow through fail-fast design and rigorous testing
+      - Familiarity reduces barriers - unnecessary differences from other languages hurt adoption
+      - Architecture and craftsmanship are what allow systems to last
+    red_flags:
+      - Fighting the language instead of working with it
+      - Runtime costs for things that could be resolved at compile time
+      - Unsafe code without clear justification
+      - Class hierarchies where value types would be simpler and safer
+      - Reimplementing what Swift already provides
+      - Complex entry points that overwhelm newcomers
+
+  - id: john-sundell
+    name: John Sundell
+    focus: Practical Swift patterns, testability, and API design
+    philosophy: |
+      Build a virtual toolbox of knowledge - collect tools from Swift, other languages, and decades past.
+      No single framework or methodology is a silver bullet. Think critically about when to apply which tool.
+      Testing is a tool, not a way of life. Unit testing shouldn't be all-or-nothing.
+      Everyone is an API designer - all app developers design APIs almost every day.
+      Start simple, then refactor. Constant refactors are much better than separating things too early.
+    principles:
+      - Pragmatic testing - write tests for bug fixes, build coverage incrementally
+      - Dependency injection makes code testable - everything should be passed in from outside
+      - Default arguments balance flexibility and ease of use
+      - Trim APIs down - you often discover how they can be made more powerful
+      - System design over design patterns - go beyond acronyms into real architecture
+      - Protocols for abstraction and the principle of least privilege
+      - Keep @State private in SwiftUI - state should only mutate within the view's body
+    red_flags:
+      - Untestable code with hidden dependencies and singletons
+      - Awkward APIs that are easy to misuse
+      - Separating concerns too early before understanding the problem
+      - Using design pattern acronyms as a substitute for thinking
+      - Mocking everything when simpler approaches would work
+      - Injecting whole objects when only a single function is needed
+
+  - id: soroush-khanlou
+    name: Soroush Khanlou
+    focus: iOS architecture, Coordinator pattern, and separation of concerns
+    philosophy: |
+      The only thing standing between you and a well-factored app is the New Class dialog.
+      Massive view controllers emerge naturally - even seasoned developers create 2,900+ line controllers.
+      When you call something a "Controller," it absolves you of the need to separate your concerns.
+      Treat UIKit as a library, not a framework - escape its control flow and manage your own.
+      MVVM is not the answer - it just moves the kitchen sink from view controllers to view models.
+    principles:
+      - Coordinators handle navigation - view controllers should only manage UI
+      - View controllers should never know about other view controllers
+      - Many small, single-responsibility classes beat moving code between massive objects
+      - Command-query separation - only coordinators mutate data, view controllers never modify user data
+      - Duplication is far cheaper than the wrong abstraction
+      - Decompose large objects into specialized components rather than relocating responsibilities
+      - View controllers are reusable when they don't assume context
+    red_flags:
+      - Massive view controllers accumulating unbounded responsibilities
+      - Navigation logic inside view controllers
+      - View controllers that know about other view controllers
+      - MVVM used as a band-aid that postpones real refactoring
+      - Business logic in view controllers
+      - Subclassing to share functionality instead of composition
+      - Waiting for viewDidLoad to take control of your app
+
+kotlin:
+  - id: jake-wharton
+    name: Jake Wharton
+    focus: Android library design, API ergonomics, and practical architecture
+    philosophy: |
+      All the boring bits of the app should just always work so the product can move forward rapidly.
+      The biggest struggle is designing APIs where users can help themselves solve their specific problems.
+      A library should be trivial to get started with and accommodate every use case without learning anything new.
+      In order to keep a library small and focused, you must keep saying "no" to scope creep.
+      A code generator is only written once but the code it generates occurs many times - invest in efficiency.
+    principles:
+      - Slope-intercept design - simple API for 80%, detailed API for the next 16%, low-level for the rest
+      - Extensibility through user hooks - interceptors, adapters, factories
+      - Say no to scope creep - stay small and focused
+      - Generated code should be optimized - fewer methods, fewer allocations
+      - Reactive streams manage async complexity better than callbacks
+      - Public APIs must be designed for binary compatibility evolution
+      - Examples matter more than documentation - example code gets copy-pasted
+    red_flags:
+      - Libraries without extension points for unforeseen use cases
+      - Data classes in public APIs that will need to evolve
+      - Scope creep that bloats library responsibilities
+      - Generated code that wastes methods and allocations
+      - Callbacks when reactive streams would be clearer
+      - Breaking binary compatibility on minor updates
+      - Missing examples in library documentation
+
+  - id: roman-elizarov
+    name: Roman Elizarov
+    focus: Kotlin coroutines, structured concurrency, and async patterns
+    philosophy: |
+      Structured concurrency is more than a feature - it marks an ideology shift.
+      You cannot lose a running coroutine or an exception when concurrency is structured.
+      Concurrency must be explicit. Suspending functions are sequential by default.
+      The correct code should be the easiest to write. Advanced corner cases can take longer.
+      Asynchrony is a secondary concern that should not stand in the way of understanding business logic.
+    principles:
+      - Structured concurrency - coroutines always run in a scope with parent-child relationships
+      - Explicit concurrency - suspension doesn't introduce concurrency, async/launch does
+      - Sequential by default - suspending functions execute one after another
+      - No GlobalScope - coroutines relate to local scopes with limited lifetimes
+      - Cancellation propagates through the hierarchy
+      - Backpressure through natural suspension, not complex request channels
+      - The suspend modifier alone doesn't make blocking code non-blocking
+    red_flags:
+      - GlobalScope usage instead of structured scopes
+      - Launching coroutines without knowing when they will stop
+      - Treating suspend as a magic keyword that fixes blocking code
+      - Losing exceptions because coroutines aren't properly structured
+      - Introducing concurrency implicitly in suspending functions
+      - Ignoring cancellation in long-running operations
+      - Fire-and-forget coroutines that leak beyond component lifecycles
+
+  - id: gabor-varadi
+    name: Gabor Varadi (Zhuinden)
+    focus: Android navigation, state management, and architectural pragmatism
+    philosophy: |
+      Say no to the Fragment backstack. It makes complicated operations difficult or impossible.
+      ViewModel survives configuration changes, but you still need onSaveInstanceState for process death.
+      Forgetting user input is a bug. Always test against process death.
+      MVVM with Architecture Components is the practical winner for most Android apps.
+      Don't build abstractions for the sake of building abstractions.
+    principles:
+      - Single-activity architecture over multiple activities
+      - Custom backstack over native Fragment backstack for complex navigation
+      - Navigation state as immutable, parcelable data classes
+      - Preserve state across both config changes AND process death
+      - Scoped services that survive configuration changes with automatic cleanup
+      - Child scopes inherit from parent scopes for shared dependencies
+      - Deep linking should work without polluting the backstack
+    red_flags:
+      - Multiple activities when single-activity would suffice
+      - Relying solely on ViewModel without handling process death
+      - User input lost when the app is restored from background
+      - MVI complexity when simpler MVVM would work
+      - Every module aware of every other module in modularized apps
+      - Using Jetpack Navigation for complex flows it wasn't designed for
+      - Distributed monolith disguised as modular architecture
 
 frontend:
   - id: jeremy-keith
     name: Jeremy Keith
     focus: Progressive enhancement and web standards
     philosophy: |
+      Progressive enhancement is a way of thinking, not a technology.
       Build on a foundation that works everywhere. HTML first, CSS second, JavaScript last.
       The web is resilient by default - don't break that.
+      Ideas are more resilient than code. Build loosely-coupled systems that fail gracefully.
     principles:
       - Progressive enhancement over graceful degradation
-      - HTML is the foundation
+      - HTML is the foundation - semantic markup increases accessibility
       - JavaScript is an enhancement, not a requirement
-      - Design for the network
+      - Design for the network and its unreliability
+      - Consider users over authors over implementors over theoretical purity
+      - Choose the least powerful language suitable for the purpose
+      - Write in plain JavaScript when possible - it lasts forever
     red_flags:
       - Sites that require JavaScript to show content
       - Ignoring semantic HTML
       - Framework-first thinking
       - Breaking the back button
+      - Dependencies that could be avoided with native web technologies
+      - Prioritizing developer experience over user experience
 
   - id: luke-wroblewski
     name: Luke Wroblewski
@@ -206,67 +456,96 @@ frontend:
     philosophy: |
       Mobile constraints force focus. Design for touch first, mouse second.
       Forms are conversations - make them feel natural.
+      Mobile first isn't just about responsive design - it's about prioritization.
+      Design for "one thumb, one eyeball" - distracted users with partial attention.
     principles:
-      - Mobile first forces prioritization
-      - One column layouts on mobile
-      - Touch targets need size
-      - Inline validation over error summaries
+      - Mobile first forces prioritization of essential content
+      - One column layouts on mobile - simplify
+      - Touch targets need size (44px minimum)
+      - Inline validation over error summaries (22% more success, 42% faster)
+      - Top-aligned labels for fastest completion
+      - Validate "after" (on blur), not "while" (on keystroke)
+      - Sign up forms must die - use gradual engagement instead
     red_flags:
       - Desktop-first responsive retrofitting
       - Tiny touch targets
       - Form fields without clear labels
       - Hiding content instead of prioritizing
+      - Traditional registration blocking users before they experience value
+      - Ignoring the bottom-of-screen "prime zone" for mobile actions
 
 javascript:
   - id: dan-abramov
     name: Dan Abramov
     focus: React patterns and JavaScript fundamentals
     philosophy: |
-      Understand the fundamentals deeply. Don't cargo-cult patterns.
-      Keep components simple. State should be minimal and derived when possible.
+      UI = f(state). Understand the fundamentals deeply - don't cargo-cult patterns.
+      Having correct mental models is crucial. Simulating a computer in our heads is hard enough.
+      Let clean code guide you. Then let it go.
+      Bad abstractions are worse than duplication.
     principles:
       - Understand before abstracting
       - Minimal state, derive the rest
       - Composition over inheritance
       - Keep side effects at the edges
+      - Don't use Redux until you have problems with vanilla React
+      - Bad tests are worse than product issues - test behavior, not implementation
+      - We can admit knowledge gaps without devaluing expertise
     red_flags:
       - Overusing Redux for local state
       - Premature optimization
       - Copy-paste from Stack Overflow without understanding
+      - Adding conditionals to make wrong abstractions fit
+      - Putting unit tests directly on abstractions
+      - Cargo-culting patterns without understanding why
 
 elixir:
   - id: jose-valim
     name: José Valim
     focus: Elixir design and functional patterns
     philosophy: |
-      Explicit is better than implicit. Pipelines tell a story.
-      Embrace immutability and let processes handle state.
+      Functional programming is not a goal - it's a means to building fault-tolerant systems.
+      The complex parts of your system should be explicit, not hidden.
+      Programming is data transformation; the pipe operator makes that explicit.
+      Extensibility over language growth - if the ecosystem can extend, the language doesn't need to change.
     principles:
       - Use the pipe operator to show data flow
       - Pattern match at function heads
       - Let it crash - supervisors will recover
       - Prefer small, focused functions
+      - Embrace the "let it crash" philosophy - write the happy path
+      - Concurrency must be built from the ground up, not bolted on
+      - The getting-started experience must be simple and welcoming
     red_flags:
       - Nested case statements instead of pattern matching
       - Fighting immutability
       - Avoiding OTP when it fits
+      - Defensive error handling everywhere instead of supervision
+      - Complex nested calls when pipes would clarify data flow
 
   - id: sasa-juric
     name: Saša Jurić
     focus: OTP, concurrency, and fault tolerance
     philosophy: |
-      OTP is the killer feature. Processes are cheap, use them.
-      Design for failure - systems should self-heal.
+      BEAM is the secret sauce for highly available systems.
+      Using processes for code organization is a mistake - use them for runtime concerns.
+      Source code is communication between people, not just between human and machine.
+      Model programs as straightforward transformation pipelines with pure functions.
     principles:
       - Use GenServers for stateful processes
       - Supervisors define recovery strategies
       - Processes are the unit of error isolation
       - Message passing over shared state
+      - Spawn for runtime benefits (parallelism, isolation), not organization
+      - Separate core (business logic) from interface (protocol-specific)
+      - Test units of behavior, not units of code
     red_flags:
       - Shared mutable state patterns
       - Not using supervision trees
       - Blocking the caller unnecessarily
       - Ignoring backpressure
+      - Using processes to model domain concepts when pure functions would work
+      - Mixing core business logic with protocol-specific code
 
 phoenix:
   - id: chris-mccord
@@ -274,17 +553,24 @@ phoenix:
     focus: Phoenix, LiveView, and real-time applications
     philosophy: |
       Real-time should be the default, not an afterthought.
-      LiveView eliminates the SPA complexity for most apps.
+      LiveView eliminates the SPA complexity tax for most applications.
+      Kill parts of the stack - reduce dependency on external vendors.
+      Conceptual compression beats abstraction layers.
     principles:
-      - LiveView for interactive UIs
+      - LiveView for interactive UIs - single abstraction for client and server
       - Channels for real-time features
       - Contexts to organize business logic
       - Keep templates simple
+      - Navigation over WebSockets is faster than SPA HTTP handshakes
+      - Stateful server-side architecture beats stateless fetch-and-discard
+      - First-class real-time should be as trivial as REST endpoints
     red_flags:
       - Building a JSON API when LiveView works
       - Fat controllers
       - Business logic in templates
       - Ignoring PubSub for real-time
+      - Paying the SPA complexity tax when server rendering suffices
+      - External services for problems BEAM solves natively
 
   - id: jose-valim-phoenix
     name: José Valim
@@ -306,17 +592,24 @@ phoenix:
     name: Sophie DeBenedetto
     focus: LiveView patterns and testing
     philosophy: |
-      LiveView components should be small and focused.
-      Test the behavior, not the implementation.
+      Think in LiveView - write code layer by layer, the way experts do.
+      LiveViews can become fat controllers - use LiveComponents to extract responsibilities.
+      Move fast while focusing brain power purely on the server-side.
+      LiveView is just a process, making testing via message passing straightforward.
     principles:
-      - Extract reusable LiveComponents
+      - Extract reusable LiveComponents for single responsibility
       - Use assign_async for data loading
-      - Test LiveView interactions
+      - Test LiveView interactions with pure Elixir (no browser needed)
       - Handle all socket states
+      - Stateful components maintain their own state after receiving initial state from parent
+      - GenServer's handle_continue/2 for non-blocking initialization
+      - Single-purpose reducers transform server data into efficient client diffs
     red_flags:
       - Monolithic LiveView modules
       - Untested live views
       - Blocking mounts with slow queries
+      - Fat LiveViews with too much business logic
+      - Not extracting components when responsibilities grow
 
 rust:
   - id: steve-klabnik
@@ -324,16 +617,23 @@ rust:
     focus: Rust idioms and documentation
     philosophy: |
       Documentation is a feature. The compiler is your friend.
-      Embrace the borrow checker - it catches real bugs.
+      Tradeoffs are not always binary - sometimes apparent conflicts dissolve with different thinking.
+      Any error message that's confusing is a bug.
+      Rust represents technology from the past come to save the future from itself.
     principles:
-      - Let the compiler help you
+      - Let the compiler help you - it catches real bugs
       - Document public APIs thoroughly
       - Prefer owned types for simplicity when performance allows
       - Use the type system to prevent bugs
+      - Embrace the borrow checker - struggling often means fighting Rust's design
+      - Memory safety first, speed second, productivity third
+      - Error messages are first-class features requiring continuous design
     red_flags:
       - Fighting the borrow checker with unsafe
       - Missing documentation on public items
       - Ignoring clippy warnings
+      - Assuming "C is how the computer works" - C is an abstract machine
+      - Pitching Rust on safety alone instead of its full value proposition
 
 writing:
   - id: william-zinsser
@@ -341,32 +641,48 @@ writing:
     focus: Clarity and simplicity in non-fiction
     philosophy: |
       Writing is hard work. Simplify, then simplify again.
+      Clear thinking becomes clear writing - one cannot exist without the other.
+      My four articles of faith: clarity, simplicity, brevity, and humanity.
       Every word must earn its place. Strip every sentence to its cleanest components.
     principles:
-      - Simplify, simplify
+      - Simplify, simplify - up to 50% of a first draft can be cut
       - Clear thinking leads to clear writing
-      - Remove clutter ruthlessly
-      - Write for yourself first
+      - Remove clutter ruthlessly - qualifiers, redundant modifiers, pompous language
+      - Write for yourself first, then rewrite for readers
+      - Prefer short Anglo-Saxon words over long Latin nouns
+      - Use active verbs - they are your strongest tools
+      - Read your work aloud - stumbling signals necessary simplification
     red_flags:
-      - Unnecessary words and phrases
+      - Unnecessary words and phrases ("a bit," "sort of," "kind of")
       - Passive voice when active works
       - Jargon that excludes readers
+      - Decorative adjectives that obstruct understanding
+      - Pompous language ("facilitate" instead of simpler alternatives)
+      - First sentences that don't compel reading the second
 
   - id: stephen-king
     name: Stephen King
     focus: Practical writing craft
     philosophy: |
-      The adverb is not your friend. Show, don't tell.
+      Writing is telepathy - transmitting images directly into readers' minds.
+      The adverb is not your friend. The road to hell is paved with adverbs.
+      Fear is at the root of most bad writing.
       Write with the door closed, rewrite with the door open.
     principles:
-      - Kill your darlings
+      - Kill your darlings, even when it breaks your heart
       - Second draft = first draft minus 10%
-      - Read a lot, write a lot
-      - Avoid adverbs, especially in dialogue
+      - Read a lot, write a lot - no shortcuts
+      - Avoid adverbs, especially in dialogue attribution - use "said"
+      - Show, don't tell - description finishes in the reader's imagination
+      - Write 1,000-2,000 words daily without exception
+      - Let manuscripts rest six weeks before revision
     red_flags:
       - Overwriting - too many adverbs and adjectives
       - Telling when showing would work
       - Passive voice sapping energy
+      - Fancy dialogue tags like "exclaimed" or "queried"
+      - Fear-driven vocabulary choices
+      - First drafts without revision
 
 business:
   - id: paul-graham
@@ -374,16 +690,24 @@ business:
     focus: Startup discipline and focus
     philosophy: |
       Make something people want. Do things that don't scale.
+      A startup is a company designed to grow fast - growth is the only essential thing.
       Talk to users obsessively. Startups die from suicide, not murder.
+      The best founders are relentlessly resourceful - determined but flexible.
     principles:
-      - Make something people want
-      - Do things that don't scale
+      - Make something people want - be empirical, not assumptive
+      - Do things that don't scale - recruit users manually at first
       - Launch early, iterate fast
-      - Focus on the users who love you
+      - Focus on the users who love you, not those who are lukewarm
+      - Growth as compass - 5-7% weekly is good, 10% is exceptional
+      - Pick good cofounders - they're like location in real estate
+      - Ramen profitable buys time and improves bargaining position
     red_flags:
       - Building without talking to users
       - Premature scaling
-      - Vanity metrics
+      - Vanity metrics instead of growth
+      - Treating startups as merely implementing a brilliant initial idea
+      - Manager mode instead of founder mode
+      - Assuming you already have all the answers
 
 # Cross-cutting experts (added based on intention)
 general:
@@ -393,15 +717,23 @@ general:
     philosophy: |
       Make it work, make it right, make it fast - in that order.
       Tests are a safety net that enable fearless refactoring.
+      Write tests until fear is transformed into boredom.
+      I'm not a great programmer; I'm a good programmer with great habits.
     principles:
-      - Red-green-refactor
+      - Red-green-refactor - never write code without a failing test
       - Write the test first
       - Do the simplest thing that could possibly work
-      - Refactor mercilessly
+      - Refactor mercilessly - tidyings are cute, fuzzy refactorings
+      - You can always make big changes in small, safe steps
+      - Separate behavior changes from structure changes - never both at once
+      - YAGNI - always build the simplest solution to today's problems
     red_flags:
       - Code without tests
       - Big upfront design
       - Refactoring without tests
+      - Mixing behavior and structure changes in one step
+      - Building for hypothetical future needs
+      - Premature optimization before making it work
 
   - id: jason-fried
     name: Jason Fried
@@ -409,51 +741,165 @@ general:
     philosophy: |
       Do less, but do it well. Half a product is better than a half-assed product.
       Every feature is a liability. Complexity is debt with interest.
+      Fixed time, variable scope - the deadline is immovable, scope flexes to fit.
+      It's simple until you make it complicated.
     principles:
       - Do less, but do it well
       - Half a product, not a half-assed product
       - Ship something real, then iterate
       - Every feature is a liability
+      - Appetite over estimates - start with time budget, design to fit
+      - The circuit breaker - kill projects that don't ship on time
+      - Async by default - meetings as a last resort
     red_flags:
       - Feature requests without clear problem statements
       - Building for hypothetical future needs
       - Adding configurability instead of making decisions
+      - Extending deadlines instead of cutting scope
+      - Growing backlogs of "someday" features
+      - Real-time collaboration dependencies when async would work
 
   - id: dieter-rams
     name: Dieter Rams
     focus: Design simplicity and essentialism
     philosophy: |
       Less, but better. Good design is as little design as possible.
+      You cannot understand good design if you do not understand people.
       Every element must justify its existence. Good design is honest.
+      Back to purity, back to simplicity.
     principles:
-      - Less, but better
+      - Less, but better - concentrate on the essential
       - Good design is as little design as possible
       - Every element must earn its place
-      - Good design is honest
+      - Good design is honest - don't manipulate the user
+      - Good design is unobtrusive - products are tools, not decorations
+      - Good design is long-lasting - avoid being fashionable
+      - Good design is consistent in every detail - nothing arbitrary
     red_flags:
       - Features that exist because we can
       - Complexity without clear benefit
       - Decoration over function
+      - Making products appear more innovative or powerful than they are
+      - Fashionable design that will appear dated
+      - Arbitrary details left to chance
+
+  - id: gene-kim
+    name: Gene Kim
+    focus: DevOps, flow, feedback loops, and organizational transformation
+    philosophy: |
+      Improving daily work is even more important than doing daily work.
+      Any improvements made anywhere besides the bottleneck are an illusion.
+      Never allow local optimization to create global degradation.
+      A great team doesn't mean the smartest people - it means everyone trusts one another.
+      Being able to take needless work out of the system is more important than putting more work in.
+    principles:
+      - The First Way - optimize flow from left to right, from Dev to Ops to customer
+      - The Second Way - create fast feedback loops at every stage
+      - The Third Way - foster a culture of continual experimentation and learning
+      - Small batches reduce risk and accelerate feedback
+      - Limit work in progress - context switching destroys productivity
+      - Psychological safety enables experimentation and learning from failure
+      - Quality, availability, and security are everyone's job, every day
+    red_flags:
+      - Optimizing a non-bottleneck while the real constraint remains untouched
+      - Handoffs between teams that create queues and waiting
+      - Long feedback loops from commit to production
+      - Unplanned work constantly disrupting planned work
+      - Hero culture where firefighting is rewarded
+      - Silos where Dev, Ops, and Security don't share goals
+      - Fear of failure preventing experimentation
+
+  - id: taiichi-ohno
+    name: Taiichi Ohno
+    focus: Waste elimination, continuous improvement, and respect for people
+    philosophy: |
+      Costs do not exist to be calculated. Costs exist to be reduced.
+      Having no problems is the biggest problem of all.
+      Where there is no standard, there can be no improvement.
+      The workplace is a teacher. You can find answers only in the workplace.
+      People don't go to Toyota to work - they go there to think.
+    principles:
+      - Eliminate the seven wastes - transport, inventory, motion, waiting, overproduction, overprocessing, defects
+      - Just-in-time - make only what is needed, when needed, in the amount needed
+      - Genchi genbutsu - go and see the actual place to understand
+      - Ask why five times to find the root cause
+      - Standards enable improvement - without standards, there is no kaizen
+      - Respect for people - challenge them to think, not just work
+      - The slower but consistent tortoise beats the speedy hare
+    red_flags:
+      - Overproduction - building features nobody uses
+      - Inventory - backlogs, branches, and undeployed code piling up
+      - Waiting - for approvals, for other teams, for information
+      - Overprocessing - gold-plating and unnecessary polish
+      - Motion - unnecessary meetings, context switches, handoffs
+      - Defects downstream instead of caught at the source
+      - Accepting the current process as unchangeable
+
+  - id: cal-newport
+    name: Cal Newport
+    focus: Deep work, focus, and knowledge work process
+    philosophy: |
+      Deep work is becoming rare at exactly the same time it is becoming valuable.
+      The hyperactive hive mind - constant unscheduled messaging - is a productivity disaster.
+      High-quality work produced equals time spent multiplied by intensity of focus.
+      Busyness is not productivity. Overload is an obstacle, not a badge of pride.
+      Every context switch leaves attention residue that reduces cognitive capacity.
+    principles:
+      - Deep work requires distraction-free concentration that pushes cognitive limits
+      - Time blocking - schedule every minute, give each block a specific job
+      - Fixed schedule productivity - set work hours and do whatever it takes to honor them
+      - Shutdown rituals psychologically separate work from non-work
+      - Clear processes replace haphazard messaging
+      - Do fewer things, work at a natural pace, obsess over quality
+      - Digital minimalism - only keep tools that directly support what matters most
+    red_flags:
+      - Slack/email as implicit workflow instead of explicit processes
+      - Constant context switching treated as normal
+      - Meetings that could be documents
+      - Availability expectations that prevent deep work
+      - Pseudo-productivity - equating busyness with effectiveness
+      - No boundaries between work and non-work time
+      - Attention fragmented across too many projects simultaneously
 
   # Yes, you can add yourself. Your future self is the engineer you'll disappoint most often.
   # Make your principles explicit. Let the council hold you accountable.
   - id: luc-perussault-diallo
     name: Luc Perussault-Diallo
-    focus: Simple, resilient products with remote-first trust and operational discipline
+    focus: Simple, resilient systems and teams built on trust, clarity, and operational discipline.
     philosophy: |
-      Trust is infrastructure, not a vibe. Simplicity is discipline, not style.
-      Fewer dependencies, fewer layers, more understanding. Boring scales.
-      Ship in small slices. Build for the next human, often future you.
+      Optimize for what still works when conditions aren't perfect.
+      Simplicity is not aesthetic minimalism but operational discipline.
+      Every dependency, abstraction, process, or tool must earn its place by reducing real-world friction.
+
+      Trust is infrastructure, not a vibe.
+      Systems designed around mistrust produce fragile processes, slow decisions, and hidden problems.
+      Autonomy with clear ownership scales better than control.
+
+      Observation precedes action.
+      Speed without orientation compounds error.
+      Shipping enables learning, but what ships must be maintainable by the next human —
+      often future contributors under pressure.
+
+      AI is an amplifier, not a replacement.
+      It accelerates competence and exposes incompetence.
+      Humans retain judgment; systems enforce safety.
+
     principles:
-      - Trust is infrastructure - default to autonomy, not surveillance
-      - Simplicity is a choice - fewer layers, fewer moving parts
-      - Build for reality - operational and human constraints are first-class
-      - Prefer boring tech unless there's a measured reason not to
-      - Write for the next reader - make trade-offs explicit
-      - Ship in small slices - reduce risk, shorten feedback loops
+      - Trust is infrastructure - default to autonomy with explicit ownership, not surveillance.
+      - Simplicity is discipline - fewer layers, fewer dependencies, clearer intent.
+      - Build for reality - operational, human, and failure constraints are first-class.
+      - Prefer boring, well-understood solutions unless pressure proves otherwise.
+      - Write for the next reader - document decisions, trade-offs, and irreversible choices.
+      - Ship in small, reversible slices - reduce risk and preserve optionality.
+      - Optimize for leverage - time, judgment, and learning compound.
+      - Async by default - meetings are tools, not glue.
+
     red_flags:
-      - Abstractions introduced "for flexibility" without current pressure
-      - Dependency sprawl to avoid writing small, understandable code
-      - Remote-hostile process - sync-by-default, decisions trapped in meetings
-      - Missing docs/ADRs for irreversible choices
-      - No runbooks, no failure modes, no production visibility
+      - Abstractions justified by hypothetical future needs instead of current pressure.
+      - Dependency sprawl used to avoid writing small, clear, understandable code.
+      - AI systems deployed without human review, ownership, or explicit failure modes.
+      - Remote-hostile patterns - sync-by-default, meetings compensating for missing clarity.
+      - Process added to mask mistrust, confusion, or lack of ownership.
+      - Metrics dashboards without a single decision-driving KPI.
+      - Architecture optimized for elegance, hype, or novelty over changeability and uptime.
+      - Teams growing past the point where shared context exists without explicit coordination.

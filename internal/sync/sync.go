@@ -2,6 +2,7 @@ package sync
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +13,12 @@ import (
 	"github.com/luuuc/council-cli/internal/expert"
 	"github.com/luuuc/council-cli/internal/fs"
 )
+
+//go:embed templates/council-add.md
+var councilAddCommand string
+
+//go:embed templates/council-detect.md
+var councilDetectCommand string
 
 // Pre-compiled template for council command generation
 var councilCommandTemplate = template.Must(template.New("council").Parse(`# Code Review Council
@@ -35,10 +42,16 @@ Review the code from each expert's perspective. For each expert:
 At the end, synthesize the key points and provide actionable recommendations.
 `))
 
+// Options configures sync behavior
+type Options struct {
+	DryRun bool // Show what would be done without making changes
+	Clean  bool // Remove stale files not in current config
+}
+
 // Target represents a sync target
 type Target struct {
 	Name     string
-	Sync     func(experts []*expert.Expert, cfg *config.Config, dryRun bool) error
+	Sync     func(experts []*expert.Expert, cfg *config.Config, opts Options) error
 	Check    func() bool
 	Location string
 }
@@ -78,7 +91,7 @@ var Targets = map[string]*Target{
 }
 
 // SyncAll syncs to all configured targets
-func SyncAll(cfg *config.Config, dryRun bool) error {
+func SyncAll(cfg *config.Config, opts Options) error {
 	experts, err := expert.List()
 	if err != nil {
 		return err
@@ -96,7 +109,7 @@ func SyncAll(cfg *config.Config, dryRun bool) error {
 		}
 
 		fmt.Printf("Syncing to %s (%s)...\n", target.Name, target.Location)
-		if err := target.Sync(experts, cfg, dryRun); err != nil {
+		if err := target.Sync(experts, cfg, opts); err != nil {
 			return fmt.Errorf("failed to sync to %s: %w", targetName, err)
 		}
 	}
@@ -117,8 +130,24 @@ func writeFile(path, content string, dryRun bool) error {
 	return nil
 }
 
+// removeFile removes a file if it exists, or prints what would be removed in dry-run mode
+func removeFile(path string, dryRun bool) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return nil // File doesn't exist, nothing to do
+	}
+	if dryRun {
+		fmt.Printf("  Would remove: %s\n", path)
+		return nil
+	}
+	if err := os.Remove(path); err != nil {
+		return err
+	}
+	fmt.Printf("  Removed: %s\n", path)
+	return nil
+}
+
 // SyncTarget syncs to a specific target
-func SyncTarget(targetName string, cfg *config.Config, dryRun bool) error {
+func SyncTarget(targetName string, cfg *config.Config, opts Options) error {
 	target, ok := Targets[targetName]
 	if !ok {
 		return fmt.Errorf("unknown target: %s", targetName)
@@ -134,14 +163,17 @@ func SyncTarget(targetName string, cfg *config.Config, dryRun bool) error {
 	}
 
 	fmt.Printf("Syncing to %s (%s)...\n", target.Name, target.Location)
-	return target.Sync(experts, cfg, dryRun)
+	return target.Sync(experts, cfg, opts)
 }
 
+// allCommands is the list of all possible council commands
+var allCommands = []string{"council", "council-add", "council-detect"}
+
 // Claude Code sync
-func syncClaude(experts []*expert.Expert, cfg *config.Config, dryRun bool) error {
+func syncClaude(experts []*expert.Expert, cfg *config.Config, opts Options) error {
 	// Create .claude/agents directory
 	agentsDir := ".claude/agents"
-	if !dryRun {
+	if !opts.DryRun {
 		if err := os.MkdirAll(agentsDir, 0755); err != nil {
 			return err
 		}
@@ -150,22 +182,53 @@ func syncClaude(experts []*expert.Expert, cfg *config.Config, dryRun bool) error
 	// Sync each expert as an agent file
 	for _, e := range experts {
 		path := filepath.Join(agentsDir, e.ID+".md")
-		if err := writeFile(path, generateAgentFile(e), dryRun); err != nil {
+		if err := writeFile(path, generateAgentFile(e), opts.DryRun); err != nil {
+			return err
+		}
+	}
+
+	// Create commands directory if any commands are enabled
+	hasCommands := len(cfg.Council.Commands) > 0
+	commandsDir := ".claude/commands"
+	if hasCommands && !opts.DryRun {
+		if err := os.MkdirAll(commandsDir, 0755); err != nil {
 			return err
 		}
 	}
 
 	// Create /council command if configured
-	if cfg.Council.IncludeCouncilCommand {
-		commandsDir := ".claude/commands"
-		if !dryRun {
-			if err := os.MkdirAll(commandsDir, 0755); err != nil {
-				return err
-			}
-		}
+	if cfg.Council.HasCommand("council") {
 		path := filepath.Join(commandsDir, "council.md")
-		if err := writeFile(path, generateCouncilCommand(experts), dryRun); err != nil {
+		if err := writeFile(path, generateCouncilCommand(experts), opts.DryRun); err != nil {
 			return err
+		}
+	}
+
+	// Create /council-add command if configured
+	if cfg.Council.HasCommand("council-add") {
+		path := filepath.Join(commandsDir, "council-add.md")
+		if err := writeFile(path, councilAddCommand, opts.DryRun); err != nil {
+			return err
+		}
+	}
+
+	// Create /council-detect command if configured
+	if cfg.Council.HasCommand("council-detect") {
+		path := filepath.Join(commandsDir, "council-detect.md")
+		if err := writeFile(path, councilDetectCommand, opts.DryRun); err != nil {
+			return err
+		}
+	}
+
+	// Clean up stale command files if requested
+	if opts.Clean {
+		for _, cmd := range allCommands {
+			if !cfg.Council.HasCommand(cmd) {
+				path := filepath.Join(commandsDir, cmd+".md")
+				if err := removeFile(path, opts.DryRun); err != nil {
+					return err
+				}
+			}
 		}
 	}
 
@@ -173,12 +236,12 @@ func syncClaude(experts []*expert.Expert, cfg *config.Config, dryRun bool) error
 }
 
 // Cursor sync
-func syncCursor(experts []*expert.Expert, cfg *config.Config, dryRun bool) error {
+func syncCursor(experts []*expert.Expert, cfg *config.Config, opts Options) error {
 	// Prefer .cursor/rules/ if .cursor exists, otherwise .cursorrules
 	var path string
 	if fs.DirExists(".cursor") {
 		rulesDir := ".cursor/rules"
-		if !dryRun {
+		if !opts.DryRun {
 			if err := os.MkdirAll(rulesDir, 0755); err != nil {
 				return err
 			}
@@ -188,24 +251,24 @@ func syncCursor(experts []*expert.Expert, cfg *config.Config, dryRun bool) error
 		path = ".cursorrules"
 	}
 
-	return writeFile(path, generateCombinedRules(experts), dryRun)
+	return writeFile(path, generateCombinedRules(experts), opts.DryRun)
 }
 
 // Windsurf sync
-func syncWindsurf(experts []*expert.Expert, cfg *config.Config, dryRun bool) error {
-	return writeFile(".windsurfrules", generateCombinedRules(experts), dryRun)
+func syncWindsurf(experts []*expert.Expert, cfg *config.Config, opts Options) error {
+	return writeFile(".windsurfrules", generateCombinedRules(experts), opts.DryRun)
 }
 
 // Generic AGENTS.md sync
-func syncGeneric(experts []*expert.Expert, cfg *config.Config, dryRun bool) error {
-	return writeFile("AGENTS.md", generateAgentsMd(experts), dryRun)
+func syncGeneric(experts []*expert.Expert, cfg *config.Config, opts Options) error {
+	return writeFile("AGENTS.md", generateAgentsMd(experts), opts.DryRun)
 }
 
 // OpenCode sync
-func syncOpenCode(experts []*expert.Expert, cfg *config.Config, dryRun bool) error {
+func syncOpenCode(experts []*expert.Expert, cfg *config.Config, opts Options) error {
 	// Create .opencode/agent directory
 	agentDir := ".opencode/agent"
-	if !dryRun {
+	if !opts.DryRun {
 		if err := os.MkdirAll(agentDir, 0755); err != nil {
 			return err
 		}
@@ -214,12 +277,54 @@ func syncOpenCode(experts []*expert.Expert, cfg *config.Config, dryRun bool) err
 	// Sync each expert as an agent file
 	for _, e := range experts {
 		path := filepath.Join(agentDir, e.ID+".md")
-		if err := writeFile(path, generateOpenCodeAgent(e), dryRun); err != nil {
+		if err := writeFile(path, generateOpenCodeAgent(e), opts.DryRun); err != nil {
 			return err
 		}
 	}
 
+	// Create /council-add command if configured
+	if cfg.Council.HasCommand("council-add") {
+		path := filepath.Join(agentDir, "council-add.md")
+		if err := writeFile(path, generateOpenCodeCommand("Add expert to council with AI-generated content", councilAddCommand), opts.DryRun); err != nil {
+			return err
+		}
+	}
+
+	// Create /council-detect command if configured
+	if cfg.Council.HasCommand("council-detect") {
+		path := filepath.Join(agentDir, "council-detect.md")
+		if err := writeFile(path, generateOpenCodeCommand("Detect stack and suggest experts", councilDetectCommand), opts.DryRun); err != nil {
+			return err
+		}
+	}
+
+	// Clean up stale command files if requested
+	if opts.Clean {
+		// OpenCode only supports council-add and council-detect
+		openCodeCommands := []string{"council-add", "council-detect"}
+		for _, cmd := range openCodeCommands {
+			if !cfg.Council.HasCommand(cmd) {
+				path := filepath.Join(agentDir, cmd+".md")
+				if err := removeFile(path, opts.DryRun); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	return nil
+}
+
+// generateOpenCodeCommand creates OpenCode command file content
+func generateOpenCodeCommand(description, body string) string {
+	var parts []string
+	parts = append(parts, "---")
+	parts = append(parts, fmt.Sprintf("description: %s", description))
+	parts = append(parts, "mode: subagent")
+	parts = append(parts, "---")
+	parts = append(parts, "")
+	parts = append(parts, body)
+	return strings.Join(parts, "\n")
 }
 
 // generateOpenCodeAgent creates OpenCode agent file content

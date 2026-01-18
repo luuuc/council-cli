@@ -19,7 +19,7 @@ council init && council setup -i
 council sync
 ```
 
-Your AI now has an expert council. Try `/council` in Claude Code or Cursor.
+Your AI now has an expert council. Try `/council`, `/council-add`, or `/council-detect` in Claude Code.
 
 ## What is a Council?
 
@@ -104,6 +104,29 @@ council sync --dry-run # Preview changes
 | `windsurf` | `.windsurfrules` | Windsurf |
 | `opencode` | `.opencode/agent/` | OpenCode |
 | `generic` | `AGENTS.md` | Any AI tool |
+
+#### Generated Slash Commands
+
+For Claude Code and OpenCode, `council sync` generates these AI-powered commands:
+
+| Command | Description |
+|---------|-------------|
+| `/council <topic>` | Convene the full council to review code or discuss a topic |
+| `/council-add <name> --focus "<area>"` | Add an expert with AI-generated philosophy, principles, and red flags |
+| `/council-detect` | Analyze the codebase and suggest relevant experts |
+
+**Example usage:**
+
+```bash
+# In Claude Code or OpenCode
+/council-add "Sandi Metz" --focus "Object-oriented design and practical refactoring"
+/council-detect
+/council review the authentication flow
+```
+
+These commands leverage your AI's context and knowledge to generate rich expert profiles, rather than creating hollow template files.
+
+> **Note on Cursor/Windsurf**: These targets receive combined expert rules but not the `/council-add` and `/council-detect` commands. These commands require AI execution context (file writing, codebase analysis) that Cursor and Windsurf rules don't support. Use Claude Code or OpenCode for the full command experience, or run `council setup -i` to add experts interactively.
 
 ### Claude Desktop (MCP)
 
@@ -247,10 +270,12 @@ targets:
   - cursor
   - opencode
 
-# Command generation
+# Commands to generate (list format)
 council:
-  include_council_command: true    # Generate /council command
-  include_expert_commands: true    # Generate individual expert commands
+  commands:
+    - council          # /council - convene the full council
+    - council-add      # /council-add - add expert with AI-generated content
+    - council-detect   # /council-detect - detect stack and suggest experts
 ```
 
 ## Expert Format

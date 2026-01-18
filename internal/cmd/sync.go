@@ -11,12 +11,14 @@ import (
 var (
 	syncDryRun bool
 	syncForce  bool
+	syncClean  bool
 )
 
 func init() {
 	rootCmd.AddCommand(syncCmd)
 	syncCmd.Flags().BoolVar(&syncDryRun, "dry-run", false, "Show what would be done without making changes")
 	syncCmd.Flags().BoolVar(&syncForce, "force", false, "Overwrite existing files without prompting")
+	syncCmd.Flags().BoolVar(&syncClean, "clean", false, "Remove stale command files not in current config")
 }
 
 var syncCmd = &cobra.Command{
@@ -43,12 +45,17 @@ Supported targets:
 			return err
 		}
 
+		opts := sync.Options{
+			DryRun: syncDryRun,
+			Clean:  syncClean,
+		}
+
 		if len(args) == 1 {
 			// Sync specific target
-			return sync.SyncTarget(args[0], cfg, syncDryRun)
+			return sync.SyncTarget(args[0], cfg, opts)
 		}
 
 		// Sync all configured targets
-		return sync.SyncAll(cfg, syncDryRun)
+		return sync.SyncAll(cfg, opts)
 	},
 }

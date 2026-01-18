@@ -164,7 +164,7 @@ func TestSyncClaude(t *testing.T) {
 	experts := []*expert.Expert{testExpert}
 
 	// Test dry run
-	err = syncClaude(experts, cfg, true)
+	err = syncClaude(experts, cfg, Options{DryRun: true})
 	if err != nil {
 		t.Errorf("syncClaude() dry run error = %v", err)
 	}
@@ -175,7 +175,7 @@ func TestSyncClaude(t *testing.T) {
 	}
 
 	// Test actual sync
-	err = syncClaude(experts, cfg, false)
+	err = syncClaude(experts, cfg, Options{DryRun: false})
 	if err != nil {
 		t.Errorf("syncClaude() error = %v", err)
 	}
@@ -222,7 +222,7 @@ func TestSyncCursor(t *testing.T) {
 	}
 
 	// Test without .cursor directory (should create .cursorrules)
-	err = syncCursor(experts, cfg, false)
+	err = syncCursor(experts, cfg, Options{DryRun: false})
 	if err != nil {
 		t.Errorf("syncCursor() error = %v", err)
 	}
@@ -236,7 +236,7 @@ func TestSyncCursor(t *testing.T) {
 
 	// Test with .cursor directory
 	_ = os.MkdirAll(".cursor", 0755)
-	err = syncCursor(experts, cfg, false)
+	err = syncCursor(experts, cfg, Options{DryRun: false})
 	if err != nil {
 		t.Errorf("syncCursor() with .cursor error = %v", err)
 	}
@@ -269,7 +269,7 @@ func TestSyncWindsurf(t *testing.T) {
 		},
 	}
 
-	err = syncWindsurf(experts, cfg, false)
+	err = syncWindsurf(experts, cfg, Options{DryRun: false})
 	if err != nil {
 		t.Errorf("syncWindsurf() error = %v", err)
 	}
@@ -306,7 +306,7 @@ func TestSyncGeneric(t *testing.T) {
 		},
 	}
 
-	err = syncGeneric(experts, cfg, false)
+	err = syncGeneric(experts, cfg, Options{DryRun: false})
 	if err != nil {
 		t.Errorf("syncGeneric() error = %v", err)
 	}
@@ -339,7 +339,7 @@ func TestSyncAllNoExperts(t *testing.T) {
 
 	cfg := config.Default()
 
-	err = SyncAll(cfg, false)
+	err = SyncAll(cfg, Options{DryRun: false})
 	if err == nil {
 		t.Error("SyncAll() should error when no experts exist")
 	}
@@ -468,7 +468,7 @@ func TestSyncOpenCode(t *testing.T) {
 	}
 
 	// Test dry run
-	err = syncOpenCode(experts, cfg, true)
+	err = syncOpenCode(experts, cfg, Options{DryRun: true})
 	if err != nil {
 		t.Errorf("syncOpenCode() dry run error = %v", err)
 	}
@@ -479,7 +479,7 @@ func TestSyncOpenCode(t *testing.T) {
 	}
 
 	// Test actual sync
-	err = syncOpenCode(experts, cfg, false)
+	err = syncOpenCode(experts, cfg, Options{DryRun: false})
 	if err != nil {
 		t.Errorf("syncOpenCode() error = %v", err)
 	}
@@ -561,7 +561,7 @@ func TestGenerateOpenCodeAgent(t *testing.T) {
 
 func TestSyncTargetUnknown(t *testing.T) {
 	cfg := config.Default()
-	err := SyncTarget("unknown-target", cfg, false)
+	err := SyncTarget("unknown-target", cfg, Options{DryRun: false})
 	if err == nil {
 		t.Error("SyncTarget() should error for unknown target")
 	}
