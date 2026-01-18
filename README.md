@@ -4,7 +4,7 @@ AI-agnostic expert council setup for coding assistants.
 
 Tired of generic AI code reviews that feel like talking to a wall? Getting the same bland suggestions over and over? Want your AI to actually challenge you like a real mentor would?
 
-The Council Pattern is here for you. Build your own expert council and make AI code review feel sharp, opinionated, and actually useful again.
+The Council Pattern is here for you. Build your own expert council and make AI code review feel sharp, opinionated, and actually useful.
 
 ## 30-Second Start
 
@@ -25,7 +25,7 @@ Your AI now has an expert council. Try `/council`, `/council-add`, or `/council-
 
 Already in Claude Code or another AI assistant? Just say:
 
-> "Read https://raw.githubusercontent.com/luuuc/council-cli/main/AGENT-INSTALL.md and follow it"
+> "Grab https://raw.githubusercontent.com/luuuc/council-cli/main/AGENT-INSTALL.md and get me set up"
 
 Your AI will install council-cli, detect your stack, and set up experts for you.
 
