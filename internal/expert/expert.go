@@ -51,6 +51,10 @@ type Expert struct {
 	Principles []string `yaml:"principles,omitempty"`
 	RedFlags   []string `yaml:"red_flags,omitempty"`
 
+	// Suggestion metadata (not saved to expert files)
+	Core     bool     `yaml:"core,omitempty"`     // Always suggest for matching intention
+	Triggers []string `yaml:"triggers,omitempty"` // Only suggest when patterns detected
+
 	// Body is the markdown content after frontmatter
 	Body string `yaml:"-"`
 }

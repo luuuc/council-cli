@@ -710,10 +710,14 @@ business:
       - Assuming you already have all the answers
 
 # Cross-cutting experts (added based on intention)
+# core: true = always suggested for matching intention
+# triggers: only suggested when specific patterns detected
 general:
   - id: kent-beck
     name: Kent Beck
     focus: Test-driven development and incremental design
+    triggers:
+      - testing
     philosophy: |
       Make it work, make it right, make it fast - in that order.
       Tests are a safety net that enable fearless refactoring.
@@ -738,6 +742,7 @@ general:
   - id: jason-fried
     name: Jason Fried
     focus: Scope discipline, simplicity, and shipping
+    core: true
     philosophy: |
       Do less, but do it well. Half a product is better than a half-assed product.
       Every feature is a liability. Complexity is debt with interest.
@@ -762,6 +767,7 @@ general:
   - id: dieter-rams
     name: Dieter Rams
     focus: Design simplicity and essentialism
+    core: true
     philosophy: |
       Less, but better. Good design is as little design as possible.
       You cannot understand good design if you do not understand people.
@@ -786,6 +792,9 @@ general:
   - id: gene-kim
     name: Gene Kim
     focus: DevOps, flow, feedback loops, and organizational transformation
+    triggers:
+      - ci-cd
+      - docker
     philosophy: |
       Improving daily work is even more important than doing daily work.
       Any improvements made anywhere besides the bottleneck are an illusion.
@@ -812,6 +821,9 @@ general:
   - id: taiichi-ohno
     name: Taiichi Ohno
     focus: Waste elimination, continuous improvement, and respect for people
+    triggers:
+      - monorepo
+      - ci-cd
     philosophy: |
       Costs do not exist to be calculated. Costs exist to be reduced.
       Having no problems is the biggest problem of all.
@@ -838,6 +850,8 @@ general:
   - id: cal-newport
     name: Cal Newport
     focus: Deep work, focus, and knowledge work process
+    triggers:
+      - writing
     philosophy: |
       Deep work is becoming rare at exactly the same time it is becoming valuable.
       The hyperactive hive mind - constant unscheduled messaging - is a productivity disaster.

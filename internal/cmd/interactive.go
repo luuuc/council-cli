@@ -132,10 +132,7 @@ func askIntention(reader *bufio.Reader) string {
 }
 
 func selectExperts(reader *bufio.Reader, suggestions []ExpertSuggestion) []expert.Expert {
-	// Initially all are selected
-	for i := range suggestions {
-		suggestions[i].Selected = true
-	}
+	// Selection state is already set by suggestExperts (pre-selects first N)
 
 	for {
 		fmt.Println("Suggested experts (toggle with number, done with Enter):")
@@ -178,72 +175,178 @@ func selectExperts(reader *bufio.Reader, suggestions []ExpertSuggestion) []exper
 	return selected
 }
 
+// Selection limits
+const (
+	maxPerCategory = 2
+	maxTotal       = 7
+	preSelectCount = 4
+)
+
 // suggestExperts returns expert suggestions based on detected stack and intention
 func suggestExperts(d *detect.Detection, intention string) []ExpertSuggestion {
 	var suggestions []ExpertSuggestion
 	seen := make(map[string]bool)
 
-	add := func(experts []expert.Expert) {
+	// addN adds up to n experts from a category
+	addN := func(experts []expert.Expert, n int) int {
+		added := 0
 		for _, e := range experts {
+			if added >= n {
+				break
+			}
 			if !seen[e.ID] {
 				seen[e.ID] = true
 				suggestions = append(suggestions, ExpertSuggestion{Expert: e})
+				added++
 			}
 		}
+		return added
 	}
 
-	// Check for frameworks first
-	hasRails := false
-	hasPhoenix := false
+	// Build pattern set for trigger matching
+	patterns := buildPatternSet(d)
+
+	// Phase 1: Framework experts (highest priority, up to 2)
+	frameworkCount := 0
 	for _, fw := range d.Frameworks {
+		if frameworkCount >= maxPerCategory {
+			break
+		}
 		switch fw.Name {
 		case "Rails":
-			hasRails = true
-			add(suggestionBank["rails"])
+			frameworkCount += addN(suggestionBank["rails"], maxPerCategory-frameworkCount)
 		case "Phoenix":
-			hasPhoenix = true
-			add(suggestionBank["phoenix"])
+			frameworkCount += addN(suggestionBank["phoenix"], maxPerCategory-frameworkCount)
+		case "Next.js", "React", "Vue":
+			frameworkCount += addN(suggestionBank["frontend"], maxPerCategory-frameworkCount)
 		}
 	}
 
-	// Language-specific experts
+	// Phase 2: Language experts (up to 2, skip if framework covers it)
+	langCount := 0
+	coveredByFramework := map[string]bool{
+		"Ruby":   hasFramework(d, "Rails"),
+		"Elixir": hasFramework(d, "Phoenix"),
+	}
+
 	for _, lang := range d.Languages {
+		if langCount >= maxPerCategory {
+			break
+		}
+		if coveredByFramework[lang.Name] {
+			continue
+		}
 		switch lang.Name {
 		case "Go":
-			add(suggestionBank["go"])
+			langCount += addN(suggestionBank["go"], maxPerCategory-langCount)
 		case "Ruby":
-			if !hasRails {
-				add(suggestionBank["ruby"])
-			}
+			langCount += addN(suggestionBank["ruby"], maxPerCategory-langCount)
 		case "Elixir":
-			if !hasPhoenix {
-				add(suggestionBank["elixir"])
-			}
+			langCount += addN(suggestionBank["elixir"], maxPerCategory-langCount)
 		case "Python":
-			add(suggestionBank["python"])
+			langCount += addN(suggestionBank["python"], maxPerCategory-langCount)
 		case "TypeScript", "JavaScript":
-			add(suggestionBank["javascript"])
-			add(suggestionBank["frontend"])
+			langCount += addN(suggestionBank["javascript"], maxPerCategory-langCount)
 		case "Rust":
-			add(suggestionBank["rust"])
+			langCount += addN(suggestionBank["rust"], maxPerCategory-langCount)
+		case "Swift":
+			langCount += addN(suggestionBank["swift"], maxPerCategory-langCount)
+		case "Kotlin":
+			langCount += addN(suggestionBank["kotlin"], maxPerCategory-langCount)
 		}
 	}
 
-	// Add general experts for code projects
+	// Phase 3: General experts based on intention
 	if intention == "code" || intention == "everything" {
-		add(suggestionBank["general"])
+		// Add core general experts first
+		addGeneralExperts(suggestionBank["general"], &suggestions, seen, patterns, true)
+		// Add triggered experts
+		addGeneralExperts(suggestionBank["general"], &suggestions, seen, patterns, false)
 	}
 
-	// Writing experts
 	if intention == "writing" {
-		add(suggestionBank["writing"])
+		addN(suggestionBank["writing"], maxPerCategory)
 	}
 
-	// Business experts
 	if intention == "business" {
-		add(suggestionBank["business"])
-		add(suggestionBank["general"]) // Jason Fried fits business too
+		addN(suggestionBank["business"], maxPerCategory)
+		// Also add relevant general experts (Jason Fried is core)
+		addGeneralExperts(suggestionBank["general"], &suggestions, seen, patterns, true)
+	}
+
+	// Phase 4: Cap at maxTotal
+	if len(suggestions) > maxTotal {
+		suggestions = suggestions[:maxTotal]
+	}
+
+	// Phase 5: Pre-select first N experts
+	for i := range suggestions {
+		suggestions[i].Selected = i < preSelectCount
 	}
 
 	return suggestions
+}
+
+// addGeneralExperts adds general experts based on core flag or trigger matching
+func addGeneralExperts(experts []expert.Expert, suggestions *[]ExpertSuggestion, seen map[string]bool, patterns map[string]bool, coreOnly bool) {
+	for _, e := range experts {
+		if len(*suggestions) >= maxTotal {
+			break
+		}
+		if seen[e.ID] {
+			continue
+		}
+
+		shouldAdd := false
+		if coreOnly {
+			shouldAdd = e.Core
+		} else {
+			// Check if any trigger matches detected patterns
+			for _, trigger := range e.Triggers {
+				if patterns[trigger] {
+					shouldAdd = true
+					break
+				}
+			}
+		}
+
+		if shouldAdd {
+			seen[e.ID] = true
+			*suggestions = append(*suggestions, ExpertSuggestion{Expert: e})
+		}
+	}
+}
+
+// buildPatternSet creates a set of detected patterns for trigger matching
+func buildPatternSet(d *detect.Detection) map[string]bool {
+	patterns := make(map[string]bool)
+
+	// Testing
+	if len(d.Testing) > 0 {
+		patterns["testing"] = true
+	}
+
+	// CI/CD and Docker
+	for _, p := range d.Patterns {
+		switch p {
+		case "GitHub Actions":
+			patterns["ci-cd"] = true
+		case "Docker":
+			patterns["docker"] = true
+		case "Monorepo":
+			patterns["monorepo"] = true
+		}
+	}
+
+	return patterns
+}
+
+// hasFramework checks if a framework is detected
+func hasFramework(d *detect.Detection, name string) bool {
+	for _, fw := range d.Frameworks {
+		if fw.Name == name {
+			return true
+		}
+	}
+	return false
 }
