@@ -25,7 +25,9 @@ Your AI now has an expert council. Try `/council`, `/council-add`, or `/council-
 
 Already in Claude Code or another AI assistant? Just say:
 
-> "Grab https://raw.githubusercontent.com/luuuc/council-cli/main/AGENT-INSTALL.md and get me set up"
+```
+Grab https://raw.githubusercontent.com/luuuc/council-cli/main/AGENT-INSTALL.md and get me set up
+```
 
 Your AI will install council-cli, detect your stack, and set up experts for you.
 
