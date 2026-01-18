@@ -2,6 +2,7 @@ package expert
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -68,6 +69,37 @@ type ExpertSuggestions struct {
 type ListResult struct {
 	Experts  []*Expert
 	Warnings []string
+}
+
+// ExpertJSON is the JSON representation of an expert
+type ExpertJSON struct {
+	ID         string   `json:"id"`
+	Name       string   `json:"name"`
+	Focus      string   `json:"focus"`
+	Philosophy string   `json:"philosophy,omitempty"`
+	Principles []string `json:"principles,omitempty"`
+	RedFlags   []string `json:"red_flags,omitempty"`
+}
+
+// ToJSON converts an expert to its JSON representation
+func (e *Expert) ToJSON() ExpertJSON {
+	return ExpertJSON{
+		ID:         e.ID,
+		Name:       e.Name,
+		Focus:      e.Focus,
+		Philosophy: e.Philosophy,
+		Principles: e.Principles,
+		RedFlags:   e.RedFlags,
+	}
+}
+
+// MarshalExpertsJSON marshals a list of experts to JSON
+func MarshalExpertsJSON(experts []*Expert) ([]byte, error) {
+	jsonExperts := make([]ExpertJSON, 0, len(experts))
+	for _, e := range experts {
+		jsonExperts = append(jsonExperts, e.ToJSON())
+	}
+	return json.MarshalIndent(jsonExperts, "", "  ")
 }
 
 // Path returns the file path for this expert

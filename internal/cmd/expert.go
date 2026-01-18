@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -25,16 +24,6 @@ func init() {
 	_ = addCmd.MarkFlagRequired("focus")
 }
 
-// ExpertJSON represents an expert in JSON output format
-type ExpertJSON struct {
-	ID         string   `json:"id"`
-	Name       string   `json:"name"`
-	Focus      string   `json:"focus"`
-	Philosophy string   `json:"philosophy,omitempty"`
-	Principles []string `json:"principles,omitempty"`
-	RedFlags   []string `json:"red_flags,omitempty"`
-}
-
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all council members",
@@ -51,18 +40,7 @@ var listCmd = &cobra.Command{
 
 		// JSON output mode
 		if listJSON {
-			experts := make([]ExpertJSON, 0, len(result.Experts))
-			for _, e := range result.Experts {
-				experts = append(experts, ExpertJSON{
-					ID:         e.ID,
-					Name:       e.Name,
-					Focus:      e.Focus,
-					Philosophy: e.Philosophy,
-					Principles: e.Principles,
-					RedFlags:   e.RedFlags,
-				})
-			}
-			data, err := json.MarshalIndent(experts, "", "  ")
+			data, err := expert.MarshalExpertsJSON(result.Experts)
 			if err != nil {
 				return fmt.Errorf("failed to marshal JSON: %w", err)
 			}

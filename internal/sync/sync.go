@@ -29,13 +29,36 @@ var councilRemoveCommand string
 // Pre-compiled template for council command generation
 var councilCommandTemplate = template.Must(template.New("council").Parse(councilCommandTemplateStr))
 
-// allCommands defines all available slash commands and their templates
-// Co-located here so adding a new command requires updating one place
-var allCommands = map[string]string{
-	"council":        "", // Uses councilCommandTemplate (dynamic, needs experts)
-	"council-add":    councilAddCommand,
-	"council-detect": councilDetectCommand,
-	"council-remove": councilRemoveCommand,
+// Command defines a slash command with its template and metadata
+type Command struct {
+	Template    string // Embedded template content
+	Description string // OpenCode description
+}
+
+// commands is the single source of truth for all slash commands
+// Adding a new command only requires adding an entry here
+var commands = map[string]Command{
+	"council-add": {
+		Template:    councilAddCommand,
+		Description: "Add expert to council with AI-generated content",
+	},
+	"council-detect": {
+		Template:    councilDetectCommand,
+		Description: "Detect stack and suggest experts",
+	},
+	"council-remove": {
+		Template:    councilRemoveCommand,
+		Description: "Remove expert from council",
+	},
+}
+
+// allCommandNames returns all command names for cleanup operations
+func allCommandNames() []string {
+	names := []string{"council"} // council is special (dynamic)
+	for name := range commands {
+		names = append(names, name)
+	}
+	return names
 }
 
 // Options configures sync behavior
@@ -189,7 +212,7 @@ func syncClaude(experts []*expert.Expert, cfg *config.Config, opts Options) erro
 		}
 	}
 
-	// Create /council command if configured
+	// Create /council command if configured (special: needs experts for dynamic content)
 	if cfg.Council.HasCommand("council") {
 		path := filepath.Join(commandsDir, "council.md")
 		if err := writeFile(path, generateCouncilCommand(experts), opts.DryRun); err != nil {
@@ -197,36 +220,22 @@ func syncClaude(experts []*expert.Expert, cfg *config.Config, opts Options) erro
 		}
 	}
 
-	// Create /council-add command if configured
-	if cfg.Council.HasCommand("council-add") {
-		path := filepath.Join(commandsDir, "council-add.md")
-		if err := writeFile(path, councilAddCommand, opts.DryRun); err != nil {
-			return err
-		}
-	}
-
-	// Create /council-detect command if configured
-	if cfg.Council.HasCommand("council-detect") {
-		path := filepath.Join(commandsDir, "council-detect.md")
-		if err := writeFile(path, councilDetectCommand, opts.DryRun); err != nil {
-			return err
-		}
-	}
-
-	// Create /council-remove command if configured
-	if cfg.Council.HasCommand("council-remove") {
-		path := filepath.Join(commandsDir, "council-remove.md")
-		if err := writeFile(path, councilRemoveCommand, opts.DryRun); err != nil {
-			return err
+	// Create other commands from registry
+	for name, cmd := range commands {
+		if cfg.Council.HasCommand(name) {
+			path := filepath.Join(commandsDir, name+".md")
+			if err := writeFile(path, cmd.Template, opts.DryRun); err != nil {
+				return err
+			}
 		}
 	}
 
 	// Clean up stale files if requested
 	if opts.Clean {
 		// Remove stale command files
-		for cmd := range allCommands {
-			if !cfg.Council.HasCommand(cmd) {
-				path := filepath.Join(commandsDir, cmd+".md")
+		for _, name := range allCommandNames() {
+			if !cfg.Council.HasCommand(name) {
+				path := filepath.Join(commandsDir, name+".md")
 				if err := removeFile(path, opts.DryRun); err != nil {
 					return err
 				}
@@ -322,37 +331,26 @@ func syncOpenCode(experts []*expert.Expert, cfg *config.Config, opts Options) er
 		}
 	}
 
-	// Create /council-add command if configured
-	if cfg.Council.HasCommand("council-add") {
-		path := filepath.Join(agentDir, "council-add.md")
-		if err := writeFile(path, generateOpenCodeCommand("Add expert to council with AI-generated content", councilAddCommand), opts.DryRun); err != nil {
-			return err
-		}
-	}
-
-	// Create /council-detect command if configured
-	if cfg.Council.HasCommand("council-detect") {
-		path := filepath.Join(agentDir, "council-detect.md")
-		if err := writeFile(path, generateOpenCodeCommand("Detect stack and suggest experts", councilDetectCommand), opts.DryRun); err != nil {
-			return err
-		}
-	}
-
-	// Create /council-remove command if configured
-	if cfg.Council.HasCommand("council-remove") {
-		path := filepath.Join(agentDir, "council-remove.md")
-		if err := writeFile(path, generateOpenCodeCommand("Remove expert from council", councilRemoveCommand), opts.DryRun); err != nil {
-			return err
+	// Create commands from registry
+	for name, cmd := range commands {
+		if cfg.Council.HasCommand(name) {
+			path := filepath.Join(agentDir, name+".md")
+			if err := writeFile(path, generateOpenCodeCommand(cmd.Description, cmd.Template), opts.DryRun); err != nil {
+				return err
+			}
 		}
 	}
 
 	// Clean up stale files if requested
 	if opts.Clean {
-		// Remove stale command files (OpenCode supports council-add, council-detect, council-remove)
-		openCodeCommands := []string{"council-add", "council-detect", "council-remove"}
-		for _, cmd := range openCodeCommands {
-			if !cfg.Council.HasCommand(cmd) {
-				path := filepath.Join(agentDir, cmd+".md")
+		// Remove stale command files
+		var cmdNames []string
+		for name := range commands {
+			cmdNames = append(cmdNames, name)
+		}
+		for _, name := range cmdNames {
+			if !cfg.Council.HasCommand(name) {
+				path := filepath.Join(agentDir, name+".md")
 				if err := removeFile(path, opts.DryRun); err != nil {
 					return err
 				}
@@ -360,7 +358,7 @@ func syncOpenCode(experts []*expert.Expert, cfg *config.Config, opts Options) er
 		}
 
 		// Remove stale agent files
-		if err := cleanStaleAgentsOpenCode(agentDir, experts, openCodeCommands, opts.DryRun); err != nil {
+		if err := cleanStaleAgentsOpenCode(agentDir, experts, cmdNames, opts.DryRun); err != nil {
 			return err
 		}
 	}
