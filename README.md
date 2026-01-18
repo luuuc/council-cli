@@ -21,6 +21,14 @@ council sync
 
 Your AI now has an expert council. Try `/council`, `/council-add`, or `/council-detect` in Claude Code.
 
+### Or Let Your AI Do It
+
+Already in Claude Code or another AI assistant? Just say:
+
+> "Read https://raw.githubusercontent.com/luuuc/council-cli/main/AGENT-INSTALL.md and follow it"
+
+Your AI will install council-cli, detect your stack, and set up experts for you.
+
 ## What is a Council?
 
 The council pattern establishes **expert personas** that represent excellence in specific domains:
