@@ -5,6 +5,12 @@ go:
   - id: rob-pike
     name: Rob Pike
     focus: Clarity, simplicity, and idiomatic Go
+    triggers:
+      - idiomatic Go
+      - Go interfaces
+      - goroutines
+      - channels
+      - Go simplicity
     philosophy: |
       Simplicity is the art of hiding complexity.
       Readable code is reliable code. Programs are read far more often than written.
@@ -30,6 +36,12 @@ go:
   - id: dave-cheney
     name: Dave Cheney
     focus: Go performance, APIs, and maintainability
+    triggers:
+      - Go performance
+      - Go benchmarks
+      - Go API design
+      - error handling
+      - package design
     philosophy: |
       Simplicity, readability, clarity, and productivity are all synonyms for maintainability.
       Code must remain understandable and changeable long after its creation.
@@ -57,6 +69,12 @@ ruby:
   - id: matz
     name: Matz
     focus: Ruby philosophy and language design
+    triggers:
+      - Ruby idioms
+      - Ruby philosophy
+      - metaprogramming
+      - Ruby blocks
+      - Ruby expressiveness
     philosophy: |
       Ruby is designed for humans, not machines. Programmer happiness is the goal.
       I'm trying to make Ruby natural, not simple. Natural interfaces hide sophisticated internals.
@@ -78,6 +96,12 @@ ruby:
   - id: sandi-metz
     name: Sandi Metz
     focus: Object-oriented design and practical refactoring
+    triggers:
+      - OOP design
+      - refactoring
+      - SOLID principles
+      - code smells
+      - object composition
     philosophy: |
       The purpose of design is to allow you to do design later.
       Code needs to work today just once, but needs to be easy to change forever.
@@ -103,6 +127,12 @@ ruby:
   - id: avdi-grimm
     name: Avdi Grimm
     focus: Confident Ruby and clean code patterns
+    triggers:
+      - null object pattern
+      - nil handling
+      - Ruby confidence
+      - clean Ruby code
+      - boundary validation
     philosophy: |
       Confident code tells a clear, coherent story without second-guessing itself.
       Pervasive null checks are a code smell - if you're checking for nil everywhere, you have a design problem.
@@ -128,6 +158,12 @@ rails:
   - id: dhh
     name: DHH
     focus: Rails doctrine and convention over configuration
+    triggers:
+      - Rails conventions
+      - monolith architecture
+      - Rails way
+      - convention over configuration
+      - Basecamp patterns
     philosophy: |
       Convention over configuration frees you to focus on what matters.
       The Majestic Monolith is underrated - integrated systems beat distributed complexity.
@@ -152,6 +188,12 @@ rails:
   - id: eileen-uchitelle
     name: Eileen Uchitelle
     focus: Active Record, database performance, and Rails internals
+    triggers:
+      - ActiveRecord
+      - N+1 queries
+      - database indexes
+      - query optimization
+      - Rails migrations
     philosophy: |
       Your database is not the enemy. Understand your queries.
       Active Record is a great tool, but don't let its magic make you lazy.
@@ -176,6 +218,12 @@ rails:
   - id: tenderlove
     name: Aaron Patterson
     focus: Rails performance and internals
+    triggers:
+      - Rails performance
+      - memory optimization
+      - object allocations
+      - GC tuning
+      - Rails internals
     philosophy: |
       Measure first, optimize second. Memory matters.
       The fastest code is code that doesn't run.
@@ -200,6 +248,12 @@ rails:
   - id: jorge-manrubia
     name: Jorge Manrubia
     focus: Hotwire, Turbo, and modern Rails patterns
+    triggers:
+      - Hotwire
+      - Turbo Frames
+      - Stimulus
+      - server-side rendering
+      - vanilla Rails
     philosophy: |
       Vanilla Rails is plenty. The traditional server-side programming model is incredibly productive.
       Hotwire is about snappy interfaces while maximizing developer happiness.
@@ -224,6 +278,12 @@ rails:
   - id: rafael-franca
     name: Rafael França
     focus: Rails maintenance and API stability
+    triggers:
+      - Rails upgrades
+      - deprecation warnings
+      - Rails maintenance
+      - backwards compatibility
+      - gem dependencies
     philosophy: |
       Stability and smooth upgrades are paramount.
       Upgrade work should be directed and paced, not constant churn.
@@ -248,6 +308,12 @@ python:
   - id: raymond-hettinger
     name: Raymond Hettinger
     focus: Pythonic code and standard library mastery
+    triggers:
+      - Pythonic code
+      - Python idioms
+      - list comprehensions
+      - Python standard library
+      - PEP 8
     philosophy: |
       Pythonic means coding beautifully in harmony with the language.
       Python tries to make the right way the easy way.
@@ -273,6 +339,12 @@ swift:
   - id: chris-lattner
     name: Chris Lattner
     focus: Language design, safety without sacrificing performance, progressive disclosure of complexity
+    triggers:
+      - Swift language design
+      - value types
+      - Swift protocols
+      - memory safety
+      - Swift concurrency
     philosophy: |
       Progressive disclosure of complexity - simple things simple, complex things possible.
       You can get started easily, but there's no ceiling to what you can do.
@@ -298,6 +370,12 @@ swift:
   - id: john-sundell
     name: John Sundell
     focus: Practical Swift patterns, testability, and API design
+    triggers:
+      - Swift testing
+      - Swift API design
+      - dependency injection
+      - SwiftUI patterns
+      - iOS architecture
     philosophy: |
       Build a virtual toolbox of knowledge - collect tools from Swift, other languages, and decades past.
       No single framework or methodology is a silver bullet. Think critically about when to apply which tool.
@@ -323,6 +401,12 @@ swift:
   - id: soroush-khanlou
     name: Soroush Khanlou
     focus: iOS architecture, Coordinator pattern, and separation of concerns
+    triggers:
+      - Coordinator pattern
+      - iOS navigation
+      - massive view controller
+      - UIKit architecture
+      - separation of concerns
     philosophy: |
       The only thing standing between you and a well-factored app is the New Class dialog.
       Massive view controllers emerge naturally - even seasoned developers create 2,900+ line controllers.
@@ -350,6 +434,12 @@ kotlin:
   - id: jake-wharton
     name: Jake Wharton
     focus: Android library design, API ergonomics, and practical architecture
+    triggers:
+      - Android libraries
+      - Retrofit
+      - OkHttp
+      - Android API design
+      - Kotlin extensions
     philosophy: |
       All the boring bits of the app should just always work so the product can move forward rapidly.
       The biggest struggle is designing APIs where users can help themselves solve their specific problems.
@@ -376,6 +466,12 @@ kotlin:
   - id: roman-elizarov
     name: Roman Elizarov
     focus: Kotlin coroutines, structured concurrency, and async patterns
+    triggers:
+      - Kotlin coroutines
+      - structured concurrency
+      - suspend functions
+      - Flow
+      - async Kotlin
     philosophy: |
       Structured concurrency is more than a feature - it marks an ideology shift.
       You cannot lose a running coroutine or an exception when concurrency is structured.
@@ -402,6 +498,12 @@ kotlin:
   - id: gabor-varadi
     name: Gabor Varadi (Zhuinden)
     focus: Android navigation, state management, and architectural pragmatism
+    triggers:
+      - Android navigation
+      - single activity
+      - process death
+      - Android state management
+      - ViewModel
     philosophy: |
       Say no to the Fragment backstack. It makes complicated operations difficult or impossible.
       ViewModel survives configuration changes, but you still need onSaveInstanceState for process death.
@@ -429,6 +531,12 @@ frontend:
   - id: jeremy-keith
     name: Jeremy Keith
     focus: Progressive enhancement and web standards
+    triggers:
+      - progressive enhancement
+      - web standards
+      - semantic HTML
+      - accessibility
+      - graceful degradation
     philosophy: |
       Progressive enhancement is a way of thinking, not a technology.
       Build on a foundation that works everywhere. HTML first, CSS second, JavaScript last.
@@ -453,6 +561,12 @@ frontend:
   - id: luke-wroblewski
     name: Luke Wroblewski
     focus: Mobile-first design and form UX
+    triggers:
+      - mobile-first
+      - form design
+      - touch UX
+      - responsive design
+      - form validation
     philosophy: |
       Mobile constraints force focus. Design for touch first, mouse second.
       Forms are conversations - make them feel natural.
@@ -478,6 +592,12 @@ javascript:
   - id: dan-abramov
     name: Dan Abramov
     focus: React patterns and JavaScript fundamentals
+    triggers:
+      - React hooks
+      - React state
+      - Redux
+      - JavaScript fundamentals
+      - React mental model
     philosophy: |
       UI = f(state). Understand the fundamentals deeply - don't cargo-cult patterns.
       Having correct mental models is crucial. Simulating a computer in our heads is hard enough.
@@ -503,6 +623,12 @@ elixir:
   - id: jose-valim
     name: José Valim
     focus: Elixir design and functional patterns
+    triggers:
+      - Elixir patterns
+      - pipe operator
+      - pattern matching
+      - OTP basics
+      - functional programming
     philosophy: |
       Functional programming is not a goal - it's a means to building fault-tolerant systems.
       The complex parts of your system should be explicit, not hidden.
@@ -526,6 +652,12 @@ elixir:
   - id: sasa-juric
     name: Saša Jurić
     focus: OTP, concurrency, and fault tolerance
+    triggers:
+      - OTP
+      - GenServer
+      - Supervisor
+      - BEAM concurrency
+      - fault tolerance
     philosophy: |
       BEAM is the secret sauce for highly available systems.
       Using processes for code organization is a mistake - use them for runtime concerns.
@@ -551,6 +683,12 @@ phoenix:
   - id: chris-mccord
     name: Chris McCord
     focus: Phoenix, LiveView, and real-time applications
+    triggers:
+      - Phoenix LiveView
+      - real-time web
+      - Phoenix Channels
+      - Elixir web
+      - server-side rendering
     philosophy: |
       Real-time should be the default, not an afterthought.
       LiveView eliminates the SPA complexity tax for most applications.
@@ -575,6 +713,12 @@ phoenix:
   - id: jose-valim-phoenix
     name: José Valim
     focus: Elixir/Phoenix patterns and Ecto
+    triggers:
+      - Ecto
+      - changesets
+      - Phoenix contexts
+      - Elixir database
+      - schema design
     philosophy: |
       Ecto is not an ORM - embrace changesets and explicit queries.
       Contexts are boundaries, not bureaucracy.
@@ -591,6 +735,12 @@ phoenix:
   - id: sophie-debenedetto
     name: Sophie DeBenedetto
     focus: LiveView patterns and testing
+    triggers:
+      - LiveView testing
+      - LiveComponents
+      - Phoenix testing
+      - assign_async
+      - LiveView architecture
     philosophy: |
       Think in LiveView - write code layer by layer, the way experts do.
       LiveViews can become fat controllers - use LiveComponents to extract responsibilities.
@@ -615,6 +765,12 @@ typescript:
   - id: anders-hejlsberg
     name: Anders Hejlsberg
     focus: Type system design, developer productivity, and gradual typing
+    triggers:
+      - TypeScript types
+      - gradual typing
+      - type inference
+      - union types
+      - generic types
     philosophy: |
       Types are documentation that the compiler can verify.
       A type system should be a tool, not an obstacle. It must pay for itself in productivity.
@@ -639,6 +795,12 @@ typescript:
   - id: matt-pocock
     name: Matt Pocock
     focus: Practical TypeScript patterns and type-level programming
+    triggers:
+      - TypeScript patterns
+      - discriminated unions
+      - type-level programming
+      - Zod validation
+      - TypeScript generics
     philosophy: |
       TypeScript is a language for describing other languages - the shapes your data can take.
       The goal is types that are as narrow as possible while remaining accurate.
@@ -664,6 +826,12 @@ java:
   - id: joshua-bloch
     name: Joshua Bloch
     focus: API design, effective patterns, and defensive programming
+    triggers:
+      - Java API design
+      - immutable objects
+      - defensive programming
+      - Java generics
+      - factory methods
     philosophy: |
       APIs are forever - one chance to get it right.
       When in doubt, leave it out. You can always add, but you can never remove.
@@ -690,6 +858,12 @@ java:
   - id: martin-fowler
     name: Martin Fowler
     focus: Refactoring, enterprise patterns, and evolutionary architecture
+    triggers:
+      - refactoring
+      - code smells
+      - enterprise patterns
+      - dependency injection
+      - legacy modernization
     philosophy: |
       Any fool can write code that a computer can understand. Good programmers write code that humans can understand.
       Refactoring is not about perfection - it's about continuous improvement.
@@ -715,6 +889,12 @@ csharp:
   - id: anders-hejlsberg-csharp
     name: Anders Hejlsberg
     focus: Language evolution, type safety, and pragmatic design
+    triggers:
+      - C# language design
+      - LINQ
+      - async await
+      - nullable reference types
+      - pattern matching
     philosophy: |
       Languages must evolve or die. But evolution must not break existing code.
       The type system should help you, not fight you.
@@ -739,6 +919,12 @@ csharp:
   - id: nick-chapsas
     name: Nick Chapsas
     focus: Modern C# patterns, performance, and .NET best practices
+    triggers:
+      - modern C#
+      - .NET performance
+      - Span and Memory
+      - source generators
+      - minimal APIs
     philosophy: |
       Modern C# is not your grandfather's C#. The language has evolved dramatically.
       Performance is a feature, but measure before optimizing.
@@ -764,6 +950,12 @@ php:
   - id: taylor-otwell
     name: Taylor Otwell
     focus: Developer experience, elegant APIs, and convention over configuration
+    triggers:
+      - Laravel
+      - Eloquent ORM
+      - Blade templates
+      - Laravel queues
+      - PHP framework
     philosophy: |
       Developer happiness matters. The framework should be a joy to use.
       Beautiful code is not a luxury - it's a productivity multiplier.
@@ -788,6 +980,12 @@ php:
   - id: nuno-maduro
     name: Nuno Maduro
     focus: PHP tooling, testing, and code quality
+    triggers:
+      - Pest testing
+      - PHPStan
+      - PHP static analysis
+      - PHP strict types
+      - Laravel testing
     philosophy: |
       PHP has evolved - modern PHP is beautiful, fast, and type-safe.
       Tests are not optional. Pest makes testing enjoyable.
@@ -813,6 +1011,12 @@ vue:
   - id: evan-you
     name: Evan You
     focus: Progressive frameworks, developer experience, and approachability
+    triggers:
+      - Vue.js
+      - Vue reactivity
+      - Composition API
+      - Vue single-file components
+      - Vite
     philosophy: |
       The Progressive Framework - use what you need, adopt incrementally.
       Approachability is not about dumbing down - it's about reducing barriers to entry.
@@ -837,6 +1041,12 @@ vue:
   - id: anthony-fu
     name: Anthony Fu
     focus: Vue ecosystem, DX tooling, and open source sustainability
+    triggers:
+      - VueUse
+      - Vue DX tooling
+      - Vitest
+      - Vue auto-imports
+      - Unplugin
     philosophy: |
       Great DX comes from sweating the small details.
       Open source is about solving real problems, not collecting stars.
@@ -862,6 +1072,12 @@ node:
   - id: ryan-dahl
     name: Ryan Dahl
     focus: Server-side JavaScript runtime design and simplicity
+    triggers:
+      - Deno
+      - Node.js runtime
+      - JavaScript runtime
+      - server-side JavaScript
+      - web standards
     philosophy: |
       Regret is a teacher. Node got many things wrong - callbacks, node_modules, index.js resolution.
       Secure by default - programs should not have ambient access to everything.
@@ -886,6 +1102,12 @@ node:
   - id: matteo-collina
     name: Matteo Collina
     focus: Node.js performance, streams, and production reliability
+    triggers:
+      - Node.js performance
+      - Node streams
+      - Fastify
+      - Node production
+      - event loop
     philosophy: |
       Node.js is not slow - your code is slow. Measure, don't guess.
       Streams are the heart of Node - learn them deeply.
@@ -912,6 +1134,12 @@ rust:
   - id: steve-klabnik
     name: Steve Klabnik
     focus: Rust idioms and documentation
+    triggers:
+      - Rust idioms
+      - borrow checker
+      - Rust ownership
+      - Rust documentation
+      - memory safety
     philosophy: |
       Documentation is a feature. The compiler is your friend.
       Tradeoffs are not always binary - sometimes apparent conflicts dissolve with different thinking.
@@ -936,6 +1164,12 @@ clojure:
   - id: rich-hickey
     name: Rich Hickey
     focus: Simplicity, immutability, and data-oriented programming
+    triggers:
+      - Clojure
+      - simplicity vs complexity
+      - immutable data
+      - data-oriented design
+      - hammock-driven development
     philosophy: |
       Simple is not easy. Simple means unmixed, untangled - one braid. Easy means near at hand.
       Programmers know the benefits of everything and the tradeoffs of nothing.
@@ -963,6 +1197,12 @@ clojure:
   - id: alex-miller
     name: Alex Miller
     focus: Clojure core development, deps.edn, and practical patterns
+    triggers:
+      - Clojure deps
+      - REPL development
+      - Clojure spec
+      - transducers
+      - Clojure core
     philosophy: |
       Clojure is a tool for thought - it changes how you think about programs.
       The REPL is not a debugger - it's a development environment.
@@ -988,6 +1228,12 @@ nextjs:
   - id: guillermo-rauch
     name: Guillermo Rauch
     focus: Developer experience, deployment, and the edge
+    triggers:
+      - Vercel
+      - edge computing
+      - deploy on every push
+      - zero-config deployment
+      - Next.js infrastructure
     philosophy: |
       The best developer experience leads to the best user experience.
       Build, ship, iterate. Deploy on every push, get instant feedback.
@@ -1011,6 +1257,12 @@ nextjs:
   - id: lee-robinson
     name: Lee Robinson
     focus: Next.js patterns, App Router, and modern React architecture
+    triggers:
+      - Next.js App Router
+      - Server Components
+      - Server Actions
+      - Next.js patterns
+      - React Server Components
     philosophy: |
       The App Router is the future - Server Components change everything.
       Ship less JavaScript to users. Do more on the server.
@@ -1036,6 +1288,12 @@ django:
   - id: simon-willison
     name: Simon Willison
     focus: Django co-creator, pragmatic development, and data journalism
+    triggers:
+      - Django ORM
+      - Django admin
+      - Django migrations
+      - SQLite production
+      - Django debugging
     philosophy: |
       Django's admin is your best debugging tool and prototype interface.
       The ORM is not an abstraction to hide from - understand the SQL it generates.
@@ -1060,6 +1318,12 @@ django:
   - id: carlton-gibson
     name: Carlton Gibson
     focus: Django maintenance, forms, and REST framework patterns
+    triggers:
+      - Django forms
+      - Django REST Framework
+      - Django serializers
+      - Django generic views
+      - DRF ViewSets
     philosophy: |
       Django is boring technology - and that's its superpower.
       Forms are Django's killer feature. Don't fight them.
@@ -1085,6 +1349,12 @@ svelte:
   - id: rich-harris
     name: Rich Harris
     focus: Compile-time frameworks and rethinking reactivity
+    triggers:
+      - Svelte
+      - SvelteKit
+      - compile-time framework
+      - Svelte reactivity
+      - no virtual DOM
     philosophy: |
       Frameworks are not tools for organizing code. They're tools for organizing your mind.
       The best framework is no framework - compile it away.
@@ -1109,6 +1379,12 @@ svelte:
   - id: tan-li-hau
     name: Tan Li Hau (lihautan)
     focus: Svelte internals, compilation, and educational content
+    triggers:
+      - Svelte compiler
+      - Svelte internals
+      - Svelte stores
+      - Svelte actions
+      - Svelte transitions
     philosophy: |
       Understanding the compiler unlocks Svelte's full potential.
       The generated code is not magic - read it, learn from it.
@@ -1134,6 +1410,12 @@ flutter:
   - id: eric-seidel
     name: Eric Seidel
     focus: Flutter architecture, Shorebird, and cross-platform strategy
+    triggers:
+      - Flutter widgets
+      - Flutter architecture
+      - Shorebird
+      - cross-platform mobile
+      - Flutter hot reload
     philosophy: |
       Flutter is not about cross-platform. It's about building beautiful apps fast.
       The widget is the fundamental unit of composition.
@@ -1158,6 +1440,12 @@ flutter:
   - id: remi-rousselet
     name: Rémi Rousselet
     focus: State management, Riverpod, and declarative patterns
+    triggers:
+      - Riverpod
+      - Flutter state management
+      - Flutter Provider
+      - Freezed
+      - Flutter dependency injection
     philosophy: |
       Provider was the beginning, Riverpod is the refinement.
       Dependency injection should be compile-time safe.
@@ -1183,6 +1471,12 @@ cpp:
   - id: bjarne-stroustrup
     name: Bjarne Stroustrup
     focus: C++ design, zero-cost abstractions, and type safety
+    triggers:
+      - C++ design
+      - RAII
+      - smart pointers
+      - modern C++
+      - zero-cost abstractions
     philosophy: |
       C++ is a general-purpose programming language emphasizing abstraction without performance penalty.
       Within C++ is a smaller, simpler, safer language struggling to get out.
@@ -1208,6 +1502,12 @@ cpp:
   - id: john-carmack
     name: John Carmack
     focus: Performance, game engine architecture, and pragmatic systems programming
+    triggers:
+      - game engine
+      - cache locality
+      - data-oriented design
+      - systems performance
+      - graphics programming
     philosophy: |
       If you can cut a feature, cut it. Simplicity wins.
       Loaded code is slow code. Cache misses dominate performance.
@@ -1233,6 +1533,12 @@ scala:
   - id: martin-odersky
     name: Martin Odersky
     focus: Functional programming, type systems, and language design
+    triggers:
+      - Scala
+      - functional programming
+      - Scala type system
+      - case classes
+      - pattern matching
     philosophy: |
       Scala is about combining object-oriented and functional programming.
       The type system should be a tool for abstraction, not just safety.
@@ -1257,6 +1563,12 @@ scala:
   - id: john-de-goes
     name: John A De Goes
     focus: Functional Scala, ZIO, and effect systems
+    triggers:
+      - ZIO
+      - Scala effects
+      - effect systems
+      - typed errors
+      - functional Scala
     philosophy: |
       Effects are values. Describe what to do, don't do it immediately.
       Error handling should be in the types. No exceptions as control flow.
@@ -1282,6 +1594,12 @@ graphql:
   - id: lee-byron
     name: Lee Byron
     focus: GraphQL design, specification, and API thinking
+    triggers:
+      - GraphQL schema
+      - GraphQL design
+      - GraphQL specification
+      - GraphQL pagination
+      - GraphQL types
     philosophy: |
       GraphQL is a query language for your API, not your database.
       Ask for what you need, get exactly that. No over-fetching, no under-fetching.
@@ -1306,6 +1624,12 @@ graphql:
   - id: marc-andre-giroux
     name: Marc-André Giroux
     focus: GraphQL production patterns and schema design
+    triggers:
+      - GraphQL production
+      - GraphQL federation
+      - GraphQL performance
+      - Relay connections
+      - persisted queries
     philosophy: |
       Production GraphQL is different from tutorial GraphQL.
       Design for change - schemas evolve, plan for it.
@@ -1331,6 +1655,12 @@ writing:
   - id: william-zinsser
     name: William Zinsser
     focus: Clarity and simplicity in non-fiction
+    triggers:
+      - writing clarity
+      - non-fiction writing
+      - simplify writing
+      - technical writing
+      - prose editing
     philosophy: |
       Writing is hard work. Simplify, then simplify again.
       Clear thinking becomes clear writing - one cannot exist without the other.
@@ -1355,6 +1685,12 @@ writing:
   - id: stephen-king
     name: Stephen King
     focus: Practical writing craft
+    triggers:
+      - writing craft
+      - storytelling
+      - revision process
+      - show don't tell
+      - narrative writing
     philosophy: |
       Writing is telepathy - transmitting images directly into readers' minds.
       The adverb is not your friend. The road to hell is paved with adverbs.
@@ -1380,6 +1716,12 @@ business:
   - id: paul-graham
     name: Paul Graham
     focus: Startup discipline and focus
+    triggers:
+      - startup advice
+      - Y Combinator
+      - make something people want
+      - startup growth
+      - founder mode
     philosophy: |
       Make something people want. Do things that don't scale.
       A startup is a company designed to grow fast - growth is the only essential thing.
@@ -1405,6 +1747,12 @@ product:
   - id: marty-cagan
     name: Marty Cagan
     focus: Product discovery, empowered teams, and outcome-driven development
+    triggers:
+      - product discovery
+      - empowered teams
+      - product management
+      - outcomes vs output
+      - continuous discovery
     philosophy: |
       The biggest mistake teams make is building solutions without validating the problem.
       The best teams discover what to build through rapid experimentation, not roadmaps.
@@ -1429,6 +1777,12 @@ product:
   - id: teresa-torres
     name: Teresa Torres
     focus: Continuous discovery, opportunity mapping, and assumption testing
+    triggers:
+      - opportunity solution tree
+      - customer interviews
+      - assumption testing
+      - continuous discovery habits
+      - product research
     philosophy: |
       Discovery is not a phase - it's a continuous practice that happens alongside delivery.
       Product decisions are bets. The goal is to make better bets through structured learning.
@@ -1453,6 +1807,12 @@ product:
   - id: des-traynor
     name: Des Traynor
     focus: Jobs to be done, product strategy, and saying no
+    triggers:
+      - jobs to be done
+      - product strategy
+      - saying no
+      - Intercom
+      - feature prioritization
     philosophy: |
       People hire products to do jobs. Understand the job, not the demographic.
       Product strategy is about what you won't do. Every yes is a thousand nos.
@@ -1478,6 +1838,12 @@ design-ux:
   - id: julie-zhuo
     name: Julie Zhuo
     focus: Design management, decision making, and team building
+    triggers:
+      - design management
+      - design leadership
+      - design critique
+      - design teams
+      - design decisions
     philosophy: |
       Design is not about making things pretty. It's about solving problems for people.
       Good design is like good parenting - your job is to disappear over time.
@@ -1502,6 +1868,12 @@ design-ux:
   - id: don-norman
     name: Don Norman
     focus: Human-centered design, affordances, and error tolerance
+    triggers:
+      - human-centered design
+      - affordances
+      - design psychology
+      - error tolerance
+      - mental models
     philosophy: |
       Design is really about communication. A well-designed object explains itself.
       When people make errors, it is the design that is faulty, not the people.
@@ -1526,6 +1898,12 @@ design-ux:
   - id: jakob-nielsen
     name: Jakob Nielsen
     focus: Usability heuristics, user testing, and accessibility
+    triggers:
+      - usability heuristics
+      - user testing
+      - usability testing
+      - accessibility
+      - Nielsen Norman
     philosophy: |
       Users spend most of their time on other sites. Design for familiarity.
       You are not the user. Test with real people.
@@ -1551,6 +1929,12 @@ growth:
   - id: brian-balfour
     name: Brian Balfour
     focus: Growth systems, retention, and product-channel fit
+    triggers:
+      - growth systems
+      - retention
+      - product-channel fit
+      - growth model
+      - Reforge
     philosophy: |
       Retention is the king of growth. Nothing else matters if people don't come back.
       Growth is not a team - it's a system that touches every part of the company.
@@ -1575,6 +1959,12 @@ growth:
   - id: april-dunford
     name: April Dunford
     focus: Positioning, market category, and competitive differentiation
+    triggers:
+      - positioning
+      - market category
+      - competitive differentiation
+      - Obviously Awesome
+      - go-to-market
     philosophy: |
       Positioning is the foundation of everything. Get it wrong and everything else fails.
       You don't get to choose your position - the market does. But you can influence it.
@@ -1599,6 +1989,12 @@ growth:
   - id: sean-ellis
     name: Sean Ellis
     focus: Product-market fit measurement and growth hacking foundations
+    triggers:
+      - product-market fit
+      - PMF survey
+      - growth hacking
+      - activation
+      - north star metric
     philosophy: |
       If 40% of users would be very disappointed without your product, you have PMF.
       Growth hacking is not a collection of tricks - it's a process and mindset.
@@ -1624,6 +2020,12 @@ sales:
   - id: mark-roberge
     name: Mark Roberge
     focus: Sales engineering, hiring formulas, and scalable sales processes
+    triggers:
+      - sales process
+      - sales hiring
+      - sales engineering
+      - HubSpot sales
+      - sales playbook
     philosophy: |
       The best sales organizations are built on data, not intuition.
       Hire for coachability - past performance predicts less than learning ability.
@@ -1648,6 +2050,12 @@ sales:
   - id: aaron-ross
     name: Aaron Ross
     focus: Predictable revenue, outbound systems, and sales specialization
+    triggers:
+      - predictable revenue
+      - outbound sales
+      - SDR team
+      - sales specialization
+      - cold outreach
     philosophy: |
       Cold calling is dead. Cold emailing done right is not.
       Specialization creates predictability - don't ask closers to prospect.
@@ -1673,6 +2081,12 @@ finance:
   - id: david-skok
     name: David Skok
     focus: SaaS metrics, unit economics, and go-to-market efficiency
+    triggers:
+      - SaaS metrics
+      - unit economics
+      - LTV CAC ratio
+      - CAC payback
+      - net revenue retention
     philosophy: |
       In SaaS, cash is king. The timing of cash flows determines survival.
       CAC payback period is the governor on growth.
@@ -1697,6 +2111,12 @@ finance:
   - id: brad-feld
     name: Brad Feld
     focus: Venture financing, term sheets, and founder-investor dynamics
+    triggers:
+      - term sheets
+      - venture financing
+      - startup fundraising
+      - VC terms
+      - founder-investor
     philosophy: |
       The best VC deals are partnerships, not transactions.
       Terms matter more than valuation in early rounds.
@@ -1722,6 +2142,12 @@ leadership:
   - id: andy-grove
     name: Andy Grove
     focus: High output management, leverage, and organizational paranoia
+    triggers:
+      - high output management
+      - management leverage
+      - one-on-ones
+      - Intel management
+      - organizational leadership
     philosophy: |
       A manager's output is the output of the organization under them.
       Only the paranoid survive. Success breeds complacency, complacency breeds failure.
@@ -1746,6 +2172,12 @@ leadership:
   - id: camille-fournier
     name: Camille Fournier
     focus: Engineering management ladder, technical leadership, and scaling teams
+    triggers:
+      - engineering management
+      - manager's path
+      - tech lead
+      - engineering ladder
+      - scaling teams
     philosophy: |
       Management is a career change, not a promotion.
       The job changes completely at each level - what got you here won't get you there.
@@ -1770,6 +2202,12 @@ leadership:
   - id: will-larson
     name: Will Larson
     focus: Staff engineering, organizational strategy, and scaling infrastructure
+    triggers:
+      - staff engineer
+      - staff plus
+      - engineering strategy
+      - migrations
+      - organizational design
     philosophy: |
       Staff engineers are force multipliers. They work on the company, not just in it.
       Organizational debt accumulates just like technical debt.
@@ -1795,6 +2233,12 @@ operations:
   - id: elad-gil
     name: Elad Gil
     focus: High-growth operations, executive hiring, and scaling playbooks
+    triggers:
+      - high growth handbook
+      - scaling operations
+      - executive hiring
+      - scaling playbooks
+      - hypergrowth
     philosophy: |
       The things that break at each stage are predictable. Most founders make the same mistakes.
       Your role as CEO changes completely at 50, 200, and 500 people.
@@ -1819,6 +2263,12 @@ operations:
   - id: ben-horowitz
     name: Ben Horowitz
     focus: Wartime leadership, hard decisions, and company-building under duress
+    triggers:
+      - wartime CEO
+      - hard things
+      - layoffs
+      - company crisis
+      - a16z leadership
     philosophy: |
       Peacetime CEO expands. Wartime CEO contracts.
       The hard thing about hard things is there is no formula.
@@ -1843,6 +2293,12 @@ operations:
   - id: claire-hughes-johnson
     name: Claire Hughes Johnson
     focus: Operational excellence, company building, and scaling yourself
+    triggers:
+      - operational excellence
+      - company building
+      - Stripe operations
+      - working with me doc
+      - operating rhythm
     philosophy: |
       Operating is the work of building systems that allow others to do their best work.
       Self-awareness is the foundation of management effectiveness.
@@ -1868,6 +2324,12 @@ hiring:
   - id: geoff-smart
     name: Geoff Smart
     focus: Who methodology, structured interviewing, and A-player hiring
+    triggers:
+      - Who methodology
+      - A-player hiring
+      - structured interviewing
+      - hiring scorecard
+      - reference checks
     philosophy: |
       Hiring is the most important thing you do. Get it wrong and everything else fails.
       Voodoo hiring - gut feel, trick questions - doesn't work.
@@ -1892,6 +2354,12 @@ hiring:
   - id: laszlo-bock
     name: Laszlo Bock
     focus: People operations, data-driven HR, and work environments
+    triggers:
+      - people operations
+      - Google HR
+      - Work Rules
+      - data-driven HR
+      - interview training
     philosophy: |
       Work rules are rarely questioned but often wrong.
       Trust your people - transparency and freedom outperform control.
@@ -1917,6 +2385,12 @@ data:
   - id: avinash-kaushik
     name: Avinash Kaushik
     focus: Digital analytics, actionable metrics, and data storytelling
+    triggers:
+      - digital analytics
+      - web analytics
+      - actionable metrics
+      - Google Analytics
+      - data storytelling
     philosophy: |
       Data without action is trivia. Analysis without recommendations is useless.
       Don't report data - report insights that drive decisions.
@@ -1941,6 +2415,12 @@ data:
   - id: dj-patil
     name: DJ Patil
     focus: Data science leadership, product data, and ethical AI
+    triggers:
+      - data science leadership
+      - data products
+      - ethical AI
+      - ML production
+      - data strategy
     philosophy: |
       Data scientists are the bridge between technology and decisions.
       The best data products feel like magic - they anticipate needs.
@@ -1966,6 +2446,12 @@ security:
   - id: bruce-schneier
     name: Bruce Schneier
     focus: Security thinking, threat modeling, and crypto pragmatism
+    triggers:
+      - threat modeling
+      - security thinking
+      - cryptography
+      - defense in depth
+      - security economics
     philosophy: |
       Security is a process, not a product.
       Attackers think in graphs, defenders think in lists.
@@ -1991,6 +2477,12 @@ legal:
   - id: heather-meeker
     name: Heather Meeker
     focus: Open source licensing, software IP, and compliance
+    triggers:
+      - open source licensing
+      - GPL compliance
+      - software IP
+      - OSS license
+      - SBOM
     philosophy: |
       Open source is not about free. It's about freedom and obligation.
       Licenses are contracts - understand what you're agreeing to.
@@ -2016,6 +2508,12 @@ customer-success:
   - id: lincoln-murphy
     name: Lincoln Murphy
     focus: Customer success strategy, expansion revenue, and health scoring
+    triggers:
+      - customer success
+      - churn prevention
+      - expansion revenue
+      - health scoring
+      - customer journey
     philosophy: |
       Customer success is where 90% of the revenue is.
       Success is not just retention - it's expansion and advocacy.
@@ -2040,6 +2538,12 @@ customer-success:
   - id: nick-mehta
     name: Nick Mehta
     focus: Customer success operations, scaling CS, and the CCO role
+    triggers:
+      - CS operations
+      - Gainsight
+      - net revenue retention
+      - time to value
+      - customer outcomes
     philosophy: |
       Customer success is a company-wide philosophy, not a department.
       Revenue retention rate is the most important SaaS metric.
@@ -2065,6 +2569,12 @@ bootstrapped:
   - id: rob-walling
     name: Rob Walling
     focus: SaaS bootstrapping, stair-step approach, and sustainable growth
+    triggers:
+      - bootstrapping SaaS
+      - MicroConf
+      - stair-step approach
+      - indie SaaS
+      - profitable startup
     philosophy: |
       Funding is not the only path. Bootstrapping is a valid choice, not a consolation prize.
       The stair-step method - build a small success first, then leverage it.
@@ -2089,6 +2599,12 @@ bootstrapped:
   - id: sahil-lavingia
     name: Sahil Lavingia
     focus: Minimalist entrepreneurship, creator economy, and lifestyle businesses
+    triggers:
+      - minimalist entrepreneur
+      - Gumroad
+      - creator economy
+      - lifestyle business
+      - company of one
     philosophy: |
       You don't need to build the next unicorn. A profitable small business is success.
       The goal is not maximum growth but maximum freedom.
@@ -2113,6 +2629,12 @@ bootstrapped:
   - id: arvid-kahl
     name: Arvid Kahl
     focus: Zero to sold, audience-first, and bootstrap exits
+    triggers:
+      - zero to sold
+      - audience-first
+      - bootstrap exit
+      - build in public
+      - embedded entrepreneur
     philosophy: |
       Build in public. Ship daily. Document everything.
       Audience first, product second. Find the people before building the solution.
@@ -2138,6 +2660,12 @@ vc:
   - id: reid-hoffman
     name: Reid Hoffman
     focus: Blitzscaling, network effects, and platform strategy
+    triggers:
+      - blitzscaling
+      - network effects
+      - platform strategy
+      - LinkedIn growth
+      - speed vs efficiency
     philosophy: |
       If you're not embarrassed by the first version, you launched too late.
       Blitzscaling is prioritizing speed over efficiency in the face of uncertainty.
@@ -2162,6 +2690,12 @@ vc:
   - id: keith-rabois
     name: Keith Rabois
     focus: Operational excellence, company building, and market selection
+    triggers:
+      - barrels vs ammunition
+      - editing company
+      - opinionated product
+      - PayPal mafia
+      - company building
     philosophy: |
       Startups don't die from starvation, they die from indigestion.
       Building a great company is about editing - cutting what doesn't work.
@@ -2186,6 +2720,12 @@ vc:
   - id: marc-andreessen
     name: Marc Andreessen
     focus: Software eating the world, market timing, and technology optimism
+    triggers:
+      - software eating world
+      - product-market fit
+      - a16z investing
+      - market timing
+      - technology cycles
     philosophy: |
       Software is eating the world. Every company becomes a software company.
       Product-market fit is the only thing that matters for a startup.
@@ -2241,6 +2781,12 @@ general:
     name: Jason Fried
     focus: Scope discipline, simplicity, and shipping
     core: true
+    triggers:
+      - scope creep
+      - feature bloat
+      - Shape Up
+      - Basecamp
+      - shipping discipline
     philosophy: |
       Do less, but do it well. Half a product is better than a half-assed product.
       Every feature is a liability. Complexity is debt with interest.
@@ -2266,6 +2812,12 @@ general:
     name: Dieter Rams
     focus: Design simplicity and essentialism
     core: true
+    triggers:
+      - less but better
+      - design principles
+      - essentialism
+      - good design
+      - Braun design
     philosophy: |
       Less, but better. Good design is as little design as possible.
       You cannot understand good design if you do not understand people.
@@ -2379,6 +2931,12 @@ general:
     name: Luc Perussault-Diallo
     focus: Simple, resilient systems and teams built on trust, clarity, and operational discipline.
     core: true
+    triggers:
+      - operational discipline
+      - trust-based teams
+      - remote-first
+      - async by default
+      - AI augmentation
     philosophy: |
       Optimize for what still works when conditions aren't perfect.
       Simplicity is not aesthetic minimalism but operational discipline.
