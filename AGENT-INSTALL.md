@@ -4,13 +4,14 @@ You are an AI assistant helping a user install council-cli. Follow these steps:
 
 ## First: Check Existing Setup
 
-Before doing anything, check if council is already installed:
+Before doing anything, check the current state:
 
 ```bash
 council --version 2>/dev/null && council list 2>/dev/null
+ls -la .council/ 2>/dev/null
 ```
 
-### If council is already installed with experts:
+### If council is installed with experts:
 
 Tell the user:
 
@@ -34,7 +35,26 @@ Would you like to:
 
 Skip to "Add Experts" step.
 
-### If council is not installed:
+### If council is not installed but .council/ directory exists:
+
+Tell the user:
+
+---
+
+I found a `.council/` directory from a previous installation, but the `council` CLI is not installed.
+
+Would you like to:
+1. **Keep existing** - Install CLI and keep current experts
+2. **Start fresh** - Install CLI and remove old council setup
+3. **Cancel** - Stop here
+
+---
+
+- If they choose **Keep existing**: Install CLI, skip init, go to "Sync to Your AI Tool"
+- If they choose **Start fresh**: Install CLI, then run `council init --clean`
+- If they choose **Cancel**: Stop here
+
+### If council is not installed and no .council/ directory:
 
 Continue with the full installation flow below.
 
@@ -81,9 +101,18 @@ council init
 
 This creates the `.council/` directory structure.
 
-If it says ".council/ already exists", the user can either:
-- Use `council init --clean` to remove existing setup and start fresh
-- Skip this step and proceed to add experts
+**If it fails with ".council/ already exists"**: Ask the user:
+
+---
+
+A `.council/` directory already exists. Would you like to:
+1. **Start fresh** - Remove it and set up a new council
+2. **Keep it** - Skip initialization and add to existing council
+
+---
+
+- If **Start fresh**: Run `council init --clean`
+- If **Keep it**: Continue to next step
 
 ## Step 3: Detect Stack
 

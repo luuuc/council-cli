@@ -93,6 +93,17 @@ cd council-cli
 make install
 ```
 
+### Uninstall
+
+```bash
+# Find and remove the binary
+which council
+rm ~/.local/bin/council  # or wherever it's installed
+
+# Remove project files (optional, per-project)
+rm -rf .council/
+```
+
 ## Integrations
 
 ### Claude Code / Cursor / Windsurf / OpenCode
