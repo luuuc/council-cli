@@ -326,7 +326,7 @@ func buildPatternSet(d *detect.Detection) map[string]bool {
 		patterns["testing"] = true
 	}
 
-	// CI/CD and Docker
+	// Map detected patterns to trigger keywords
 	for _, p := range d.Patterns {
 		switch p {
 		case "GitHub Actions":
@@ -335,6 +335,27 @@ func buildPatternSet(d *detect.Detection) map[string]bool {
 			patterns["docker"] = true
 		case "Monorepo":
 			patterns["monorepo"] = true
+		case "API":
+			patterns["api"] = true
+		case "MVC":
+			patterns["mvc"] = true
+		case "Microservices":
+			patterns["microservices"] = true
+		case "Background Jobs":
+			patterns["background-jobs"] = true
+		}
+	}
+
+	// Framework-based triggers
+	for _, fw := range d.Frameworks {
+		switch fw.Name {
+		case "Rails", "Django", "Phoenix":
+			patterns["mvc"] = true
+			patterns["full-stack"] = true
+		case "Next.js", "React", "Vue":
+			patterns["frontend"] = true
+		case "Express", "Gin", "FastAPI":
+			patterns["api"] = true
 		}
 	}
 

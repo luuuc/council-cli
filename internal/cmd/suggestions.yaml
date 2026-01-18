@@ -1025,7 +1025,7 @@ nextjs:
       - Parallel routes for complex layouts
       - Static generation when possible, dynamic when necessary
     red_flags:
-      - "use client" on every component
+      - '"use client" on every component'
       - Client-side data fetching when server fetching works
       - API routes for simple form submissions
       - Ignoring caching and revalidation strategies
@@ -1092,7 +1092,7 @@ svelte:
       Rethink assumptions. Virtual DOM was an implementation detail, not a feature.
     principles:
       - Compile-time over runtime - ship less JavaScript
-      - Reactivity as assignment - $: marks reactive statements
+      - "Reactivity as assignment - $: marks reactive statements"
       - Runes in Svelte 5 for fine-grained reactivity
       - No virtual DOM - surgical DOM updates
       - Single-file components with scoped CSS by default
@@ -2378,6 +2378,7 @@ general:
   - id: luc-perussault-diallo
     name: Luc Perussault-Diallo
     focus: Simple, resilient systems and teams built on trust, clarity, and operational discipline.
+    core: true
     philosophy: |
       Optimize for what still works when conditions aren't perfect.
       Simplicity is not aesthetic minimalism but operational discipline.
