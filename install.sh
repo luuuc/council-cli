@@ -39,32 +39,42 @@ fi
 
 echo "Latest version: $VERSION"
 
-# Build download URL
-EXT=""
+# Build download URL (GoReleaser format)
+VERSION_NUM="${VERSION#v}"  # Strip leading 'v'
 if [ "$OS" = "windows" ]; then
-  EXT=".exe"
+  ARCHIVE="council-cli_${VERSION_NUM}_${OS}_${ARCH}.zip"
+else
+  ARCHIVE="council-cli_${VERSION_NUM}_${OS}_${ARCH}.tar.gz"
 fi
 
-URL="https://github.com/$REPO/releases/download/$VERSION/council-${OS}-${ARCH}${EXT}"
+URL="https://github.com/$REPO/releases/download/$VERSION/$ARCHIVE"
 
 echo "Downloading from: $URL"
 
-# Download
-TMP_FILE=$(mktemp)
-if ! curl -fsSL "$URL" -o "$TMP_FILE"; then
+# Download and extract
+TMP_DIR=$(mktemp -d)
+trap "rm -rf $TMP_DIR" EXIT
+
+if ! curl -fsSL "$URL" -o "$TMP_DIR/$ARCHIVE"; then
   echo "Download failed"
-  rm -f "$TMP_FILE"
   exit 1
 fi
 
+cd "$TMP_DIR"
+if [ "$OS" = "windows" ]; then
+  unzip -q "$ARCHIVE"
+else
+  tar -xzf "$ARCHIVE"
+fi
+
 # Install
-chmod +x "$TMP_FILE"
+chmod +x "$BINARY_NAME"
 
 if [ -w "$INSTALL_DIR" ]; then
-  mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME"
+  mv "$BINARY_NAME" "$INSTALL_DIR/$BINARY_NAME"
 else
   echo "Installing to $INSTALL_DIR (requires sudo)..."
-  sudo mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME"
+  sudo mv "$BINARY_NAME" "$INSTALL_DIR/$BINARY_NAME"
 fi
 
 echo ""
@@ -72,5 +82,5 @@ echo "council $VERSION installed to $INSTALL_DIR/$BINARY_NAME"
 echo ""
 echo "Get started:"
 echo "  council init           Initialize council directory"
-echo "  council setup --apply  Create council with AI assistance"
+echo "  council setup -i       Interactive expert selection"
 echo "  council sync           Sync to AI tool configs"
