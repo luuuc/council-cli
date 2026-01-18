@@ -2,8 +2,19 @@
 set -e
 
 REPO="luuuc/council-cli"
-INSTALL_DIR="${INSTALL_DIR:-/usr/local/bin}"
 BINARY_NAME="council"
+
+# Determine install directory (prefer user-writable locations)
+if [ -n "$INSTALL_DIR" ]; then
+  # User specified
+  :
+elif [ -w "/usr/local/bin" ]; then
+  INSTALL_DIR="/usr/local/bin"
+elif [ -d "$HOME/.local/bin" ] || mkdir -p "$HOME/.local/bin" 2>/dev/null; then
+  INSTALL_DIR="$HOME/.local/bin"
+else
+  INSTALL_DIR="/usr/local/bin"
+fi
 
 # Detect OS
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
@@ -69,16 +80,22 @@ fi
 
 # Install
 chmod +x "$BINARY_NAME"
-
-if [ -w "$INSTALL_DIR" ]; then
-  mv "$BINARY_NAME" "$INSTALL_DIR/$BINARY_NAME"
-else
-  echo "Installing to $INSTALL_DIR (requires sudo)..."
-  sudo mv "$BINARY_NAME" "$INSTALL_DIR/$BINARY_NAME"
-fi
+mkdir -p "$INSTALL_DIR"
+mv "$BINARY_NAME" "$INSTALL_DIR/$BINARY_NAME"
 
 echo ""
 echo "council $VERSION installed to $INSTALL_DIR/$BINARY_NAME"
+
+# Check if install dir is in PATH
+case ":$PATH:" in
+  *":$INSTALL_DIR:"*) ;;
+  *)
+    echo ""
+    echo "Add to your PATH:"
+    echo "  export PATH=\"$INSTALL_DIR:\$PATH\""
+    ;;
+esac
+
 echo ""
 echo "Get started:"
 echo "  council init           Initialize council directory"

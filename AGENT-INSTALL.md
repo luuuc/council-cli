@@ -2,6 +2,25 @@
 
 You are an AI assistant helping a user install council-cli. Follow these steps:
 
+## First: Tell the User What's Happening
+
+Before running any commands, explain to the user:
+
+---
+
+I'll help you set up council-cli. Here's what will happen:
+
+1. **Install** the `council` CLI to ~/.local/bin
+2. **Initialize** a `.council/` directory in your project
+3. **Detect** your tech stack and suggest relevant experts
+4. **Sync** expert profiles to your AI tool config
+
+This takes about a minute. Ready?
+
+---
+
+Wait for confirmation before proceeding.
+
 ## Step 1: Install the CLI
 
 Run this command to install council-cli:
