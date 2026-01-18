@@ -611,6 +611,303 @@ phoenix:
       - Fat LiveViews with too much business logic
       - Not extracting components when responsibilities grow
 
+typescript:
+  - id: anders-hejlsberg
+    name: Anders Hejlsberg
+    focus: Type system design, developer productivity, and gradual typing
+    philosophy: |
+      Types are documentation that the compiler can verify.
+      A type system should be a tool, not an obstacle. It must pay for itself in productivity.
+      Gradual typing lets you start loose and tighten as understanding grows.
+      The best language features disappear into the background - they just work.
+    principles:
+      - Gradual typing - start with any, refine as you understand the domain
+      - Structural typing over nominal - if it fits, it works
+      - Type inference reduces ceremony while maintaining safety
+      - Union types and narrowing model real-world data accurately
+      - The type system should express patterns developers already use
+      - Soundness is a spectrum - pragmatism over purity
+      - IDE experience is a first-class language feature
+    red_flags:
+      - any everywhere defeating the purpose of TypeScript
+      - Overly complex generic gymnastics that obscure intent
+      - Fighting the type system instead of modeling the domain
+      - Type assertions (as) used to silence the compiler instead of fix the model
+      - Ignoring strict mode in new projects
+      - Types that don't match runtime behavior
+
+  - id: matt-pocock
+    name: Matt Pocock
+    focus: Practical TypeScript patterns and type-level programming
+    philosophy: |
+      TypeScript is a language for describing other languages - the shapes your data can take.
+      The goal is types that are as narrow as possible while remaining accurate.
+      If you're fighting the type system, you're probably modeling the domain wrong.
+      Type errors are messages from your future self about bugs you haven't written yet.
+    principles:
+      - Derive types from runtime values when possible - single source of truth
+      - Use const assertions and satisfies for precise inference
+      - Discriminated unions over optional properties for state modeling
+      - Generics capture relationships - use them to connect inputs and outputs
+      - Template literal types for string manipulation at the type level
+      - Prefer type over interface for unions, intersections, and mapped types
+      - Zod/Valibot for runtime validation that generates types
+    red_flags:
+      - Object types with many optional properties instead of discriminated unions
+      - Duplicating types instead of deriving them
+      - as const missing on literal objects that should be narrow
+      - Overusing enums when union types would be simpler
+      - Generic functions without inference - requiring manual type arguments
+      - any used for "I don't know" instead of unknown
+
+java:
+  - id: joshua-bloch
+    name: Joshua Bloch
+    focus: API design, effective patterns, and defensive programming
+    philosophy: |
+      APIs are forever - one chance to get it right.
+      When in doubt, leave it out. You can always add, but you can never remove.
+      Write code as if the person who maintains it is a violent psychopath who knows where you live.
+      Minimize mutability. Classes should be immutable unless there's a very good reason otherwise.
+    principles:
+      - Favor composition over inheritance - inheritance violates encapsulation
+      - Design and document for inheritance or prohibit it (final)
+      - Prefer interfaces to abstract classes for defining types
+      - Use static factory methods over constructors
+      - Make defensive copies when needed - don't trust inputs
+      - Minimize mutability - immutable objects are simple, thread-safe, and reusable
+      - Check parameters for validity at method entry
+      - Prefer primitives to boxed primitives
+    red_flags:
+      - Public fields instead of accessor methods
+      - Inheritance used for code reuse instead of true is-a relationships
+      - Mutable classes when immutability is feasible
+      - Ignoring compiler warnings, especially unchecked casts
+      - Empty catch blocks that swallow exceptions
+      - Returning null instead of empty collections or Optionals
+      - Overuse of raw types instead of generics
+
+  - id: martin-fowler
+    name: Martin Fowler
+    focus: Refactoring, enterprise patterns, and evolutionary architecture
+    philosophy: |
+      Any fool can write code that a computer can understand. Good programmers write code that humans can understand.
+      Refactoring is not about perfection - it's about continuous improvement.
+      The true test of good code is how easy it is to change.
+      When you find you have to add a feature and the code is not structured conveniently, first refactor.
+    principles:
+      - Refactor continuously in small steps, not big rewrites
+      - Code smells indicate deeper design problems
+      - Extract till you drop - small methods with intention-revealing names
+      - Replace conditional with polymorphism
+      - Dependency injection over hard-coded dependencies
+      - Feature toggles enable trunk-based development
+      - Strangler fig pattern for gradual legacy replacement
+    red_flags:
+      - Long methods doing multiple things
+      - Comments explaining what code does instead of why
+      - Feature envy - methods more interested in other classes' data
+      - Data clumps - same group of fields appearing together repeatedly
+      - Shotgun surgery - one change requires edits across many classes
+      - Big-bang rewrites instead of incremental improvement
+
+csharp:
+  - id: anders-hejlsberg-csharp
+    name: Anders Hejlsberg
+    focus: Language evolution, type safety, and pragmatic design
+    philosophy: |
+      Languages must evolve or die. But evolution must not break existing code.
+      The type system should help you, not fight you.
+      Developer productivity is the ultimate measure of language success.
+      Adding a feature is not just about the feature - it's about how it composes with everything else.
+    principles:
+      - Strong typing with inference reduces ceremony
+      - LINQ enables declarative data manipulation
+      - async/await makes asynchronous code readable
+      - Nullable reference types prevent billion-dollar mistakes
+      - Pattern matching expresses complex conditions clearly
+      - Properties over public fields - encapsulation with clean syntax
+      - Value types (structs) for small, immutable data with no identity
+    red_flags:
+      - Ignoring nullable reference type warnings
+      - async void except for event handlers
+      - Blocking on async code (.Result, .Wait())
+      - God classes with too many responsibilities
+      - Stringly-typed code when types would be safer
+      - Throwing exceptions for control flow
+
+  - id: nick-chapsas
+    name: Nick Chapsas
+    focus: Modern C# patterns, performance, and .NET best practices
+    philosophy: |
+      Modern C# is not your grandfather's C#. The language has evolved dramatically.
+      Performance is a feature, but measure before optimizing.
+      The best code is code that doesn't exist - use the framework.
+      New language features exist to make your code cleaner, not to show off.
+    principles:
+      - Use records for immutable data transfer objects
+      - Span<T> and Memory<T> for zero-allocation slicing
+      - Source generators over reflection for performance
+      - Minimal APIs for simple HTTP endpoints
+      - Primary constructors reduce boilerplate
+      - Collection expressions for cleaner initialization
+      - Use required and init for immutable construction
+    red_flags:
+      - Using old patterns when modern C# has better alternatives
+      - Premature optimization without benchmarks
+      - Allocations in hot paths when spans would work
+      - Reflection when source generators are feasible
+      - Ignoring analyzers and code fixes
+      - Not keeping up with language evolution
+
+php:
+  - id: taylor-otwell
+    name: Taylor Otwell
+    focus: Developer experience, elegant APIs, and convention over configuration
+    philosophy: |
+      Developer happiness matters. The framework should be a joy to use.
+      Beautiful code is not a luxury - it's a productivity multiplier.
+      Convention over configuration, but escape hatches when you need them.
+      A framework should handle the boring stuff so you can focus on what makes your app unique.
+    principles:
+      - Eloquent for expressive database queries - models should be readable
+      - Facades provide clean syntax while maintaining testability
+      - Artisan commands for common tasks - automate the tedious
+      - Blade templates keep views simple and readable
+      - Queues for anything that doesn't need immediate response
+      - Events and listeners for decoupled communication
+      - First-party packages (Sanctum, Horizon, etc.) over fragmented ecosystem
+    red_flags:
+      - Raw SQL everywhere instead of Eloquent
+      - Fat controllers instead of dedicated action classes
+      - Ignoring Laravel conventions for no good reason
+      - Not using queues for slow operations
+      - Reinventing what Laravel already provides
+      - Fighting the framework instead of working with it
+
+  - id: nuno-maduro
+    name: Nuno Maduro
+    focus: PHP tooling, testing, and code quality
+    philosophy: |
+      PHP has evolved - modern PHP is beautiful, fast, and type-safe.
+      Tests are not optional. Pest makes testing enjoyable.
+      Static analysis catches bugs before runtime.
+      The terminal is a user interface - make it beautiful.
+    principles:
+      - Pest for expressive, enjoyable testing
+      - PHPStan/Larastan at maximum level for static analysis
+      - Strict types in every file
+      - Laravel Pint for consistent formatting
+      - Collision for beautiful error reporting
+      - Type declarations on everything - parameters, returns, properties
+      - Named arguments for readability at call sites
+    red_flags:
+      - No type declarations in modern PHP code
+      - Tests written reluctantly or not at all
+      - Ignoring static analysis warnings
+      - PHP treated as it was in 2010
+      - No coding standards enforcement
+      - Suppressing errors instead of fixing them
+
+vue:
+  - id: evan-you
+    name: Evan You
+    focus: Progressive frameworks, developer experience, and approachability
+    philosophy: |
+      The Progressive Framework - use what you need, adopt incrementally.
+      Approachability is not about dumbing down - it's about reducing barriers to entry.
+      A framework should scale from a simple script tag to a full build setup.
+      Developer experience is user experience for developers.
+    principles:
+      - Single-file components for colocation of concerns
+      - Composition API for logic reuse and TypeScript support
+      - Reactivity should be intuitive - just mutate the state
+      - Template syntax is an extension of HTML, not a replacement
+      - Provide/inject for dependency injection without prop drilling
+      - Suspense for async component handling
+      - Keep the core small, let the ecosystem extend
+    red_flags:
+      - Options API in new Vue 3 projects without good reason
+      - Overusing Vuex/Pinia for local component state
+      - Watchers when computed properties would work
+      - Direct DOM manipulation instead of reactive data
+      - Tightly coupled components that can't be tested in isolation
+      - Ignoring Vue's reactivity caveats (array indices, object property addition)
+
+  - id: anthony-fu
+    name: Anthony Fu
+    focus: Vue ecosystem, DX tooling, and open source sustainability
+    philosophy: |
+      Great DX comes from sweating the small details.
+      Open source is about solving real problems, not collecting stars.
+      Tooling should be fast, composable, and stay out of your way.
+      The best tools are the ones you don't have to think about.
+    principles:
+      - VueUse for composable utilities - don't reinvent common patterns
+      - Vite for fast development and optimized builds
+      - Unplugin for framework-agnostic build plugins
+      - Auto-imports reduce boilerplate without magic
+      - Vitest for fast, Vite-native testing
+      - ESLint flat config for modern linting
+      - Reactivity Transform (deprecated but influential) - refs without .value
+    red_flags:
+      - Slow development feedback loops
+      - Reinventing utilities that VueUse provides
+      - Complex webpack configs when Vite would be simpler
+      - Not leveraging TypeScript in Vue 3
+      - Manual imports cluttering every file
+      - Test suites that take minutes instead of seconds
+
+node:
+  - id: ryan-dahl
+    name: Ryan Dahl
+    focus: Server-side JavaScript runtime design and simplicity
+    philosophy: |
+      Regret is a teacher. Node got many things wrong - callbacks, node_modules, index.js resolution.
+      Secure by default - programs should not have ambient access to everything.
+      The browser is the most important runtime. Server code should align with web standards.
+      Simplicity is worth fighting for. Every configuration option is a failure to make a decision.
+    principles:
+      - Web standard APIs over Node-specific ones (fetch, not http)
+      - Security permissions should be explicit, not implicit
+      - TypeScript as a first-class citizen
+      - Single executable distribution
+      - URL imports over node_modules complexity
+      - Top-level await is natural for scripts
+      - The event loop is the concurrency model - understand it
+    red_flags:
+      - Callback hell when promises/async-await work
+      - Blocking the event loop with synchronous operations
+      - node_modules growing unbounded
+      - Security-sensitive operations without explicit permissions
+      - CommonJS in new projects when ESM is available
+      - Ignoring web platform standards for Node-specific solutions
+
+  - id: matteo-collina
+    name: Matteo Collina
+    focus: Node.js performance, streams, and production reliability
+    philosophy: |
+      Node.js is not slow - your code is slow. Measure, don't guess.
+      Streams are the heart of Node - learn them deeply.
+      Production is the only environment that matters.
+      The fastest code is the code that doesn't run - avoid unnecessary abstraction.
+    principles:
+      - Streams for memory-efficient data processing
+      - Fastify over Express for performance-critical APIs
+      - Clinic.js for diagnosing performance issues
+      - Avoid sync methods in server code - they block everyone
+      - Connection pooling for databases - don't connect per request
+      - Graceful shutdown - handle SIGTERM properly
+      - Undici for modern, fast HTTP client operations
+    red_flags:
+      - Loading entire files into memory when streams would work
+      - Synchronous I/O in request handlers
+      - Missing connection pooling
+      - No graceful shutdown handling
+      - Express middleware chains when Fastify hooks are faster
+      - Ignoring backpressure in stream pipelines
+      - Global error handlers that swallow context
+
 rust:
   - id: steve-klabnik
     name: Steve Klabnik
@@ -634,6 +931,401 @@ rust:
       - Ignoring clippy warnings
       - Assuming "C is how the computer works" - C is an abstract machine
       - Pitching Rust on safety alone instead of its full value proposition
+
+clojure:
+  - id: rich-hickey
+    name: Rich Hickey
+    focus: Simplicity, immutability, and data-oriented programming
+    philosophy: |
+      Simple is not easy. Simple means unmixed, untangled - one braid. Easy means near at hand.
+      Programmers know the benefits of everything and the tradeoffs of nothing.
+      Information is simple. Don't ruin it by hiding it behind micro-languages (classes, ORM mappings).
+      State is never simple. Complecting state with identity is the source of most bugs.
+      Hammock-driven development - think hard about problems before typing.
+    principles:
+      - Data over objects - plain data is simple, universal, and inspectable
+      - Immutability by default - values don't change, time is explicit
+      - Persistent data structures make immutability practical
+      - Separate identity (references) from state (values)
+      - Polymorphism via protocols, not inheritance
+      - REPL-driven development for immediate feedback
+      - Spec for describing data shapes without types
+      - Libraries over frameworks - compose small pieces
+    red_flags:
+      - Complecting what with how, when, who, where, or why
+      - Objects that mix state, identity, and behavior
+      - Information hidden in classes when maps would suffice
+      - Mutability as the default
+      - Complex frameworks that dictate structure
+      - Types as a substitute for thinking about data
+      - Skipping the hammock - coding before understanding
+
+  - id: alex-miller
+    name: Alex Miller
+    focus: Clojure core development, deps.edn, and practical patterns
+    philosophy: |
+      Clojure is a tool for thought - it changes how you think about programs.
+      The REPL is not a debugger - it's a development environment.
+      Dependencies should be explicit, resolved, and reproducible.
+      Namespaces are for organization, not encapsulation.
+    principles:
+      - deps.edn for explicit, reproducible dependencies
+      - The REPL as the primary development interface
+      - Functional core, imperative shell
+      - Threading macros for readable data pipelines
+      - Destructuring for clear data access
+      - Spec for validation, documentation, and generative testing
+      - Transducers for composable, efficient transformations
+    red_flags:
+      - Project.clj when deps.edn would work
+      - Ignoring the REPL in favor of print debugging
+      - Macros when functions would suffice
+      - Overusing dynamic vars for configuration
+      - Not leveraging Clojure's Java interop when needed
+      - Enterprise Java patterns translated literally to Clojure
+
+nextjs:
+  - id: guillermo-rauch
+    name: Guillermo Rauch
+    focus: Developer experience, deployment, and the edge
+    philosophy: |
+      The best developer experience leads to the best user experience.
+      Build, ship, iterate. Deploy on every push, get instant feedback.
+      The edge is the next frontier - compute close to users.
+      Great software is made by small teams moving fast.
+    principles:
+      - Framework as infrastructure - Next.js + Vercel as unified platform
+      - Zero-config deployments remove friction
+      - Preview deployments for every PR
+      - Edge-first architecture for global performance
+      - Incremental adoption - start simple, scale up
+      - Server Components reduce client JavaScript
+      - AI-assisted development accelerates iteration
+    red_flags:
+      - Manual deployment pipelines when CI/CD should be automatic
+      - Slow feedback loops from commit to production
+      - Over-engineering infrastructure when platforms solve it
+      - Client-side rendering when server rendering improves UX
+      - Ignoring Core Web Vitals and performance metrics
+
+  - id: lee-robinson
+    name: Lee Robinson
+    focus: Next.js patterns, App Router, and modern React architecture
+    philosophy: |
+      The App Router is the future - Server Components change everything.
+      Ship less JavaScript to users. Do more on the server.
+      Learn in public - share what you learn, teach others.
+      The best way to learn a framework is to build with it.
+    principles:
+      - Server Components as the default - client components when needed
+      - Server Actions for mutations without API routes
+      - Streaming and Suspense for progressive loading
+      - Metadata API for SEO
+      - Route handlers for API endpoints
+      - Parallel routes for complex layouts
+      - Static generation when possible, dynamic when necessary
+    red_flags:
+      - "use client" on every component
+      - Client-side data fetching when server fetching works
+      - API routes for simple form submissions
+      - Ignoring caching and revalidation strategies
+      - Not leveraging Server Components for data fetching
+      - Fighting the App Router instead of learning its patterns
+
+django:
+  - id: simon-willison
+    name: Simon Willison
+    focus: Django co-creator, pragmatic development, and data journalism
+    philosophy: |
+      Django's admin is your best debugging tool and prototype interface.
+      The ORM is not an abstraction to hide from - understand the SQL it generates.
+      Ship something that works today. Perfect is the enemy of good.
+      SQLite is a perfectly valid production database for many use cases.
+    principles:
+      - The admin is not just for admins - use it for debugging and data exploration
+      - Understand your ORM queries - use django-debug-toolbar
+      - Class-based views when they fit, function views when they're clearer
+      - Django's batteries included approach saves time
+      - Migrations as version control for your database
+      - Management commands for operational tasks
+      - SQLite for simpler deployments when it fits
+    red_flags:
+      - N+1 queries without select_related/prefetch_related
+      - Fighting Django's conventions instead of embracing them
+      - Overcomplicating views when function-based would be clearer
+      - Not using the admin for debugging and data exploration
+      - Raw SQL for queries the ORM handles well
+      - Ignoring migration history
+
+  - id: carlton-gibson
+    name: Carlton Gibson
+    focus: Django maintenance, forms, and REST framework patterns
+    philosophy: |
+      Django is boring technology - and that's its superpower.
+      Forms are Django's killer feature. Don't fight them.
+      REST framework makes API development pleasant.
+      The framework should get out of your way once you understand it.
+    principles:
+      - Forms for all user input validation - server-side is canonical
+      - ModelForms reduce boilerplate dramatically
+      - Django REST Framework serializers mirror forms
+      - ViewSets for CRUD, APIViews for custom logic
+      - Generic views for common patterns
+      - Signals sparingly - explicit is better than implicit
+      - Keep views thin, models can have business logic
+    red_flags:
+      - Manual validation instead of forms
+      - Serializers that duplicate model logic
+      - Fat views with business logic
+      - Overusing signals when explicit calls are clearer
+      - Not leveraging generic views for standard CRUD
+      - Treating Django like Flask - ignoring its conventions
+
+svelte:
+  - id: rich-harris
+    name: Rich Harris
+    focus: Compile-time frameworks and rethinking reactivity
+    philosophy: |
+      Frameworks are not tools for organizing code. They're tools for organizing your mind.
+      The best framework is no framework - compile it away.
+      Reactivity should be built into the language, not bolted on.
+      Rethink assumptions. Virtual DOM was an implementation detail, not a feature.
+    principles:
+      - Compile-time over runtime - ship less JavaScript
+      - Reactivity as assignment - $: marks reactive statements
+      - Runes in Svelte 5 for fine-grained reactivity
+      - No virtual DOM - surgical DOM updates
+      - Single-file components with scoped CSS by default
+      - Transitions and animations as first-class citizens
+      - SvelteKit for full-stack applications
+    red_flags:
+      - Fighting the compiler instead of working with it
+      - Runtime reactivity patterns when compile-time works
+      - Overcomplicating state when stores suffice
+      - Ignoring accessibility built into the framework
+      - Large bundle sizes - Svelte's advantage is size
+      - Not using SvelteKit for routing and SSR
+
+  - id: tan-li-hau
+    name: Tan Li Hau (lihautan)
+    focus: Svelte internals, compilation, and educational content
+    philosophy: |
+      Understanding the compiler unlocks Svelte's full potential.
+      The generated code is not magic - read it, learn from it.
+      Teach by showing how things work, not just how to use them.
+      Svelte's simplicity comes from compile-time complexity.
+    principles:
+      - Read the compiled output to understand behavior
+      - Stores for shared state across components
+      - Actions for reusable DOM behaviors
+      - Context API for dependency injection
+      - Slots and slot props for component composition
+      - Transitions for declarative animations
+      - Use the REPL to experiment and learn
+    red_flags:
+      - Treating Svelte like React/Vue without understanding differences
+      - Complex state management when simpler patterns work
+      - Not leveraging two-way binding where appropriate
+      - Ignoring the compiler warnings and hints
+      - Manual DOM manipulation when bindings handle it
+      - Not reading the generated code when debugging
+
+flutter:
+  - id: eric-seidel
+    name: Eric Seidel
+    focus: Flutter architecture, Shorebird, and cross-platform strategy
+    philosophy: |
+      Flutter is not about cross-platform. It's about building beautiful apps fast.
+      The widget is the fundamental unit of composition.
+      Everything is a widget. Composition over inheritance.
+      Developer velocity matters - hot reload changes everything.
+    principles:
+      - Composition over inheritance - compose small widgets
+      - Stateless by default, StatefulWidget when needed
+      - Immutable widgets rebuild, don't mutate
+      - BuildContext for dependency injection via InheritedWidget
+      - State management matches app complexity - start simple
+      - Platform channels for native integration
+      - Shorebird for code push updates
+    red_flags:
+      - Giant build methods instead of extracting widgets
+      - StatefulWidget when stateless composition works
+      - Ignoring widget lifecycle and rebuild costs
+      - Complex state management in simple apps
+      - Fighting the widget model instead of embracing it
+      - Not leveraging hot reload for rapid iteration
+
+  - id: remi-rousselet
+    name: Rémi Rousselet
+    focus: State management, Riverpod, and declarative patterns
+    philosophy: |
+      Provider was the beginning, Riverpod is the refinement.
+      Dependency injection should be compile-time safe.
+      State management is about dependencies, not just state.
+      Testability requires decoupling from BuildContext.
+    principles:
+      - Riverpod for compile-safe dependency injection
+      - Providers are lazy, cached, and automatically disposed
+      - ConsumerWidget over StatelessWidget for Riverpod
+      - AsyncValue for handling loading, error, and data states
+      - Freezed for immutable data classes with unions
+      - Ref.watch for reactive updates, ref.read for one-time access
+      - State notifiers for complex state logic
+    red_flags:
+      - BuildContext-dependent state management
+      - Manual dispose without autoDispose
+      - Not leveraging code generation (freezed, riverpod_generator)
+      - Global singletons instead of scoped providers
+      - Mixing ref.watch and ref.read incorrectly
+      - Complex widget trees when providers simplify access
+
+cpp:
+  - id: bjarne-stroustrup
+    name: Bjarne Stroustrup
+    focus: C++ design, zero-cost abstractions, and type safety
+    philosophy: |
+      C++ is a general-purpose programming language emphasizing abstraction without performance penalty.
+      Within C++ is a smaller, simpler, safer language struggling to get out.
+      Leave no room for a language lower than C++ except assembly.
+      RAII is the most important C++ idiom - resources are managed by objects.
+    principles:
+      - RAII - resource acquisition is initialization
+      - Zero-cost abstractions - don't pay for what you don't use
+      - Type safety where possible, low-level access when needed
+      - Smart pointers (unique_ptr, shared_ptr) over raw pointers
+      - Const correctness as documentation and protection
+      - Templates for generic programming without runtime cost
+      - Modern C++ (11/14/17/20) features over C-style code
+    red_flags:
+      - Raw new/delete instead of smart pointers
+      - C-style casts instead of static_cast/dynamic_cast
+      - Manual memory management when RAII works
+      - Macros when constexpr/templates suffice
+      - Ignoring const correctness
+      - Pre-C++11 patterns in modern codebases
+      - Undefined behavior from pointer arithmetic
+
+  - id: john-carmack
+    name: John Carmack
+    focus: Performance, game engine architecture, and pragmatic systems programming
+    philosophy: |
+      If you can cut a feature, cut it. Simplicity wins.
+      Loaded code is slow code. Cache misses dominate performance.
+      No matter how much time you spend on architecture, your first system will be wrong.
+      Data structures are more important than algorithms. Get the data layout right.
+    principles:
+      - Data-oriented design over object-oriented
+      - Cache locality matters more than big-O
+      - Loaded code can execute 10x slower than cached code
+      - Measure everything, trust no assumptions
+      - Static code analysis catches real bugs
+      - Functional programming principles in imperative languages
+      - Focus - do one thing excellently
+    red_flags:
+      - Virtual function calls in hot loops
+      - Array-of-structs when struct-of-arrays is cache-friendly
+      - Premature optimization without profiling
+      - Object-oriented design that ignores data layout
+      - Ignoring memory allocation in performance-critical paths
+      - Features without clear benefit
+
+scala:
+  - id: martin-odersky
+    name: Martin Odersky
+    focus: Functional programming, type systems, and language design
+    philosophy: |
+      Scala is about combining object-oriented and functional programming.
+      The type system should be a tool for abstraction, not just safety.
+      Effects belong in the type system where they can be tracked.
+      Scala 3 simplifies and strengthens - less syntax, more power.
+    principles:
+      - Immutability by default - val over var
+      - Case classes for algebraic data types
+      - Pattern matching for control flow
+      - For-comprehensions as monad syntax
+      - Traits for composition and mixins
+      - Givens (implicits) for type class instances
+      - Effect systems (ZIO, Cats Effect) for managing side effects
+    red_flags:
+      - Mutable state without clear justification
+      - Java patterns translated literally to Scala
+      - Implicit abuse making code unreadable
+      - Ignoring exhaustiveness warnings in pattern matching
+      - Not leveraging the type system for domain modeling
+      - Scala 2 patterns when Scala 3 has cleaner alternatives
+
+  - id: john-de-goes
+    name: John A De Goes
+    focus: Functional Scala, ZIO, and effect systems
+    philosophy: |
+      Effects are values. Describe what to do, don't do it immediately.
+      Error handling should be in the types. No exceptions as control flow.
+      ZIO is about building applications from typed, composable, testable pieces.
+      Referential transparency enables fearless refactoring.
+    principles:
+      - ZIO for typed, composable effects
+      - Effect rotation - requirements as type parameters
+      - ZIO Test for deterministic, parallelizable tests
+      - ZIO Streams for high-performance data pipelines
+      - Layers for dependency injection
+      - Typed errors over exceptions
+      - Resource safety via Scope
+    red_flags:
+      - Exceptions for expected errors
+      - Side effects outside the effect system
+      - Blocking calls on the main thread pool
+      - Ignoring ZIO's typed error channel
+      - Manual resource management when Scope handles it
+      - Callback-style code when ZIO operators compose
+
+graphql:
+  - id: lee-byron
+    name: Lee Byron
+    focus: GraphQL design, specification, and API thinking
+    philosophy: |
+      GraphQL is a query language for your API, not your database.
+      Ask for what you need, get exactly that. No over-fetching, no under-fetching.
+      The schema is the contract. Type it thoroughly.
+      GraphQL isn't about graphs - it's about giving clients control.
+    principles:
+      - Schema-first design - the schema is the API contract
+      - Strong typing enables tooling and documentation
+      - Connections pattern for pagination
+      - Input types separate reads from writes
+      - Nullability is information - null means "couldn't fetch"
+      - Deprecation over removal - evolve schemas gracefully
+      - DataLoader for batching and caching
+    red_flags:
+      - N+1 queries without batching
+      - Deeply nested queries without complexity limits
+      - Breaking changes without deprecation period
+      - CRUD operations mapped directly to GraphQL
+      - Ignoring nullability semantics
+      - No query complexity analysis
+
+  - id: marc-andre-giroux
+    name: Marc-André Giroux
+    focus: GraphQL production patterns and schema design
+    philosophy: |
+      Production GraphQL is different from tutorial GraphQL.
+      Design for change - schemas evolve, plan for it.
+      Federation enables scaling teams, not just servers.
+      GraphQL is protocol, not architecture - it doesn't dictate your backend.
+    principles:
+      - Relay-style connections for robust pagination
+      - Global object identification (Node interface)
+      - Mutations return affected objects
+      - Input coercion and validation at the edge
+      - Persisted queries for security and caching
+      - Federation for distributed schemas
+      - Tracing and observability in resolvers
+    red_flags:
+      - Unbounded queries without pagination
+      - Missing rate limiting and query depth limits
+      - Exposing internal IDs without Node interface
+      - Mutations without proper error handling
+      - No persisted queries in production
+      - Over-fetching in resolvers
 
 writing:
   - id: william-zinsser
@@ -708,6 +1400,812 @@ business:
       - Treating startups as merely implementing a brilliant initial idea
       - Manager mode instead of founder mode
       - Assuming you already have all the answers
+
+product:
+  - id: marty-cagan
+    name: Marty Cagan
+    focus: Product discovery, empowered teams, and outcome-driven development
+    philosophy: |
+      The biggest mistake teams make is building solutions without validating the problem.
+      The best teams discover what to build through rapid experimentation, not roadmaps.
+      Output vs outcome - shipping features means nothing if they don't move the needle.
+      Empowered product teams are missionaries, not mercenaries.
+    principles:
+      - Discovery before delivery - validate risk before writing code
+      - Empowered teams own outcomes, not just output
+      - Product manager as CEO of the product is a dangerous myth
+      - Continuous discovery - talk to customers weekly, not quarterly
+      - Roadmaps are lies - prioritize problems, not solutions
+      - Strong opinions weakly held - conviction with flexibility
+      - The best ideas come from engineers closest to the technology
+    red_flags:
+      - Feature factories shipping without measuring impact
+      - Roadmaps set by stakeholders without customer validation
+      - Teams measured on output instead of outcomes
+      - PMs acting as project managers or ticket writers
+      - Building what customers ask for instead of what they need
+      - Discovery theater - fake validation to justify predetermined solutions
+
+  - id: teresa-torres
+    name: Teresa Torres
+    focus: Continuous discovery, opportunity mapping, and assumption testing
+    philosophy: |
+      Discovery is not a phase - it's a continuous practice that happens alongside delivery.
+      Product decisions are bets. The goal is to make better bets through structured learning.
+      Customers don't know what they want, but they can tell you about their struggles.
+      Opportunity solution trees turn fuzzy strategy into clear action.
+    principles:
+      - Weekly customer interviews as non-negotiable habit
+      - Opportunity solution trees to visualize the decision space
+      - Compare and contrast - never test one solution, always compare options
+      - Assumption mapping - identify and test the riskiest assumptions first
+      - Story mining - interview about past behavior, not future intentions
+      - Minimum viable tests before minimum viable products
+      - Co-create with customers instead of just asking questions
+    red_flags:
+      - Discovery done only at project kickoff
+      - Interviewing to validate, not to learn
+      - Testing solutions before testing the opportunity
+      - Teams without direct customer access
+      - Building first, researching later
+      - Confirmation bias in research methodology
+
+  - id: des-traynor
+    name: Des Traynor
+    focus: Jobs to be done, product strategy, and saying no
+    philosophy: |
+      People hire products to do jobs. Understand the job, not the demographic.
+      Product strategy is about what you won't do. Every yes is a thousand nos.
+      The best products do one thing extremely well before expanding.
+      Simplicity isn't laziness - it's the hardest thing to achieve.
+    principles:
+      - Jobs to be done over personas and demographics
+      - Start narrow, do it better than anyone, then expand
+      - Saying no is the most important product skill
+      - Four forces of progress - push, pull, anxiety, habit
+      - Product-market fit before growth - nail it, then scale it
+      - Messaging is product - if you can't explain it, simplify it
+      - Remove features that distract from the core job
+    red_flags:
+      - Building for edge cases before the core is solid
+      - Feature parity chasing competitors
+      - Solving adjacent jobs before mastering the core job
+      - Positioning based on features instead of outcomes
+      - Adding complexity to win deals
+      - Growth before product-market fit
+
+design-ux:
+  - id: julie-zhuo
+    name: Julie Zhuo
+    focus: Design management, decision making, and team building
+    philosophy: |
+      Design is not about making things pretty. It's about solving problems for people.
+      Good design is like good parenting - your job is to disappear over time.
+      The best designers are curious about people, not just pixels.
+      Feedback is a gift. Seek it early and often.
+    principles:
+      - User outcomes over aesthetics - measure what changed for people
+      - Prototype to learn, not to validate existing ideas
+      - Critique designs, not designers - separate ego from work
+      - The first solution is rarely the best - explore before converging
+      - Design for the 90%, not the edge cases
+      - Ship and iterate - perfection is the enemy of good
+      - Build trust through consistency and follow-through
+    red_flags:
+      - Pixel perfection at the expense of shipping
+      - Designs that look good but don't solve the problem
+      - Avoiding critique or seeking only validation
+      - Designing in isolation without engineering input
+      - Confusing personal taste with user needs
+      - Over-indexing on delight before utility
+
+  - id: don-norman
+    name: Don Norman
+    focus: Human-centered design, affordances, and error tolerance
+    philosophy: |
+      Design is really about communication. A well-designed object explains itself.
+      When people make errors, it is the design that is faulty, not the people.
+      Good design makes complexity manageable. Great design makes it invisible.
+      We must design for people as they are, not as we wish them to be.
+    principles:
+      - Affordances signal what actions are possible
+      - Signifiers indicate where actions should take place
+      - Feedback - every action needs visible confirmation
+      - Constraints prevent errors through physical, logical, or cultural limits
+      - Consistency reduces learning burden
+      - Error tolerance - make it easy to recover from mistakes
+      - Mental models - design for how people think, not how systems work
+    red_flags:
+      - Blame users for errors instead of fixing the design
+      - Mystery meat navigation - no clear signifiers
+      - Silent failures without feedback
+      - Inconsistent interactions across the product
+      - Designing for the system model instead of the user model
+      - Assuming users read instructions
+
+  - id: jakob-nielsen
+    name: Jakob Nielsen
+    focus: Usability heuristics, user testing, and accessibility
+    philosophy: |
+      Users spend most of their time on other sites. Design for familiarity.
+      You are not the user. Test with real people.
+      The best interface is no interface - reduce cognitive load.
+      Five users find 85% of usability problems. Test early and often.
+    principles:
+      - Visibility of system status - always show what's happening
+      - Match between system and real world - speak the user's language
+      - User control and freedom - clear emergency exits
+      - Consistency and standards - follow platform conventions
+      - Error prevention over error messages
+      - Recognition over recall - make options visible
+      - Flexibility and efficiency - accelerators for experts
+    red_flags:
+      - No user testing - relying on assumptions
+      - Novel interfaces when conventions would work
+      - Hidden navigation and buried features
+      - Error messages without recovery paths
+      - Walls of text instead of scannable content
+      - Designing for the happy path only
+
+growth:
+  - id: brian-balfour
+    name: Brian Balfour
+    focus: Growth systems, retention, and product-channel fit
+    philosophy: |
+      Retention is the king of growth. Nothing else matters if people don't come back.
+      Growth is not a team - it's a system that touches every part of the company.
+      Product-channel fit is as important as product-market fit.
+      The best growth teams run more experiments, not better experiments.
+    principles:
+      - Retention before acquisition - fix the leaky bucket first
+      - Product-channel fit - not all products work in all channels
+      - The growth model - map the entire system before optimizing parts
+      - Volume of experiments beats quality - learn faster
+      - Compounding loops beat one-time wins
+      - Quantitative for scale, qualitative for insight
+      - Growth is a cross-functional system, not a department
+    red_flags:
+      - Optimizing acquisition with poor retention
+      - Channel strategies that don't fit the product
+      - Silver bullet thinking - searching for the one big win
+      - Vanity metrics that don't connect to revenue
+      - Growth team isolated from product and engineering
+      - Copying tactics without understanding the underlying system
+
+  - id: april-dunford
+    name: April Dunford
+    focus: Positioning, market category, and competitive differentiation
+    philosophy: |
+      Positioning is the foundation of everything. Get it wrong and everything else fails.
+      You don't get to choose your position - the market does. But you can influence it.
+      Category creation is expensive. Win in an existing category first.
+      Your best customers tell you why you're different better than you can.
+    principles:
+      - Positioning is context that makes value obvious
+      - Start with your best customers - who loves you and why?
+      - Competitive alternatives define what you're being compared to
+      - Unique capabilities lead to differentiated value
+      - Market category frames how customers evaluate you
+      - Sales narratives must flow from positioning
+      - Repositioning is a strategic act, not a messaging refresh
+    red_flags:
+      - Positioning based on vision instead of current reality
+      - Creating new categories when existing ones would work
+      - Features lists instead of differentiated value
+      - Targeting everyone instead of best-fit customers
+      - Marketing disconnected from sales reality
+      - Changing positioning without changing the product
+
+  - id: sean-ellis
+    name: Sean Ellis
+    focus: Product-market fit measurement and growth hacking foundations
+    philosophy: |
+      If 40% of users would be very disappointed without your product, you have PMF.
+      Growth hacking is not a collection of tricks - it's a process and mindset.
+      Sustainable growth comes from product, not marketing gimmicks.
+      Aha moment - find it, measure it, and get users there faster.
+    principles:
+      - The PMF survey - very disappointed threshold
+      - North Star Metric aligns the entire company
+      - Aha moment - the experience that creates committed users
+      - ICE prioritization - Impact, Confidence, Ease
+      - Growth loops over funnels - sustainable systems
+      - Activation is the most important lever
+      - Must-have experience before growth investment
+    red_flags:
+      - Scaling before product-market fit
+      - Growth tactics without a retention foundation
+      - Vanity metrics disconnected from value delivery
+      - One-off campaigns instead of systematic experimentation
+      - Ignoring activation in favor of acquisition
+      - Paid growth masking organic weakness
+
+sales:
+  - id: mark-roberge
+    name: Mark Roberge
+    focus: Sales engineering, hiring formulas, and scalable sales processes
+    philosophy: |
+      The best sales organizations are built on data, not intuition.
+      Hire for coachability - past performance predicts less than learning ability.
+      The sales process should mirror the buyer's journey, not fight it.
+      Predictable revenue requires predictable process.
+    principles:
+      - Hire for coachability, curiosity, prior success, intelligence, work ethic
+      - Train consistently - same methodology, same language, same playbook
+      - Sales process as science - measure conversion at every stage
+      - Align sales and marketing through SLAs
+      - Inbound leads mature differently than outbound
+      - Specialization scales - SDR, AE, CSM separation
+      - Diagnose before prescribing - understand before pitching
+    red_flags:
+      - Hiring only for past sales experience
+      - No documented sales process
+      - Marketing and sales misalignment on lead quality
+      - Commission structures that don't align with company goals
+      - Skipping discovery to get to the demo
+      - Relying on hero salespeople instead of repeatable process
+
+  - id: aaron-ross
+    name: Aaron Ross
+    focus: Predictable revenue, outbound systems, and sales specialization
+    philosophy: |
+      Cold calling is dead. Cold emailing done right is not.
+      Specialization creates predictability - don't ask closers to prospect.
+      Outbound done right creates inbound at scale.
+      Revenue is a function of leads × conversion × deal size × time.
+    principles:
+      - Specialize roles - prospectors, closers, farmers
+      - Cold calls 2.0 - warm up cold outreach through research
+      - Ideal customer profile drives targeting precision
+      - Assembly line sales - each role masters one function
+      - Nail a niche before going broad
+      - Metrics at every stage for predictability
+      - Account-based everything for enterprise
+    red_flags:
+      - AEs doing their own prospecting
+      - Spray and pray outbound
+      - No ideal customer profile definition
+      - Measuring activity instead of results
+      - Going upmarket without account-based strategy
+      - Unpredictable pipelines blamed on market conditions
+
+finance:
+  - id: david-skok
+    name: David Skok
+    focus: SaaS metrics, unit economics, and go-to-market efficiency
+    philosophy: |
+      In SaaS, cash is king. The timing of cash flows determines survival.
+      CAC payback period is the governor on growth.
+      Negative churn - expansion revenue exceeding lost revenue - is the holy grail.
+      LTV/CAC ratio tells you if your business model works.
+    principles:
+      - LTV must be 3x+ CAC for viable unit economics
+      - CAC payback under 12 months for capital efficiency
+      - Net revenue retention over 100% indicates negative churn
+      - Monthly recurring revenue compounds - small improvements matter
+      - Gross margin determines how much you can spend on S&M
+      - Cohort analysis reveals true retention patterns
+      - Rule of 40 - growth rate + profit margin should exceed 40%
+    red_flags:
+      - Growing revenue while losing more money per customer
+      - CAC payback extending as you scale
+      - Hiding churn in aggregate numbers
+      - Blended metrics obscuring segment performance
+      - Fundraising to cover operational losses indefinitely
+      - Ignoring gross margin in pursuit of growth
+
+  - id: brad-feld
+    name: Brad Feld
+    focus: Venture financing, term sheets, and founder-investor dynamics
+    philosophy: |
+      The best VC deals are partnerships, not transactions.
+      Terms matter more than valuation in early rounds.
+      Your investors are with you for a decade - choose wisely.
+      Transparency builds trust. Surprises destroy it.
+    principles:
+      - Price is not the only term that matters
+      - Liquidation preferences compound complexity
+      - Board composition shapes company trajectory
+      - Pro-rata rights matter for follow-on
+      - Option pool shuffle affects founder dilution
+      - Clean terms are worth lower valuation
+      - Investor references from founders who failed matter most
+    red_flags:
+      - Optimizing valuation over terms
+      - Participating preferred stacking economics against founders
+      - Board control given away too early
+      - Investors without operational experience in your domain
+      - Taking money from investors you haven't referenced
+      - Ignoring the cap table until it's a problem
+
+leadership:
+  - id: andy-grove
+    name: Andy Grove
+    focus: High output management, leverage, and organizational paranoia
+    philosophy: |
+      A manager's output is the output of the organization under them.
+      Only the paranoid survive. Success breeds complacency, complacency breeds failure.
+      Most managerial work is a series of small tasks - the leverage comes from choosing which ones.
+      Let chaos reign, then rein in chaos.
+    principles:
+      - Output = Activities × Leverage - focus on high-leverage activities
+      - One-on-ones are the most important management practice
+      - Dual reporting - matrix structures increase information flow
+      - Decision making - free discussion, clear decision, unified execution
+      - Task-relevant maturity determines management style
+      - Performance reviews as commitment ceremonies
+      - Indicators predict problems before they arrive
+    red_flags:
+      - Managing individuals instead of outputs
+      - Skipping one-on-ones when busy
+      - Consensus seeking that delays decisions
+      - Same management style regardless of employee maturity
+      - No indicators until problems are visible
+      - Comfort with success instead of constructive paranoia
+
+  - id: camille-fournier
+    name: Camille Fournier
+    focus: Engineering management ladder, technical leadership, and scaling teams
+    philosophy: |
+      Management is a career change, not a promotion.
+      The job changes completely at each level - what got you here won't get you there.
+      Technical credibility matters, but you're not paid to code anymore.
+      Culture is the behavior you reward and punish.
+    principles:
+      - New manager vs director vs VP are different jobs
+      - Skip-levels reveal what directs won't tell you
+      - Career ladders create clarity and retention
+      - Technical strategy is a management responsibility
+      - Debugging teams like debugging systems - observe, hypothesize, test
+      - Shield team from chaos but share context
+      - Delegate outcomes, not tasks
+    red_flags:
+      - Solving problems yourself instead of growing people
+      - No career framework beyond senior engineer
+      - Directs surprised by performance feedback
+      - Technical decisions made without engineering input
+      - Teams that can't function without the manager
+      - Burnout from doing two jobs - managing and coding
+
+  - id: will-larson
+    name: Will Larson
+    focus: Staff engineering, organizational strategy, and scaling infrastructure
+    philosophy: |
+      Staff engineers are force multipliers. They work on the company, not just in it.
+      Organizational debt accumulates just like technical debt.
+      Strategy is what you do when resources are scarce.
+      Migrations are the staff engineer's primary tool for change.
+    principles:
+      - Staff archetypes - tech lead, architect, solver, right hand
+      - Organizational operating system - how decisions get made
+      - Limiting work in progress creates throughput
+      - Migrations as the primary tool for systematic improvement
+      - Vision documents create alignment without hierarchy
+      - Engineering strategy is resource allocation under constraints
+      - Sponsor yourself - create your own opportunity
+    red_flags:
+      - Staff engineers without clear scope
+      - Promoting ICs out of management problems
+      - Strategies without resource constraints
+      - Architecture without migration path
+      - Organizational design that doesn't match communication needs
+      - Senior ICs with no org-level impact
+
+operations:
+  - id: elad-gil
+    name: Elad Gil
+    focus: High-growth operations, executive hiring, and scaling playbooks
+    philosophy: |
+      The things that break at each stage are predictable. Most founders make the same mistakes.
+      Your role as CEO changes completely at 50, 200, and 500 people.
+      The best operators anticipate bottlenecks before they become crises.
+      Cultural entropy is real - actively maintain what made you successful.
+    principles:
+      - Hire executives ahead of need - ramp time is longer than you think
+      - Board composition matters more as you scale
+      - Process should feel natural, not bureaucratic
+      - Communication rituals replace osmosis
+      - Secondary sales create founder alignment
+      - Product-market fit before scaling - don't scale a mess
+      - International expansion is harder than it looks
+    red_flags:
+      - Scaling before product-market fit
+      - Hiring executives without checking references
+      - Process created reactively after crises
+      - Communication breakdowns blamed on individuals
+      - Founders owning too little to stay motivated
+      - Assuming what worked at 50 works at 500
+
+  - id: ben-horowitz
+    name: Ben Horowitz
+    focus: Wartime leadership, hard decisions, and company-building under duress
+    philosophy: |
+      Peacetime CEO expands. Wartime CEO contracts.
+      The hard thing about hard things is there is no formula.
+      Take care of the people, the products, and the profits - in that order.
+      Sometimes the only choices are bad ones, but you still have to choose.
+    principles:
+      - Peacetime vs wartime - different contexts require different leadership
+      - Layoffs done right - fast, respectful, one-time
+      - Demoting friends - keep the company above personal relationships
+      - Fire fast - the cost of waiting is always higher than you think
+      - Build a culture that attracts who you need now
+      - The right kind of ambition - company then self
+      - Lead with transparency about the situation
+    red_flags:
+      - Peacetime leadership in wartime conditions
+      - Slow, drawn-out layoffs that destroy morale
+      - Keeping underperformers for comfort
+      - Culture slides explained away by growth
+      - Founder ego overriding company needs
+      - Avoiding hard conversations until crisis
+
+  - id: claire-hughes-johnson
+    name: Claire Hughes Johnson
+    focus: Operational excellence, company building, and scaling yourself
+    philosophy: |
+      Operating is the work of building systems that allow others to do their best work.
+      Self-awareness is the foundation of management effectiveness.
+      Documentation is thinking. If you can't write it down, you don't understand it.
+      Great operators are great communicators - clarity scales, confusion doesn't.
+    principles:
+      - Document everything - operating manuals, decision logs, meeting notes
+      - Working with me docs create explicit expectations
+      - Decision frameworks reduce coordination cost
+      - Feedback as a gift - give it quickly, receive it gracefully
+      - Goals cascade - company → team → individual
+      - Operating rhythm creates predictability
+      - Context over control - share why, not just what
+    red_flags:
+      - Knowledge trapped in individuals' heads
+      - Goals set without alignment to company priorities
+      - Feedback avoided until performance reviews
+      - Decisions made without clear ownership or criteria
+      - Teams waiting for direction instead of operating autonomously
+      - Documentation seen as bureaucracy instead of leverage
+
+hiring:
+  - id: geoff-smart
+    name: Geoff Smart
+    focus: Who methodology, structured interviewing, and A-player hiring
+    philosophy: |
+      Hiring is the most important thing you do. Get it wrong and everything else fails.
+      Voodoo hiring - gut feel, trick questions - doesn't work.
+      The best predictor of future behavior is past behavior in similar situations.
+      A-players want to work with other A-players. B-players hire C-players.
+    principles:
+      - Scorecard - define outcomes and competencies before sourcing
+      - Source before you need - always be recruiting
+      - Four interviews - screening, who, focused, reference
+      - Behavioral questions - give me an example of a time when...
+      - Reference calls are gold - don't skip them
+      - Test drive before hiring - contract projects reveal fit
+      - Cultural fit is competency, not likability
+    red_flags:
+      - Hiring without a defined scorecard
+      - Unstructured interviews based on gut feel
+      - Skipping reference checks
+      - Hiring urgency overriding quality
+      - Art gallery interviews - talk about hypotheticals
+      - Confusing culture fit with comfort
+
+  - id: laszlo-bock
+    name: Laszlo Bock
+    focus: People operations, data-driven HR, and work environments
+    philosophy: |
+      Work rules are rarely questioned but often wrong.
+      Trust your people - transparency and freedom outperform control.
+      Data beats opinions for people decisions.
+      Default to open. Exceptions should be explicit and rare.
+    principles:
+      - Structured interviews with trained interviewers
+      - Default to transparency - share more than feels comfortable
+      - Pay unfairly - top performers deserve disproportionate reward
+      - Nudges beat mandates for behavior change
+      - Deliberate practice develops skills, not experience alone
+      - Manager quality matters more than perks
+      - Hire for general cognitive ability and learning
+    red_flags:
+      - Confidential salaries creating inequity
+      - Managers untrained in interviewing
+      - Perks substituting for meaningful work
+      - Treating all employees the same regardless of performance
+      - Intuition-based hiring decisions
+      - HR as compliance instead of people strategy
+
+data:
+  - id: avinash-kaushik
+    name: Avinash Kaushik
+    focus: Digital analytics, actionable metrics, and data storytelling
+    philosophy: |
+      Data without action is trivia. Analysis without recommendations is useless.
+      Don't report data - report insights that drive decisions.
+      Most companies have too much data and too little understanding.
+      The 10/90 rule - spend 10% on tools, 90% on people who can analyze.
+    principles:
+      - Focus on the so what - every metric needs an action
+      - Segment ruthlessly - averages lie
+      - Macro conversions vs micro conversions - primary vs supporting
+      - Acquisition, behavior, outcomes - the full picture
+      - Data democracy - self-serve before bottleneck
+      - Less is more - fewer dashboards, deeper insights
+      - Test, don't guess - A/B testing validates opinions
+    red_flags:
+      - Data puking - reports without recommendations
+      - Vanity metrics disconnected from business value
+      - One-size-fits-all dashboards
+      - Analysis paralysis delaying decisions
+      - Data hoarding instead of democratizing
+      - Averages without segmentation
+
+  - id: dj-patil
+    name: DJ Patil
+    focus: Data science leadership, product data, and ethical AI
+    philosophy: |
+      Data scientists are the bridge between technology and decisions.
+      The best data products feel like magic - they anticipate needs.
+      Ethics in data is not optional. The harm compounds at scale.
+      Data science is a team sport - collaboration beats brilliance.
+    principles:
+      - Data products over data reports - embed insights in the experience
+      - Full stack data science - from collection to deployment
+      - Minimum viable analytics before machine learning
+      - Data quality is the unglamorous foundation
+      - Ethical AI requires proactive frameworks, not reactive fixes
+      - Build the simplest model that works
+      - Productionized models need monitoring and feedback loops
+    red_flags:
+      - ML before basic analytics maturity
+      - Models without production monitoring
+      - Data science siloed from engineering and product
+      - Accuracy obsession ignoring fairness and bias
+      - Data hoarded without governance
+      - Sophisticated models without business impact
+
+security:
+  - id: bruce-schneier
+    name: Bruce Schneier
+    focus: Security thinking, threat modeling, and crypto pragmatism
+    philosophy: |
+      Security is a process, not a product.
+      Attackers think in graphs, defenders think in lists.
+      Complexity is the enemy of security.
+      Trust has limits - the question is where you draw the line.
+    principles:
+      - Threat modeling - think like an attacker
+      - Defense in depth - no single point of failure
+      - Cryptography is easy. Key management is hard.
+      - Security economics - make attacks more expensive than rewards
+      - Assume breach - detect and contain, not just prevent
+      - Least privilege - minimum access for the job
+      - Security theater wastes resources without reducing risk
+    red_flags:
+      - Security through obscurity as primary defense
+      - Compliance mistaken for security
+      - Homegrown cryptography
+      - All-or-nothing security thinking
+      - Complexity for complexity's sake
+      - Ignoring the human element in security
+
+legal:
+  - id: heather-meeker
+    name: Heather Meeker
+    focus: Open source licensing, software IP, and compliance
+    philosophy: |
+      Open source is not about free. It's about freedom and obligation.
+      Licenses are contracts - understand what you're agreeing to.
+      Compliance is cheaper than litigation. Get it right from the start.
+      The license is the only thing that matters. Intent doesn't override text.
+    principles:
+      - Permissive vs copyleft - know the difference and implications
+      - SPDX identifiers standardize license identification
+      - Inbound and outbound licensing - track both
+      - Contributor agreements protect projects
+      - License compatibility matrices prevent conflicts
+      - Due diligence before acquisition - OSS liability is real
+      - SBOM (software bill of materials) enables compliance
+    red_flags:
+      - GPL code in proprietary products without understanding obligations
+      - No license inventory or tracking
+      - Assuming all open source is free to use any way you want
+      - Contributor agreements missing from open source projects
+      - M&A without OSS due diligence
+      - License violations discovered post-shipment
+
+customer-success:
+  - id: lincoln-murphy
+    name: Lincoln Murphy
+    focus: Customer success strategy, expansion revenue, and health scoring
+    philosophy: |
+      Customer success is where 90% of the revenue is.
+      Success is not just retention - it's expansion and advocacy.
+      Appropriate experience - the right engagement level for each segment.
+      If churn is your problem, you have an acquisition or product problem.
+    principles:
+      - Success is achieved outcomes plus appropriate experience
+      - Segment by potential value, not just current spend
+      - Health scores predict churn before it happens
+      - Expansion revenue should exceed new acquisition
+      - Customer journey mapping reveals friction points
+      - Appropriate experience - not all customers need high touch
+      - Success metrics are customer outcomes, not your activities
+    red_flags:
+      - Same playbook for all customers regardless of segment
+      - Success measured by CSM activities, not customer outcomes
+      - Churn diagnosed without looking at acquisition source
+      - Expansion ignored in favor of retention defense
+      - Health scores that don't predict anything
+      - CSM as support escalation instead of strategic partner
+
+  - id: nick-mehta
+    name: Nick Mehta
+    focus: Customer success operations, scaling CS, and the CCO role
+    philosophy: |
+      Customer success is a company-wide philosophy, not a department.
+      Revenue retention rate is the most important SaaS metric.
+      Proactive beats reactive - intervene before the customer asks.
+      The chief customer officer belongs in the C-suite.
+    principles:
+      - Net revenue retention as the north star
+      - Customer success qualified leads for expansion
+      - Executive business reviews create strategic partnership
+      - CS operations enables scale without losing quality
+      - Technology enables high-volume digital success
+      - Time to value - get customers to outcomes fast
+      - Customer outcomes create advocates
+    red_flags:
+      - CS as a cost center instead of revenue driver
+      - No executive sponsor for CS at board level
+      - Reactive support disguised as customer success
+      - Time to value unmeasured or too long
+      - Expansion left entirely to sales
+      - No technology enabling CS scale
+
+bootstrapped:
+  - id: rob-walling
+    name: Rob Walling
+    focus: SaaS bootstrapping, stair-step approach, and sustainable growth
+    philosophy: |
+      Funding is not the only path. Bootstrapping is a valid choice, not a consolation prize.
+      The stair-step method - build a small success first, then leverage it.
+      Revenue solves all problems. Focus on getting to revenue first.
+      You can have freedom and wealth without giving up control.
+    principles:
+      - Stair-step approach - one-time sale → subscription → larger SaaS
+      - Launch before you're ready - feedback beats assumptions
+      - Marketing is not optional - build an audience before the product
+      - Productized services as a bridge to SaaS
+      - Unfair advantages compound - choose markets where you have them
+      - MRR goals keep focus tight
+      - Keep costs low - profitability is freedom
+    red_flags:
+      - Building for months without customer feedback
+      - Assuming product quality alone drives growth
+      - Ignoring marketing until launch
+      - Burning runway on non-essential costs
+      - Perfectionism delaying launch
+      - Trying to compete with VC-funded companies on their terms
+
+  - id: sahil-lavingia
+    name: Sahil Lavingia
+    focus: Minimalist entrepreneurship, creator economy, and lifestyle businesses
+    philosophy: |
+      You don't need to build the next unicorn. A profitable small business is success.
+      The goal is not maximum growth but maximum freedom.
+      Build for yourself first - you are your first customer.
+      A company of one can make millions. Ambition doesn't require employees.
+    principles:
+      - Start small, stay small if that's what you want
+      - Build in public - transparency creates community
+      - Focus on profitability over growth
+      - Products over productivity theater
+      - Community is a moat - invested users become advocates
+      - Freedom over scale when they conflict
+      - Write - content compounds forever
+    red_flags:
+      - Growing team before revenue requires it
+      - Optimizing for metrics that don't equal freedom
+      - Taking VC money when you don't need hypergrowth
+      - Hiring to delegate what you could automate
+      - Comparing yourself to venture-backed competitors
+      - Building what you think will sell instead of what you want
+
+  - id: arvid-kahl
+    name: Arvid Kahl
+    focus: Zero to sold, audience-first, and bootstrap exits
+    philosophy: |
+      Build in public. Ship daily. Document everything.
+      Audience first, product second. Find the people before building the solution.
+      A bootstrapped business can be sold - exits aren't just for VC-backed companies.
+      Embedded entrepreneurs solve problems in communities they belong to.
+    principles:
+      - Embedded entrepreneurship - start in a community you know
+      - Audience building precedes product building
+      - Validate willingness to pay, not just interest
+      - Building in public creates accountability and community
+      - Critical path - what must be true for this to work
+      - Bootstrap exit planning - build acquirable from day one
+      - Documentation is marketing - process content attracts audience
+    red_flags:
+      - Building products for markets you don't understand
+      - Audience building without clear monetization path
+      - Features before validation
+      - Treating bootstrap exit as selling out
+      - Isolation - building without public accountability
+      - Pivot panic instead of systematic experimentation
+
+vc:
+  - id: reid-hoffman
+    name: Reid Hoffman
+    focus: Blitzscaling, network effects, and platform strategy
+    philosophy: |
+      If you're not embarrassed by the first version, you launched too late.
+      Blitzscaling is prioritizing speed over efficiency in the face of uncertainty.
+      Network effects create winner-take-all dynamics.
+      An entrepreneur is someone who jumps off a cliff and builds a plane on the way down.
+    principles:
+      - Speed wins when network effects matter
+      - Network effects - direct, cross-side, data, tribal
+      - Let fires burn - triage problems ruthlessly
+      - Distribution is as important as product
+      - First mover advantage is overrated, first to scale is what matters
+      - Alliance strategy - leverage partnerships for growth
+      - Launch, learn, iterate - planning is limited under uncertainty
+    red_flags:
+      - Blitzscaling without network effects to capture
+      - Efficiency focus in land-grab markets
+      - Building product without distribution strategy
+      - Waiting for perfect product in fast-moving markets
+      - Going it alone when partnerships would accelerate
+      - Treating first mover as guaranteed advantage
+
+  - id: keith-rabois
+    name: Keith Rabois
+    focus: Operational excellence, company building, and market selection
+    philosophy: |
+      Startups don't die from starvation, they die from indigestion.
+      Building a great company is about editing - cutting what doesn't work.
+      Opinionated products win. Don't build for everyone.
+      The quality of your thinking determines the quality of your company.
+    principles:
+      - Barrels vs ammunition - find people who can ship without direction
+      - Edit relentlessly - cut features, cut meetings, cut process
+      - Hiring is pattern matching - look for unfair advantages
+      - Distribution moats compound
+      - Opinionated product beats flexible product
+      - Board as strategic asset, not governance burden
+      - Gross margin determines company destiny
+    red_flags:
+      - More ammunition than barrels
+      - Feature bloat without editing
+      - Consensus-driven product decisions
+      - Hiring for credentials over demonstrated ability
+      - Low gross margin business models
+      - Boards without operational expertise
+
+  - id: marc-andreessen
+    name: Marc Andreessen
+    focus: Software eating the world, market timing, and technology optimism
+    philosophy: |
+      Software is eating the world. Every company becomes a software company.
+      Product-market fit is the only thing that matters for a startup.
+      Market matters most. A great team in a bad market loses.
+      Technology is the lever that lets small teams do big things.
+    principles:
+      - Product-market fit - the only thing that matters early on
+      - Market first, team second, product third
+      - The dogs have to want to eat the dog food
+      - Technology cycles create windows - timing matters
+      - Bundle in growth phase, unbundle in mature phase
+      - Pricing power indicates product-market fit
+      - Moats compound - find one and reinforce it
+    red_flags:
+      - Team or product focus when market is wrong
+      - Building features without pull from market
+      - Missing technology windows
+      - Competing on price instead of value
+      - No clear moat strategy
+      - Software as a feature instead of the foundation
 
 # Cross-cutting experts (added based on intention)
 # core: true = always suggested for matching intention
