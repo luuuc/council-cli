@@ -50,6 +50,23 @@ fi
 
 echo "Latest version: $VERSION"
 
+# Check if already installed with same version
+CURRENT_VERSION=""
+if command -v council >/dev/null 2>&1; then
+  CURRENT_VERSION=$(council --version 2>/dev/null | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' || echo "")
+fi
+
+if [ "$CURRENT_VERSION" = "$VERSION" ]; then
+  echo "council $VERSION is already installed and up to date."
+  echo ""
+  echo "Run 'council --help' to see available commands."
+  exit 0
+fi
+
+if [ -n "$CURRENT_VERSION" ]; then
+  echo "Upgrading from $CURRENT_VERSION to $VERSION"
+fi
+
 # Build download URL (GoReleaser format)
 VERSION_NUM="${VERSION#v}"  # Strip leading 'v'
 if [ "$OS" = "windows" ]; then

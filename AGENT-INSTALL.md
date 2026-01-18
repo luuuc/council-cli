@@ -2,9 +2,47 @@
 
 You are an AI assistant helping a user install council-cli. Follow these steps:
 
-## First: Tell the User What's Happening
+## First: Check Existing Setup
 
-Before running any commands, explain to the user:
+Before doing anything, check if council is already installed:
+
+```bash
+council --version 2>/dev/null && council list 2>/dev/null
+```
+
+### If council is already installed with experts:
+
+Tell the user:
+
+---
+
+Council is already set up in this project with the following experts:
+{list the experts from council list output}
+
+Would you like to:
+1. **Keep existing** - Add more experts to your current council
+2. **Start fresh** - Remove existing council and set up from scratch
+3. **Cancel** - Keep everything as is
+
+---
+
+- If they choose **Keep existing**: Skip to "Detect Stack and Add Experts"
+- If they choose **Start fresh**: Run `council init --clean`, then continue with setup
+- If they choose **Cancel**: Stop here
+
+### If council is installed but no experts:
+
+Continue with "Detect Stack and Add Experts" step.
+
+### If council is not installed:
+
+Continue with the full installation flow below.
+
+---
+
+## Tell the User What's Happening
+
+Before running install commands, explain:
 
 ---
 
@@ -15,7 +53,7 @@ I'll help you set up council-cli. Here's what will happen:
 3. **Detect** your tech stack and suggest relevant experts
 4. **Sync** expert profiles to your AI tool config
 
-This takes about a minute. Ready?
+Ready?
 
 ---
 
@@ -35,6 +73,8 @@ If that fails (permissions, curl not available, etc.), try:
 go install github.com/luuuc/council-cli/cmd/council@latest
 ```
 
+Note: The install script will skip download if the latest version is already installed.
+
 ## Step 2: Initialize
 
 ```bash
@@ -42,6 +82,10 @@ council init
 ```
 
 This creates the `.council/` directory structure.
+
+If it says ".council/ already exists", the user can either:
+- Use `council init --clean` to remove existing setup and start fresh
+- Skip this step and proceed to add experts
 
 ## Step 3: Detect Stack and Add Experts
 

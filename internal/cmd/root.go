@@ -45,19 +45,70 @@ var versionCmd = &cobra.Command{
 	},
 }
 
+var initClean bool
+
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize a new .council directory",
 	Long:  `Creates the .council/ directory structure in the current project.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return initCouncil()
+		return initCouncil(initClean)
 	},
 }
 
-func initCouncil() error {
-	// Check if already initialized
+func init() {
+	initCmd.Flags().BoolVar(&initClean, "clean", false, "Remove existing council and synced files before initializing")
+}
+
+// cleanExisting removes existing council directory and synced files
+func cleanExisting() error {
+	// Remove .council/ directory
+	if err := os.RemoveAll(config.CouncilDir); err != nil {
+		return fmt.Errorf("failed to remove .council/: %w", err)
+	}
+	fmt.Println("Removed .council/")
+
+	// Remove synced files from various targets
+	syncedPaths := []string{
+		// Claude Code
+		".claude/agents",
+		".claude/commands/council.md",
+		".claude/commands/council-add.md",
+		".claude/commands/council-detect.md",
+		// Cursor
+		".cursorrules",
+		".cursor/rules/council.md",
+		// Windsurf
+		".windsurfrules",
+		// OpenCode
+		".opencode/agent",
+		// Generic
+		"AGENTS.md",
+	}
+
+	for _, path := range syncedPaths {
+		if _, err := os.Stat(path); err == nil {
+			if err := os.RemoveAll(path); err != nil {
+				fmt.Printf("Warning: could not remove %s: %v\n", path, err)
+			} else {
+				fmt.Printf("Removed %s\n", path)
+			}
+		}
+	}
+
+	return nil
+}
+
+func initCouncil(clean bool) error {
+	// Handle existing installation
 	if config.Exists() {
-		return fmt.Errorf(".council/ already exists")
+		if !clean {
+			return fmt.Errorf(".council/ already exists (use --clean to remove and reinitialize)")
+		}
+		// Clean existing council and synced files
+		if err := cleanExisting(); err != nil {
+			return fmt.Errorf("failed to clean existing setup: %w", err)
+		}
 	}
 
 	// Create directory structure
