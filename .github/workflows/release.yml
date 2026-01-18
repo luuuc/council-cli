@@ -9,65 +9,20 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - goos: darwin
-            goarch: amd64
-          - goos: darwin
-            goarch: arm64
-          - goos: linux
-            goarch: amd64
-          - goos: linux
-            goarch: arm64
-          - goos: windows
-            goarch: amd64
-
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22'
 
-      - name: Build
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          args: release --clean
         env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/}
-          COMMIT=$(git rev-parse --short HEAD)
-          EXT=""
-          if [ "$GOOS" = "windows" ]; then
-            EXT=".exe"
-          fi
-          go build \
-            -ldflags="-s -w -X 'github.com/luuuc/council-cli/internal/cmd.version=${VERSION}' -X 'github.com/luuuc/council-cli/internal/cmd.commit=${COMMIT}'" \
-            -o council-${GOOS}-${GOARCH}${EXT} \
-            ./cmd/council
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: council-${{ matrix.goos }}-${{ matrix.goarch }}
-          path: council-*
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: dist
-          merge-multiple: true
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/council-*
-          generate_release_notes: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
