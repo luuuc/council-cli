@@ -26,13 +26,13 @@ Would you like to:
 
 ---
 
-- If they choose **Keep existing**: Skip to "Detect Stack and Add Experts"
+- If they choose **Keep existing**: Skip to "Add Experts"
 - If they choose **Start fresh**: Run `council init --clean`, then continue with setup
 - If they choose **Cancel**: Stop here
 
 ### If council is installed but no experts:
 
-Continue with "Detect Stack and Add Experts" step.
+Skip to "Add Experts" step.
 
 ### If council is not installed:
 
@@ -50,7 +50,7 @@ I'll help you set up council-cli. Here's what will happen:
 
 1. **Install** the `council` CLI to ~/.local/bin
 2. **Initialize** a `.council/` directory in your project
-3. **Detect** your tech stack and suggest relevant experts
+3. **Detect** your tech stack and help you choose relevant experts
 4. **Sync** expert profiles to your AI tool config
 
 Ready?
@@ -60,8 +60,6 @@ Ready?
 Wait for confirmation before proceeding.
 
 ## Step 1: Install the CLI
-
-Run this command to install council-cli:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/luuuc/council-cli/main/install.sh | sh
@@ -87,19 +85,51 @@ If it says ".council/ already exists", the user can either:
 - Use `council init --clean` to remove existing setup and start fresh
 - Skip this step and proceed to add experts
 
-## Step 3: Detect Stack and Add Experts
+## Step 3: Detect Stack
 
-Use `/council-detect` to analyze the codebase and suggest experts tailored to this project.
-
-If `/council-detect` is not available yet (first install), run:
+Run detection to understand the project:
 
 ```bash
-council setup -i
+council detect --json
 ```
 
-This provides interactive expert selection based on detected tech stack.
+This outputs the detected languages, frameworks, testing tools, and patterns.
 
-## Step 4: Sync to Your AI Tool
+## Step 4: Add Experts
+
+Based on the detection results, suggest **3-5 experts** (maximum 7) to the user. Consider:
+
+- **Framework experts** (1-2): DHH for Rails, Chris McCord for Phoenix, etc.
+- **Language experts** (1-2): Rob Pike for Go, Matz for Ruby, José Valim for Elixir, etc.
+- **Practice experts** (1-2): Kent Beck for TDD, Sandi Metz for OO design, etc.
+
+Present your suggestions:
+
+---
+
+Based on your {language} project using {frameworks}, I suggest these experts:
+
+1. **{Name}** - {Focus} - {Why relevant to this project}
+2. **{Name}** - {Focus} - {Why relevant to this project}
+3. **{Name}** - {Focus} - {Why relevant to this project}
+
+Which experts would you like to add? (all / numbers / none)
+
+---
+
+For each expert the user approves, run:
+
+```bash
+council add "{Name}" --focus "{Focus}"
+```
+
+Example:
+```bash
+council add "Rob Pike" --focus "Go simplicity and idiomatic code"
+council add "Kent Beck" --focus "TDD and incremental design"
+```
+
+## Step 5: Sync to Your AI Tool
 
 ```bash
 council sync
@@ -113,6 +143,14 @@ This generates slash commands for your AI tool:
 ## Done
 
 Tell the user:
-- Installation complete
-- They can now use `/council <topic>` to get expert code reviews
-- They can add more experts with `/council-add "Name" --focus "area"`
+
+---
+
+Setup complete! Your council has {N} experts: {names}.
+
+You can now use:
+- `/council <topic>` - Get expert code reviews
+- `/council-add "Name" --focus "area"` - Add more experts
+- `/council-detect` - Re-analyze and get new suggestions
+
+---
