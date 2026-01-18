@@ -18,7 +18,7 @@ func init() {
 	rootCmd.AddCommand(syncCmd)
 	syncCmd.Flags().BoolVar(&syncDryRun, "dry-run", false, "Show what would be done without making changes")
 	syncCmd.Flags().BoolVar(&syncForce, "force", false, "Overwrite existing files without prompting")
-	syncCmd.Flags().BoolVar(&syncClean, "clean", false, "Remove stale command files not in current config")
+	syncCmd.Flags().BoolVar(&syncClean, "clean", false, "Remove stale command and agent files")
 }
 
 var syncCmd = &cobra.Command{

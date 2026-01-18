@@ -14,6 +14,9 @@ import (
 	"github.com/luuuc/council-cli/internal/fs"
 )
 
+//go:embed templates/council.md.tmpl
+var councilCommandTemplateStr string
+
 //go:embed templates/council-add.md
 var councilAddCommand string
 
@@ -21,26 +24,15 @@ var councilAddCommand string
 var councilDetectCommand string
 
 // Pre-compiled template for council command generation
-var councilCommandTemplate = template.Must(template.New("council").Parse(`# Code Review Council
+var councilCommandTemplate = template.Must(template.New("council").Parse(councilCommandTemplateStr))
 
-Convene the council to review: $ARGUMENTS
-
-## Council Members
-
-{{range .}}
-### {{.Name}}
-**Focus**: {{.Focus}}
-{{end}}
-
-## Instructions
-
-Review the code from each expert's perspective. For each expert:
-1. State the expert's name
-2. Provide their assessment focused on their domain
-3. Note any concerns or suggestions
-
-At the end, synthesize the key points and provide actionable recommendations.
-`))
+// allCommands defines all available slash commands and their templates
+// Co-located here so adding a new command requires updating one place
+var allCommands = map[string]string{
+	"council":        "", // Uses councilCommandTemplate (dynamic, needs experts)
+	"council-add":    councilAddCommand,
+	"council-detect": councilDetectCommand,
+}
 
 // Options configures sync behavior
 type Options struct {
@@ -166,9 +158,6 @@ func SyncTarget(targetName string, cfg *config.Config, opts Options) error {
 	return target.Sync(experts, cfg, opts)
 }
 
-// allCommands is the list of all possible council commands
-var allCommands = []string{"council", "council-add", "council-detect"}
-
 // Claude Code sync
 func syncClaude(experts []*expert.Expert, cfg *config.Config, opts Options) error {
 	// Create .claude/agents directory
@@ -220,14 +209,53 @@ func syncClaude(experts []*expert.Expert, cfg *config.Config, opts Options) erro
 		}
 	}
 
-	// Clean up stale command files if requested
+	// Clean up stale files if requested
 	if opts.Clean {
-		for _, cmd := range allCommands {
+		// Remove stale command files
+		for cmd := range allCommands {
 			if !cfg.Council.HasCommand(cmd) {
 				path := filepath.Join(commandsDir, cmd+".md")
 				if err := removeFile(path, opts.DryRun); err != nil {
 					return err
 				}
+			}
+		}
+
+		// Remove stale agent files (experts no longer in .council/experts/)
+		if err := cleanStaleAgents(agentsDir, experts, opts.DryRun); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// cleanStaleAgents removes agent files that no longer have corresponding experts
+func cleanStaleAgents(agentsDir string, experts []*expert.Expert, dryRun bool) error {
+	entries, err := os.ReadDir(agentsDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	// Build set of current expert IDs
+	currentIDs := make(map[string]bool)
+	for _, e := range experts {
+		currentIDs[e.ID] = true
+	}
+
+	// Remove files for experts that no longer exist
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
+		id := strings.TrimSuffix(entry.Name(), ".md")
+		if !currentIDs[id] {
+			path := filepath.Join(agentsDir, entry.Name())
+			if err := removeFile(path, dryRun); err != nil {
+				return err
 			}
 		}
 	}
@@ -298,9 +326,9 @@ func syncOpenCode(experts []*expert.Expert, cfg *config.Config, opts Options) er
 		}
 	}
 
-	// Clean up stale command files if requested
+	// Clean up stale files if requested
 	if opts.Clean {
-		// OpenCode only supports council-add and council-detect
+		// Remove stale command files (OpenCode only supports council-add and council-detect)
 		openCodeCommands := []string{"council-add", "council-detect"}
 		for _, cmd := range openCodeCommands {
 			if !cfg.Council.HasCommand(cmd) {
@@ -308,6 +336,55 @@ func syncOpenCode(experts []*expert.Expert, cfg *config.Config, opts Options) er
 				if err := removeFile(path, opts.DryRun); err != nil {
 					return err
 				}
+			}
+		}
+
+		// Remove stale agent files
+		if err := cleanStaleAgentsOpenCode(agentDir, experts, openCodeCommands, opts.DryRun); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// cleanStaleAgentsOpenCode removes agent files that no longer have corresponding experts
+// It excludes command files (council-add, council-detect) from cleanup
+func cleanStaleAgentsOpenCode(agentDir string, experts []*expert.Expert, commandFiles []string, dryRun bool) error {
+	entries, err := os.ReadDir(agentDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	// Build set of current expert IDs
+	currentIDs := make(map[string]bool)
+	for _, e := range experts {
+		currentIDs[e.ID] = true
+	}
+
+	// Build set of command file names to exclude
+	commandSet := make(map[string]bool)
+	for _, cmd := range commandFiles {
+		commandSet[cmd] = true
+	}
+
+	// Remove files for experts that no longer exist
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
+		id := strings.TrimSuffix(entry.Name(), ".md")
+		// Skip command files
+		if commandSet[id] {
+			continue
+		}
+		if !currentIDs[id] {
+			path := filepath.Join(agentDir, entry.Name())
+			if err := removeFile(path, dryRun); err != nil {
+				return err
 			}
 		}
 	}
