@@ -117,7 +117,7 @@ func Scan(dir string) (*Detection, error) {
 	extCounts := make(map[string]int)
 	totalFiles := 0
 
-	err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+	err := filepath.WalkDir(dir, func(path string, entry os.DirEntry, err error) error {
 		if err != nil {
 			// Collect warning instead of silently skipping
 			relPath, _ := filepath.Rel(dir, path)
@@ -129,8 +129,8 @@ func Scan(dir string) (*Detection, error) {
 		}
 
 		// Skip hidden directories and common non-source directories
-		if info.IsDir() {
-			name := info.Name()
+		if entry.IsDir() {
+			name := entry.Name()
 			if strings.HasPrefix(name, ".") ||
 				name == "node_modules" ||
 				name == "vendor" ||

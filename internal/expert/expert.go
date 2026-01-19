@@ -43,7 +43,9 @@ When reviewing code, focus on your area of expertise. Be direct and specific.
 Explain your reasoning. Suggest concrete improvements.
 `))
 
-// Expert represents an expert persona
+// Expert represents an expert persona.
+// This is the canonical type used throughout the codebase for both
+// project experts and custom/installed personas.
 type Expert struct {
 	ID         string   `yaml:"id"`
 	Name       string   `yaml:"name"`
@@ -52,9 +54,13 @@ type Expert struct {
 	Principles []string `yaml:"principles,omitempty"`
 	RedFlags   []string `yaml:"red_flags,omitempty"`
 
-	// Suggestion metadata (not saved to expert files)
+	// Suggestion metadata
 	Core     bool     `yaml:"core,omitempty"`     // Always suggest for matching intention
 	Triggers []string `yaml:"triggers,omitempty"` // Only suggest when patterns detected
+
+	// Personal council metadata (used by creator commands)
+	Category string `yaml:"category,omitempty"` // e.g., "custom", "rails", "go"
+	Priority string `yaml:"priority,omitempty"` // "always", "high", "normal"
 
 	// Body is the markdown content after frontmatter
 	Body string `yaml:"-"`
@@ -82,6 +88,8 @@ type ExpertJSON struct {
 	Philosophy string   `json:"philosophy,omitempty"`
 	Principles []string `json:"principles,omitempty"`
 	RedFlags   []string `json:"red_flags,omitempty"`
+	Category   string   `json:"category,omitempty"`
+	Priority   string   `json:"priority,omitempty"`
 }
 
 // ToJSON converts an expert to its JSON representation
@@ -93,6 +101,18 @@ func (e *Expert) ToJSON() ExpertJSON {
 		Philosophy: e.Philosophy,
 		Principles: e.Principles,
 		RedFlags:   e.RedFlags,
+		Category:   e.Category,
+		Priority:   e.Priority,
+	}
+}
+
+// ApplyDefaults sets default values for optional fields.
+func (e *Expert) ApplyDefaults() {
+	if e.Category == "" {
+		e.Category = "custom"
+	}
+	if e.Priority == "" {
+		e.Priority = "normal"
 	}
 }
 
@@ -283,7 +303,7 @@ func ListWithWarnings() (*ListResult, error) {
 func Delete(id string) error {
 	path := config.Path(config.ExpertsDir, id+".md")
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return fmt.Errorf("expert '%s' not found", id)
+		return fmt.Errorf("expert '%s' not found - run 'council list' to see available experts", id)
 	}
 	return os.Remove(path)
 }
@@ -343,5 +363,44 @@ func (e *Expert) SourceMarker() string {
 	default:
 		return ""
 	}
+}
+
+// ParseFrontmatter parses just the YAML frontmatter into an Expert.
+// Unlike Parse, this expects only the YAML content without the --- delimiters.
+func ParseFrontmatter(data []byte) (*Expert, error) {
+	var e Expert
+	if err := yaml.Unmarshal(data, &e); err != nil {
+		return nil, err
+	}
+	return &e, nil
+}
+
+// SaveToPath writes the expert to a specific file path.
+func SaveToPath(e *Expert, path string) error {
+	// Generate body if empty
+	if e.Body == "" {
+		e.Body = e.generateBody()
+	}
+
+	// Generate frontmatter
+	fm, err := yaml.Marshal(e)
+	if err != nil {
+		return fmt.Errorf("failed to marshal expert: %w", err)
+	}
+
+	// Combine frontmatter and body
+	content := fmt.Sprintf("---\n%s---\n\n%s", string(fm), e.Body)
+
+	// Ensure directory exists
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		return fmt.Errorf("failed to write expert file: %w", err)
+	}
+
+	return nil
 }
 

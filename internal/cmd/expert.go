@@ -86,7 +86,7 @@ var showCmd = &cobra.Command{
 		e, err := expert.Load(args[0])
 		if err != nil {
 			if os.IsNotExist(err) {
-				return fmt.Errorf("expert '%s' not found", args[0])
+				return fmt.Errorf("expert '%s' not found - run 'council list' to see available experts", args[0])
 			}
 			return err
 		}
@@ -164,7 +164,7 @@ var removeCmd = &cobra.Command{
 		e, err := expert.Load(id)
 		if err != nil {
 			if os.IsNotExist(err) {
-				return fmt.Errorf("expert '%s' not found", id)
+				return fmt.Errorf("expert '%s' not found - run 'council list' to see available experts", id)
 			}
 			return err
 		}

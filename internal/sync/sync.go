@@ -62,6 +62,24 @@ func allCommandNames() []string {
 	return names
 }
 
+// claudeCommandPaths returns paths to all Claude command files
+func claudeCommandPaths() []string {
+	var paths []string
+	for _, name := range allCommandNames() {
+		paths = append(paths, ".claude/commands/"+name+".md")
+	}
+	return paths
+}
+
+// AllCleanPaths returns all paths that should be cleaned across all targets
+func AllCleanPaths() []string {
+	var paths []string
+	for _, target := range Targets {
+		paths = append(paths, target.CleanPaths...)
+	}
+	return paths
+}
+
 // Options configures sync behavior
 type Options struct {
 	DryRun bool // Show what would be done without making changes
@@ -70,10 +88,11 @@ type Options struct {
 
 // Target represents a sync target
 type Target struct {
-	Name     string
-	Sync     func(experts []*expert.Expert, cfg *config.Config, opts Options) error
-	Check    func() bool
-	Location string
+	Name       string
+	Sync       func(experts []*expert.Expert, cfg *config.Config, opts Options) error
+	Check      func() bool
+	Location   string
+	CleanPaths []string // Paths to remove when cleaning
 }
 
 // Targets is the registry of available sync targets
@@ -83,30 +102,38 @@ var Targets = map[string]*Target{
 		Location: ".claude/",
 		Sync:     syncClaude,
 		Check:    func() bool { return fs.DirExists(".claude") },
+		CleanPaths: append(
+			[]string{".claude/agents"},
+			claudeCommandPaths()...,
+		),
 	},
 	"cursor": {
-		Name:     "Cursor",
-		Location: ".cursor/rules/ or .cursorrules",
-		Sync:     syncCursor,
-		Check:    func() bool { return fs.DirExists(".cursor") || fs.FileExists(".cursorrules") },
+		Name:       "Cursor",
+		Location:   ".cursor/rules/ or .cursorrules",
+		Sync:       syncCursor,
+		Check:      func() bool { return fs.DirExists(".cursor") || fs.FileExists(".cursorrules") },
+		CleanPaths: []string{".cursorrules", ".cursor/rules/council.md"},
 	},
 	"windsurf": {
-		Name:     "Windsurf",
-		Location: ".windsurfrules",
-		Sync:     syncWindsurf,
-		Check:    func() bool { return fs.FileExists(".windsurfrules") },
+		Name:       "Windsurf",
+		Location:   ".windsurfrules",
+		Sync:       syncWindsurf,
+		Check:      func() bool { return fs.FileExists(".windsurfrules") },
+		CleanPaths: []string{".windsurfrules"},
 	},
 	"generic": {
-		Name:     "Generic",
-		Location: "AGENTS.md",
-		Sync:     syncGeneric,
-		Check:    func() bool { return fs.FileExists("AGENTS.md") },
+		Name:       "Generic",
+		Location:   "AGENTS.md",
+		Sync:       syncGeneric,
+		Check:      func() bool { return fs.FileExists("AGENTS.md") },
+		CleanPaths: []string{"AGENTS.md"},
 	},
 	"opencode": {
-		Name:     "OpenCode",
-		Location: ".opencode/agent/",
-		Sync:     syncOpenCode,
-		Check:    func() bool { return fs.DirExists(".opencode") || fs.FileExists("opencode.json") },
+		Name:       "OpenCode",
+		Location:   ".opencode/agent/",
+		Sync:       syncOpenCode,
+		Check:      func() bool { return fs.DirExists(".opencode") || fs.FileExists("opencode.json") },
+		CleanPaths: []string{".opencode/agent"},
 	},
 }
 
@@ -142,39 +169,13 @@ func SyncAll(cfg *config.Config, opts Options) error {
 func loadAllExperts() ([]*expert.Expert, error) {
 	var allExperts []*expert.Expert
 
-	// Load custom personas first
-	customPersonas, _ := creator.List()
-	for _, p := range customPersonas {
-		e := &expert.Expert{
-			ID:         p.ID,
-			Name:       p.Name,
-			Focus:      p.Focus,
-			Philosophy: p.Philosophy,
-			Principles: p.Principles,
-			RedFlags:   p.RedFlags,
-			Triggers:   p.Triggers,
-			Body:       p.Body,
-			Source:     "custom",
-		}
-		allExperts = append(allExperts, e)
-	}
+	// Load custom experts first (from personal council)
+	customExperts, _ := creator.List()
+	allExperts = append(allExperts, customExperts...)
 
-	// Load installed personas
-	installedPersonas, _ := creator.ListInstalledPersonas()
-	for _, p := range installedPersonas {
-		e := &expert.Expert{
-			ID:         p.ID,
-			Name:       p.Name,
-			Focus:      p.Focus,
-			Philosophy: p.Philosophy,
-			Principles: p.Principles,
-			RedFlags:   p.RedFlags,
-			Triggers:   p.Triggers,
-			Body:       p.Body,
-			Source:     p.Source,
-		}
-		allExperts = append(allExperts, e)
-	}
+	// Load installed experts (from cloned repositories)
+	installedExperts, _ := creator.ListInstalledExperts()
+	allExperts = append(allExperts, installedExperts...)
 
 	// Load project council experts
 	projectExperts, err := expert.List()
@@ -231,7 +232,7 @@ func removeFile(path string, dryRun bool) error {
 func SyncTarget(targetName string, cfg *config.Config, opts Options) error {
 	target, ok := Targets[targetName]
 	if !ok {
-		return fmt.Errorf("unknown target: %s", targetName)
+		return fmt.Errorf("unknown target '%s' - valid targets: claude, cursor, windsurf, opencode, generic", targetName)
 	}
 
 	allExperts, err := loadAllExperts()
@@ -240,7 +241,7 @@ func SyncTarget(targetName string, cfg *config.Config, opts Options) error {
 	}
 
 	if len(allExperts) == 0 {
-		return fmt.Errorf("no experts to sync")
+		return fmt.Errorf("no experts to sync - add some with 'council add' or 'council setup --apply'")
 	}
 
 	fmt.Printf("Syncing to %s (%s)...\n", target.Name, target.Location)
@@ -266,45 +267,30 @@ func syncClaude(experts []*expert.Expert, cfg *config.Config, opts Options) erro
 		}
 	}
 
-	// Create commands directory if any commands are enabled
-	hasCommands := len(cfg.Council.Commands) > 0
+	// Create commands directory
 	commandsDir := ".claude/commands"
-	if hasCommands && !opts.DryRun {
+	if !opts.DryRun {
 		if err := os.MkdirAll(commandsDir, 0755); err != nil {
 			return err
 		}
 	}
 
-	// Create /council command if configured (special: needs experts for dynamic content)
-	if cfg.Council.HasCommand("council") {
-		path := filepath.Join(commandsDir, "council.md")
-		if err := writeFile(path, generateCouncilCommand(experts), opts.DryRun); err != nil {
-			return err
-		}
+	// Create /council command (special: needs experts for dynamic content)
+	path := filepath.Join(commandsDir, "council.md")
+	if err := writeFile(path, generateCouncilCommand(experts), opts.DryRun); err != nil {
+		return err
 	}
 
 	// Create other commands from registry
 	for name, cmd := range commands {
-		if cfg.Council.HasCommand(name) {
-			path := filepath.Join(commandsDir, name+".md")
-			if err := writeFile(path, cmd.Template, opts.DryRun); err != nil {
-				return err
-			}
+		path := filepath.Join(commandsDir, name+".md")
+		if err := writeFile(path, cmd.Template, opts.DryRun); err != nil {
+			return err
 		}
 	}
 
 	// Clean up stale files if requested
 	if opts.Clean {
-		// Remove stale command files
-		for _, name := range allCommandNames() {
-			if !cfg.Council.HasCommand(name) {
-				path := filepath.Join(commandsDir, name+".md")
-				if err := removeFile(path, opts.DryRun); err != nil {
-					return err
-				}
-			}
-		}
-
 		// Remove stale agent files (experts no longer in .council/experts/)
 		if err := cleanStaleAgents(agentsDir, experts, opts.DryRun); err != nil {
 			return err
@@ -396,31 +382,21 @@ func syncOpenCode(experts []*expert.Expert, cfg *config.Config, opts Options) er
 
 	// Create commands from registry
 	for name, cmd := range commands {
-		if cfg.Council.HasCommand(name) {
-			path := filepath.Join(agentDir, name+".md")
-			if err := writeFile(path, generateOpenCodeCommand(cmd.Description, cmd.Template), opts.DryRun); err != nil {
-				return err
-			}
+		path := filepath.Join(agentDir, name+".md")
+		if err := writeFile(path, generateOpenCodeCommand(cmd.Description, cmd.Template), opts.DryRun); err != nil {
+			return err
 		}
 	}
 
 	// Clean up stale files if requested
 	if opts.Clean {
-		// Remove stale command files
+		// Build list of command names to exclude from agent cleanup
 		var cmdNames []string
 		for name := range commands {
 			cmdNames = append(cmdNames, name)
 		}
-		for _, name := range cmdNames {
-			if !cfg.Council.HasCommand(name) {
-				path := filepath.Join(agentDir, name+".md")
-				if err := removeFile(path, opts.DryRun); err != nil {
-					return err
-				}
-			}
-		}
 
-		// Remove stale agent files
+		// Remove stale agent files (but keep command files)
 		if err := cleanStaleAgentsOpenCode(agentDir, experts, cmdNames, opts.DryRun); err != nil {
 			return err
 		}

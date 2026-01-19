@@ -63,29 +63,25 @@ func InteractiveSetup() error {
 	}
 	fmt.Println()
 
-	// Phase 3: Load custom personas (always first)
+	// Phase 3: Load custom experts (always first)
 	var customSuggestions []ExpertSuggestion
-	customPersonas, _ := creator.List()
-	for _, p := range customPersonas {
-		e := personaToExpert(p)
-		selected := p.Priority == "always"
+	customExperts, _ := creator.List()
+	for _, e := range customExperts {
 		customSuggestions = append(customSuggestions, ExpertSuggestion{
-			Expert:   e,
-			Selected: selected,
+			Expert:   *e,
+			Selected: e.Priority == "always",
 			Source:   "custom",
 		})
 	}
 
-	// Phase 3b: Load installed personas
+	// Phase 3b: Load installed experts
 	var installedSuggestions []ExpertSuggestion
-	installedPersonas, _ := creator.ListInstalledPersonas()
-	for _, p := range installedPersonas {
-		e := personaToExpert(p)
-		selected := p.Priority == "always"
+	installedExperts, _ := creator.ListInstalledExperts()
+	for _, e := range installedExperts {
 		installedSuggestions = append(installedSuggestions, ExpertSuggestion{
-			Expert:   e,
-			Selected: selected,
-			Source:   p.Source,
+			Expert:   *e,
+			Selected: e.Priority == "always",
+			Source:   e.Source,
 		})
 	}
 
@@ -358,19 +354,6 @@ func hasFramework(d *detect.Detection, name string) bool {
 		}
 	}
 	return false
-}
-
-// personaToExpert converts a creator.Persona to an expert.Expert
-func personaToExpert(p *creator.Persona) expert.Expert {
-	return expert.Expert{
-		ID:         p.ID,
-		Name:       p.Name,
-		Focus:      p.Focus,
-		Philosophy: p.Philosophy,
-		Principles: p.Principles,
-		RedFlags:   p.RedFlags,
-		Triggers:   p.Triggers,
-	}
 }
 
 // selectExpertsWithSources shows a selection UI that groups by source

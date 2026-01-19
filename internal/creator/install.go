@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/luuuc/council-cli/internal/expert"
 )
 
 // Install clones a git repository to the installed directory.
@@ -165,8 +167,8 @@ func ListInstalled() ([]string, error) {
 	return names, nil
 }
 
-// ListInstalledPersonas returns all personas from installed repositories.
-func ListInstalledPersonas() ([]*Persona, error) {
+// ListInstalledExperts returns all experts from installed repositories.
+func ListInstalledExperts() ([]*expert.Expert, error) {
 	installedDir, err := InstalledPath()
 	if err != nil {
 		return nil, err
@@ -177,15 +179,15 @@ func ListInstalledPersonas() ([]*Persona, error) {
 		return nil, err
 	}
 
-	var personas []*Persona
+	var experts []*expert.Expert
 	for _, name := range installed {
 		repoPath := filepath.Join(installedDir, name)
-		repoPersonas, err := listPersonasInDir(repoPath, "installed:"+name)
+		repoExperts, err := ListExpertsInDir(repoPath, "installed:"+name)
 		if err != nil {
 			continue
 		}
-		personas = append(personas, repoPersonas...)
+		experts = append(experts, repoExperts...)
 	}
 
-	return personas, nil
+	return experts, nil
 }

@@ -17,10 +17,9 @@ const (
 
 // Config represents the council configuration
 type Config struct {
-	Version int           `yaml:"version"`
-	AI      AIConfig      `yaml:"ai"`
-	Targets []string      `yaml:"targets"`
-	Council CouncilConfig `yaml:"council"`
+	Version int      `yaml:"version"`
+	AI      AIConfig `yaml:"ai"`
+	Targets []string `yaml:"targets"`
 }
 
 // AIConfig holds AI CLI configuration
@@ -28,23 +27,6 @@ type AIConfig struct {
 	Command string   `yaml:"command"`
 	Args    []string `yaml:"args,omitempty"`
 	Timeout int      `yaml:"timeout"`
-}
-
-// CouncilConfig holds council generation options
-type CouncilConfig struct {
-	// Commands is the list of slash commands to generate
-	// Valid values: council, council-add, council-detect, council-remove
-	Commands []string `yaml:"commands"`
-}
-
-// HasCommand checks if a command is enabled
-func (c *CouncilConfig) HasCommand(name string) bool {
-	for _, cmd := range c.Commands {
-		if cmd == name {
-			return true
-		}
-	}
-	return false
 }
 
 // Default returns a default configuration
@@ -56,9 +38,6 @@ func Default() *Config {
 			Timeout: 120,
 		},
 		Targets: []string{"claude", "cursor", "opencode"},
-		Council: CouncilConfig{
-			Commands: []string{"council", "council-add", "council-detect", "council-remove"},
-		},
 	}
 }
 
@@ -99,11 +78,6 @@ func Load() (*Config, error) {
 // applyDefaults fills in missing configuration with sensible defaults
 func (c *Config) applyDefaults() {
 	defaults := Default()
-
-	// If no commands specified, use defaults
-	if len(c.Council.Commands) == 0 {
-		c.Council.Commands = defaults.Council.Commands
-	}
 
 	// If no targets specified, use defaults
 	if len(c.Targets) == 0 {

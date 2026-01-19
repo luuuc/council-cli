@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/luuuc/council-cli/internal/config"
+	"github.com/luuuc/council-cli/internal/sync"
 	"github.com/spf13/cobra"
 )
 
@@ -32,9 +33,12 @@ func Execute() error {
 	return rootCmd.Execute()
 }
 
+var initClean bool
+
 func init() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(initCmd)
+	initCmd.Flags().BoolVar(&initClean, "clean", false, "Remove existing council and synced files before initializing")
 }
 
 var versionCmd = &cobra.Command{
@@ -45,8 +49,6 @@ var versionCmd = &cobra.Command{
 	},
 }
 
-var initClean bool
-
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Initialize a new .council directory",
@@ -54,10 +56,6 @@ var initCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return initCouncil(initClean)
 	},
-}
-
-func init() {
-	initCmd.Flags().BoolVar(&initClean, "clean", false, "Remove existing council and synced files before initializing")
 }
 
 // cleanExisting removes existing council directory and synced files
@@ -68,25 +66,8 @@ func cleanExisting() error {
 	}
 	fmt.Println("Removed .council/")
 
-	// Remove synced files from various targets
-	syncedPaths := []string{
-		// Claude Code
-		".claude/agents",
-		".claude/commands/council.md",
-		".claude/commands/council-add.md",
-		".claude/commands/council-detect.md",
-		// Cursor
-		".cursorrules",
-		".cursor/rules/council.md",
-		// Windsurf
-		".windsurfrules",
-		// OpenCode
-		".opencode/agent",
-		// Generic
-		"AGENTS.md",
-	}
-
-	for _, path := range syncedPaths {
+	// Remove synced files from all targets (derived from registry)
+	for _, path := range sync.AllCleanPaths() {
 		if _, err := os.Stat(path); err == nil {
 			if err := os.RemoveAll(path); err != nil {
 				fmt.Printf("Warning: could not remove %s: %v\n", path, err)

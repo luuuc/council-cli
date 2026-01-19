@@ -507,3 +507,197 @@ func TestGenerateBody_SpecialCharacters(t *testing.T) {
 		t.Error("generateBody() should preserve template-like content as literal text")
 	}
 }
+
+func TestParseFrontmatter(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    *Expert
+		wantErr bool
+	}{
+		{
+			name: "valid frontmatter",
+			input: `id: kent-beck
+name: Kent Beck
+focus: TDD expert
+philosophy: Write tests first.
+principles:
+  - Red-green-refactor
+red_flags:
+  - No tests`,
+			want: &Expert{
+				ID:         "kent-beck",
+				Name:       "Kent Beck",
+				Focus:      "TDD expert",
+				Philosophy: "Write tests first.",
+				Principles: []string{"Red-green-refactor"},
+				RedFlags:   []string{"No tests"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "with category and priority",
+			input: `id: custom-expert
+name: Custom
+focus: Custom focus
+category: custom
+priority: high`,
+			want: &Expert{
+				ID:       "custom-expert",
+				Name:     "Custom",
+				Focus:    "Custom focus",
+				Category: "custom",
+				Priority: "high",
+			},
+			wantErr: false,
+		},
+		{
+			name:    "invalid yaml",
+			input:   "id: [broken",
+			want:    nil,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ParseFrontmatter([]byte(tt.input))
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ParseFrontmatter() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr {
+				return
+			}
+
+			if got.ID != tt.want.ID {
+				t.Errorf("ParseFrontmatter() ID = %v, want %v", got.ID, tt.want.ID)
+			}
+			if got.Name != tt.want.Name {
+				t.Errorf("ParseFrontmatter() Name = %v, want %v", got.Name, tt.want.Name)
+			}
+			if got.Category != tt.want.Category {
+				t.Errorf("ParseFrontmatter() Category = %v, want %v", got.Category, tt.want.Category)
+			}
+			if got.Priority != tt.want.Priority {
+				t.Errorf("ParseFrontmatter() Priority = %v, want %v", got.Priority, tt.want.Priority)
+			}
+		})
+	}
+}
+
+func TestApplyDefaults(t *testing.T) {
+	tests := []struct {
+		name         string
+		expert       *Expert
+		wantCategory string
+		wantPriority string
+	}{
+		{
+			name:         "empty fields get defaults",
+			expert:       &Expert{ID: "test"},
+			wantCategory: "custom",
+			wantPriority: "normal",
+		},
+		{
+			name:         "existing values preserved",
+			expert:       &Expert{ID: "test", Category: "rails", Priority: "high"},
+			wantCategory: "rails",
+			wantPriority: "high",
+		},
+		{
+			name:         "partial defaults",
+			expert:       &Expert{ID: "test", Category: "go"},
+			wantCategory: "go",
+			wantPriority: "normal",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.expert.ApplyDefaults()
+			if tt.expert.Category != tt.wantCategory {
+				t.Errorf("ApplyDefaults() Category = %v, want %v", tt.expert.Category, tt.wantCategory)
+			}
+			if tt.expert.Priority != tt.wantPriority {
+				t.Errorf("ApplyDefaults() Priority = %v, want %v", tt.expert.Priority, tt.wantPriority)
+			}
+		})
+	}
+}
+
+func TestSaveToPath(t *testing.T) {
+	// Create a temp directory for testing
+	tmpDir, err := os.MkdirTemp("", "council-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	expert := &Expert{
+		ID:         "test-save-path",
+		Name:       "Test Save Path",
+		Focus:      "Testing SaveToPath",
+		Philosophy: "Test all paths.",
+		Principles: []string{"Test first"},
+	}
+
+	path := filepath.Join(tmpDir, "experts", "test.md")
+
+	err = SaveToPath(expert, path)
+	if err != nil {
+		t.Fatalf("SaveToPath() error = %v", err)
+	}
+
+	// Verify file was created
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		t.Errorf("SaveToPath() did not create file at %s", path)
+		return
+	}
+
+	// Load it back and verify
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("Failed to read saved file: %v", err)
+	}
+
+	loaded, err := Parse(data)
+	if err != nil {
+		t.Fatalf("Failed to parse saved file: %v", err)
+	}
+
+	if loaded.ID != expert.ID {
+		t.Errorf("SaveToPath() ID = %v, want %v", loaded.ID, expert.ID)
+	}
+	if loaded.Name != expert.Name {
+		t.Errorf("SaveToPath() Name = %v, want %v", loaded.Name, expert.Name)
+	}
+}
+
+func TestToJSON(t *testing.T) {
+	expert := &Expert{
+		ID:         "test-json",
+		Name:       "Test JSON",
+		Focus:      "Testing JSON conversion",
+		Philosophy: "JSON all the things.",
+		Principles: []string{"Serialize", "Deserialize"},
+		RedFlags:   []string{"Invalid JSON"},
+		Category:   "testing",
+		Priority:   "high",
+	}
+
+	json := expert.ToJSON()
+
+	if json.ID != expert.ID {
+		t.Errorf("ToJSON() ID = %v, want %v", json.ID, expert.ID)
+	}
+	if json.Name != expert.Name {
+		t.Errorf("ToJSON() Name = %v, want %v", json.Name, expert.Name)
+	}
+	if json.Category != expert.Category {
+		t.Errorf("ToJSON() Category = %v, want %v", json.Category, expert.Category)
+	}
+	if json.Priority != expert.Priority {
+		t.Errorf("ToJSON() Priority = %v, want %v", json.Priority, expert.Priority)
+	}
+}

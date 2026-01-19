@@ -21,15 +21,6 @@ func TestDefault(t *testing.T) {
 	if len(cfg.Targets) != 3 {
 		t.Errorf("Default().Targets length = %d, want 3", len(cfg.Targets))
 	}
-	if !cfg.Council.HasCommand("council") {
-		t.Error("Default().Council should have council command")
-	}
-	if !cfg.Council.HasCommand("council-add") {
-		t.Error("Default().Council should have council-add command")
-	}
-	if !cfg.Council.HasCommand("council-detect") {
-		t.Error("Default().Council should have council-detect command")
-	}
 }
 
 func TestPath(t *testing.T) {

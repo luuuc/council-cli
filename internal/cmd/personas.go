@@ -9,6 +9,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/luuuc/council-cli/internal/creator"
+	"github.com/luuuc/council-cli/internal/expert"
 	"github.com/spf13/cobra"
 )
 
@@ -107,22 +108,22 @@ Examples:
 			return err
 		}
 
-		// List personas in installed repo
-		personas, _ := creator.ListInstalledPersonas()
-		var repoPersonas []*creator.Persona
-		for _, p := range personas {
-			if p.Source == "installed:"+name {
-				repoPersonas = append(repoPersonas, p)
+		// List experts in installed repo
+		experts, _ := creator.ListInstalledExperts()
+		var repoExperts []*expert.Expert
+		for _, e := range experts {
+			if e.Source == "installed:"+name {
+				repoExperts = append(repoExperts, e)
 			}
 		}
 
 		fmt.Println()
 		fmt.Printf("Installed to: %s\n\n", name)
 
-		if len(repoPersonas) > 0 {
-			fmt.Println("Personas added:")
-			for _, p := range repoPersonas {
-				fmt.Printf("  - %s - %s\n", p.ID, p.Focus)
+		if len(repoExperts) > 0 {
+			fmt.Println("Experts added:")
+			for _, e := range repoExperts {
+				fmt.Printf("  - %s - %s\n", e.ID, e.Focus)
 			}
 			fmt.Println()
 		}
@@ -152,16 +153,16 @@ var personasInstalledCmd = &cobra.Command{
 			return nil
 		}
 
-		// Get personas for each installed repo
-		personas, _ := creator.ListInstalledPersonas()
+		// Get experts for each installed repo
+		experts, _ := creator.ListInstalledExperts()
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "REPOSITORY\tPERSONAS")
+		fmt.Fprintln(w, "REPOSITORY\tEXPERTS")
 
 		for _, name := range installed {
 			count := 0
-			for _, p := range personas {
-				if p.Source == "installed:"+name {
+			for _, e := range experts {
+				if e.Source == "installed:"+name {
 					count++
 				}
 			}

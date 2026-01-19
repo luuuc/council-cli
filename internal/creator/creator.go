@@ -6,28 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v3"
+	"github.com/luuuc/council-cli/internal/expert"
 )
-
-// Persona represents a custom persona in my-council.
-// Uses the same format as built-in experts with additional priority field.
-type Persona struct {
-	ID         string   `yaml:"id"`
-	Name       string   `yaml:"name"`
-	Focus      string   `yaml:"focus"`
-	Category   string   `yaml:"category,omitempty"`
-	Priority   string   `yaml:"priority,omitempty"` // always, high, normal
-	Triggers   []string `yaml:"triggers,omitempty"`
-	Philosophy string   `yaml:"philosophy,omitempty"`
-	Principles []string `yaml:"principles,omitempty"`
-	RedFlags   []string `yaml:"red_flags,omitempty"`
-
-	// Body is the markdown content after frontmatter
-	Body string `yaml:"-"`
-
-	// Source indicates where this persona came from (custom, installed:<name>)
-	Source string `yaml:"-"`
-}
 
 // Init initializes the personal council directory with git.
 func Init() error {
@@ -97,31 +77,31 @@ Each markdown file represents an expert persona that can review your code.
 `
 }
 
-// List returns all custom personas from my-council.
-func List() ([]*Persona, error) {
+// List returns all custom experts from my-council.
+func List() ([]*expert.Expert, error) {
 	path, err := MyCouncilPath()
 	if err != nil {
 		return nil, err
 	}
 
 	if !Initialized() {
-		return []*Persona{}, nil
+		return []*expert.Expert{}, nil
 	}
 
-	return listPersonasInDir(path, "custom")
+	return ListExpertsInDir(path, "custom")
 }
 
-// listPersonasInDir loads all personas from a directory.
-func listPersonasInDir(dir, source string) ([]*Persona, error) {
+// ListExpertsInDir loads all experts from a directory.
+func ListExpertsInDir(dir, source string) ([]*expert.Expert, error) {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return []*Persona{}, nil
+			return []*expert.Expert{}, nil
 		}
 		return nil, err
 	}
 
-	var personas []*Persona
+	var experts []*expert.Expert
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
 			continue
@@ -132,28 +112,28 @@ func listPersonasInDir(dir, source string) ([]*Persona, error) {
 		}
 
 		path := filepath.Join(dir, entry.Name())
-		p, err := LoadFile(path)
+		e, err := LoadFile(path)
 		if err != nil {
 			continue // Skip files that can't be parsed
 		}
-		p.Source = source
-		personas = append(personas, p)
+		e.Source = source
+		experts = append(experts, e)
 	}
 
-	return personas, nil
+	return experts, nil
 }
 
-// Load reads a persona by ID from my-council.
-func Load(id string) (*Persona, error) {
-	path, err := PersonaPath(id)
+// Load reads an expert by ID from my-council.
+func Load(id string) (*expert.Expert, error) {
+	path, err := ExpertPath(id)
 	if err != nil {
 		return nil, err
 	}
 	return LoadFile(path)
 }
 
-// LoadFile reads a persona from a specific file.
-func LoadFile(path string) (*Persona, error) {
+// LoadFile reads an expert from a specific file.
+func LoadFile(path string) (*expert.Expert, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -161,8 +141,8 @@ func LoadFile(path string) (*Persona, error) {
 	return Parse(data)
 }
 
-// Parse parses persona markdown with frontmatter.
-func Parse(data []byte) (*Persona, error) {
+// Parse parses expert markdown with frontmatter.
+func Parse(data []byte) (*expert.Expert, error) {
 	content := string(data)
 
 	// Split frontmatter and body
@@ -178,84 +158,60 @@ func Parse(data []byte) (*Persona, error) {
 	frontmatter := strings.TrimSpace(parts[0])
 	body := strings.TrimSpace(parts[1])
 
-	var p Persona
-	if err := yaml.Unmarshal([]byte(frontmatter), &p); err != nil {
+	e, err := expert.ParseFrontmatter([]byte(frontmatter))
+	if err != nil {
 		return nil, fmt.Errorf("failed to parse YAML: %w", err)
 	}
 
-	p.Body = body
+	e.Body = body
+	e.ApplyDefaults()
 
-	// Set defaults
-	if p.Category == "" {
-		p.Category = "custom"
-	}
-	if p.Priority == "" {
-		p.Priority = "normal"
-	}
-
-	return &p, nil
+	return e, nil
 }
 
-// Save writes a persona to my-council.
-func (p *Persona) Save() error {
+// Save writes an expert to my-council.
+func Save(e *expert.Expert) error {
 	if !Initialized() {
 		return fmt.Errorf("my-council not initialized: run 'council creator init' first")
 	}
 
-	path, err := PersonaPath(p.ID)
+	path, err := ExpertPath(e.ID)
 	if err != nil {
 		return err
 	}
 
 	// Generate body if empty
-	if p.Body == "" {
-		p.Body = p.generateBody()
+	if e.Body == "" {
+		e.Body = GenerateBody(e)
 	}
 
-	// Set defaults
-	if p.Category == "" {
-		p.Category = "custom"
-	}
-	if p.Priority == "" {
-		p.Priority = "normal"
-	}
+	e.ApplyDefaults()
 
-	// Generate frontmatter
-	fm, err := yaml.Marshal(p)
-	if err != nil {
-		return fmt.Errorf("failed to marshal persona: %w", err)
-	}
-
-	// Combine frontmatter and body
-	content := fmt.Sprintf("---\n%s---\n\n%s", string(fm), p.Body)
-
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
-		return fmt.Errorf("failed to write persona file: %w", err)
-	}
-
-	return nil
+	// Write using expert's save logic
+	return expert.SaveToPath(e, path)
 }
 
-func (p *Persona) generateBody() string {
+// GenerateBody creates default body content for an expert.
+func GenerateBody(e *expert.Expert) string {
 	var buf strings.Builder
 
-	fmt.Fprintf(&buf, "# %s - %s\n\n", p.Name, p.Focus)
-	fmt.Fprintf(&buf, "You are channeling %s, known for expertise in %s.\n", p.Name, p.Focus)
+	fmt.Fprintf(&buf, "# %s - %s\n\n", e.Name, e.Focus)
+	fmt.Fprintf(&buf, "You are channeling %s, known for expertise in %s.\n", e.Name, e.Focus)
 
-	if p.Philosophy != "" {
-		fmt.Fprintf(&buf, "\n## Philosophy\n\n%s\n", p.Philosophy)
+	if e.Philosophy != "" {
+		fmt.Fprintf(&buf, "\n## Philosophy\n\n%s\n", e.Philosophy)
 	}
 
-	if len(p.Principles) > 0 {
+	if len(e.Principles) > 0 {
 		fmt.Fprintf(&buf, "\n## Principles\n\n")
-		for _, pr := range p.Principles {
+		for _, pr := range e.Principles {
 			fmt.Fprintf(&buf, "- %s\n", pr)
 		}
 	}
 
-	if len(p.RedFlags) > 0 {
+	if len(e.RedFlags) > 0 {
 		fmt.Fprintf(&buf, "\n## Red Flags\n\nWatch for these patterns:\n")
-		for _, rf := range p.RedFlags {
+		for _, rf := range e.RedFlags {
 			fmt.Fprintf(&buf, "- %s\n", rf)
 		}
 	}
@@ -267,36 +223,40 @@ func (p *Persona) generateBody() string {
 	return buf.String()
 }
 
-// Path returns the file path for this persona.
-func (p *Persona) Path() (string, error) {
-	return PersonaPath(p.ID)
+// ExpertPath returns the full path to an expert file in my-council.
+func ExpertPath(id string) (string, error) {
+	myCouncil, err := MyCouncilPath()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(myCouncil, id+".md"), nil
 }
 
-// Delete removes a persona from my-council and commits.
+// Delete removes an expert from my-council and commits.
 func Delete(id string) error {
 	if !Initialized() {
 		return fmt.Errorf("my-council not initialized")
 	}
 
-	path, err := PersonaPath(id)
+	path, err := ExpertPath(id)
 	if err != nil {
 		return err
 	}
 
 	// Check if exists
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return fmt.Errorf("persona '%s' not found", id)
+		return fmt.Errorf("expert '%s' not found - run 'council creator list' to see your personas", id)
 	}
 
 	// Load to get name for commit message
-	p, err := Load(id)
+	e, err := Load(id)
 	if err != nil {
 		return err
 	}
 
 	// Delete file
 	if err := os.Remove(path); err != nil {
-		return fmt.Errorf("failed to delete persona: %w", err)
+		return fmt.Errorf("failed to delete expert: %w", err)
 	}
 
 	// Commit
@@ -308,12 +268,12 @@ func Delete(id string) error {
 	if err := repo.Add(id + ".md"); err != nil {
 		return err
 	}
-	return repo.Commit(fmt.Sprintf("Remove persona: %s", p.Name))
+	return repo.Commit(fmt.Sprintf("Remove expert: %s", e.Name))
 }
 
-// Exists checks if a persona exists in my-council.
+// Exists checks if an expert exists in my-council.
 func Exists(id string) bool {
-	path, err := PersonaPath(id)
+	path, err := ExpertPath(id)
 	if err != nil {
 		return false
 	}
@@ -321,9 +281,9 @@ func Exists(id string) bool {
 	return err == nil
 }
 
-// SaveAndCommit saves a persona and commits the change.
-func (p *Persona) SaveAndCommit(isNew bool) error {
-	if err := p.Save(); err != nil {
+// SaveAndCommit saves an expert and commits the change.
+func SaveAndCommit(e *expert.Expert, isNew bool) error {
+	if err := Save(e); err != nil {
 		return err
 	}
 
@@ -337,5 +297,5 @@ func (p *Persona) SaveAndCommit(isNew bool) error {
 	if isNew {
 		action = "Add"
 	}
-	return repo.AddAndCommit(p.ID+".md", fmt.Sprintf("%s persona: %s", action, p.Name))
+	return repo.AddAndCommit(e.ID+".md", fmt.Sprintf("%s expert: %s", action, e.Name))
 }
