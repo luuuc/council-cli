@@ -58,6 +58,9 @@ type Expert struct {
 
 	// Body is the markdown content after frontmatter
 	Body string `yaml:"-"`
+
+	// Source indicates where this expert came from: "", "custom", or "installed:<name>"
+	Source string `yaml:"-"`
 }
 
 // ExpertSuggestions is the expected AI response format
@@ -328,5 +331,17 @@ func ParseAIResponse(data []byte) ([]Expert, error) {
 	}
 
 	return suggestions.Experts, nil
+}
+
+// SourceMarker returns the display marker for an expert's source
+func (e *Expert) SourceMarker() string {
+	switch {
+	case e.Source == "custom":
+		return " [custom]"
+	case strings.HasPrefix(e.Source, "installed:"):
+		return " [" + e.Source + "]"
+	default:
+		return ""
+	}
 }
 

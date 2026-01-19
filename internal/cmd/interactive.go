@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/luuuc/council-cli/internal/creator"
 	"github.com/luuuc/council-cli/internal/detect"
 	"github.com/luuuc/council-cli/internal/expert"
 	"gopkg.in/yaml.v3"
@@ -29,6 +30,7 @@ func init() {
 type ExpertSuggestion struct {
 	Expert   expert.Expert
 	Selected bool
+	Source   string // "custom", "installed:<name>", or "" for built-in
 }
 
 // InteractiveSetup runs the interactive council setup flow
@@ -61,17 +63,47 @@ func InteractiveSetup() error {
 	}
 	fmt.Println()
 
-	// Phase 3: Suggest experts based on detection and intention
+	// Phase 3: Load custom personas (always first)
+	var customSuggestions []ExpertSuggestion
+	customPersonas, _ := creator.List()
+	for _, p := range customPersonas {
+		e := personaToExpert(p)
+		selected := p.Priority == "always"
+		customSuggestions = append(customSuggestions, ExpertSuggestion{
+			Expert:   e,
+			Selected: selected,
+			Source:   "custom",
+		})
+	}
+
+	// Phase 3b: Load installed personas
+	var installedSuggestions []ExpertSuggestion
+	installedPersonas, _ := creator.ListInstalledPersonas()
+	for _, p := range installedPersonas {
+		e := personaToExpert(p)
+		selected := p.Priority == "always"
+		installedSuggestions = append(installedSuggestions, ExpertSuggestion{
+			Expert:   e,
+			Selected: selected,
+			Source:   p.Source,
+		})
+	}
+
+	// Phase 4: Suggest built-in experts based on detection and intention
 	suggestions := suggestExperts(detection, intention)
 
-	if len(suggestions) == 0 {
+	// Combine all suggestions
+	allSuggestions := append(customSuggestions, installedSuggestions...)
+	allSuggestions = append(allSuggestions, suggestions...)
+
+	if len(allSuggestions) == 0 {
 		fmt.Println("No automatic suggestions available for this stack.")
 		fmt.Println("Use 'council add <name>' to add experts manually.")
 		return nil
 	}
 
-	// Phase 4: Let user select experts
-	selected := selectExperts(reader, suggestions)
+	// Phase 5: Let user select experts
+	selected := selectExpertsWithSources(reader, allSuggestions, len(customSuggestions), len(installedSuggestions))
 
 	if len(selected) == 0 {
 		fmt.Println("No experts selected. Setup cancelled.")
@@ -129,50 +161,6 @@ func askIntention(reader *bufio.Reader) string {
 	default:
 		return "code"
 	}
-}
-
-func selectExperts(reader *bufio.Reader, suggestions []ExpertSuggestion) []expert.Expert {
-	// Selection state is already set by suggestExperts (pre-selects first N)
-
-	for {
-		fmt.Println("Suggested experts (toggle with number, done with Enter):")
-		fmt.Println()
-
-		for i, s := range suggestions {
-			mark := "[x]"
-			if !s.Selected {
-				mark = "[ ]"
-			}
-			fmt.Printf("  %d. %s %s - %s\n", i+1, mark, s.Expert.Name, s.Expert.Focus)
-		}
-
-		fmt.Println()
-		fmt.Print("Toggle (1-" + strconv.Itoa(len(suggestions)) + ") or Enter to continue: ")
-
-		input, _ := reader.ReadString('\n')
-		input = strings.TrimSpace(input)
-
-		if input == "" {
-			break
-		}
-
-		num, err := strconv.Atoi(input)
-		if err != nil || num < 1 || num > len(suggestions) {
-			fmt.Println("Invalid selection.")
-			continue
-		}
-
-		suggestions[num-1].Selected = !suggestions[num-1].Selected
-		fmt.Println()
-	}
-
-	var selected []expert.Expert
-	for _, s := range suggestions {
-		if s.Selected {
-			selected = append(selected, s.Expert)
-		}
-	}
-	return selected
 }
 
 // Selection limits
@@ -370,4 +358,93 @@ func hasFramework(d *detect.Detection, name string) bool {
 		}
 	}
 	return false
+}
+
+// personaToExpert converts a creator.Persona to an expert.Expert
+func personaToExpert(p *creator.Persona) expert.Expert {
+	return expert.Expert{
+		ID:         p.ID,
+		Name:       p.Name,
+		Focus:      p.Focus,
+		Philosophy: p.Philosophy,
+		Principles: p.Principles,
+		RedFlags:   p.RedFlags,
+		Triggers:   p.Triggers,
+	}
+}
+
+// selectExpertsWithSources shows a selection UI that groups by source
+func selectExpertsWithSources(reader *bufio.Reader, suggestions []ExpertSuggestion, customCount, installedCount int) []expert.Expert {
+	for {
+		// Show custom section
+		if customCount > 0 {
+			fmt.Println("YOUR COUNCIL [custom]")
+			for i := 0; i < customCount; i++ {
+				s := suggestions[i]
+				mark := "[x]"
+				if !s.Selected {
+					mark = "[ ]"
+				}
+				fmt.Printf("  %d. %s %s - %s\n", i+1, mark, s.Expert.Name, s.Expert.Focus)
+			}
+			fmt.Println()
+		}
+
+		// Show installed section
+		if installedCount > 0 {
+			fmt.Println("INSTALLED")
+			start := customCount
+			for i := start; i < start+installedCount; i++ {
+				s := suggestions[i]
+				mark := "[x]"
+				if !s.Selected {
+					mark = "[ ]"
+				}
+				source := strings.TrimPrefix(s.Source, "installed:")
+				fmt.Printf("  %d. %s %s - %s [%s]\n", i+1, mark, s.Expert.Name, s.Expert.Focus, source)
+			}
+			fmt.Println()
+		}
+
+		// Show built-in section
+		builtinStart := customCount + installedCount
+		if len(suggestions) > builtinStart {
+			fmt.Println("RECOMMENDED FOR THIS PROJECT")
+			for i := builtinStart; i < len(suggestions); i++ {
+				s := suggestions[i]
+				mark := "[x]"
+				if !s.Selected {
+					mark = "[ ]"
+				}
+				fmt.Printf("  %d. %s %s - %s\n", i+1, mark, s.Expert.Name, s.Expert.Focus)
+			}
+			fmt.Println()
+		}
+
+		fmt.Print("Toggle (1-" + strconv.Itoa(len(suggestions)) + ") or Enter to continue: ")
+
+		input, _ := reader.ReadString('\n')
+		input = strings.TrimSpace(input)
+
+		if input == "" {
+			break
+		}
+
+		num, err := strconv.Atoi(input)
+		if err != nil || num < 1 || num > len(suggestions) {
+			fmt.Println("Invalid selection.")
+			continue
+		}
+
+		suggestions[num-1].Selected = !suggestions[num-1].Selected
+		fmt.Println()
+	}
+
+	var selected []expert.Expert
+	for _, s := range suggestions {
+		if s.Selected {
+			selected = append(selected, s.Expert)
+		}
+	}
+	return selected
 }

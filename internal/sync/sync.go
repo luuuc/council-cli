@@ -10,6 +10,7 @@ import (
 	"text/template"
 
 	"github.com/luuuc/council-cli/internal/config"
+	"github.com/luuuc/council-cli/internal/creator"
 	"github.com/luuuc/council-cli/internal/expert"
 	"github.com/luuuc/council-cli/internal/fs"
 )
@@ -111,12 +112,13 @@ var Targets = map[string]*Target{
 
 // SyncAll syncs to all configured targets
 func SyncAll(cfg *config.Config, opts Options) error {
-	experts, err := expert.List()
+	// Load all experts: custom + installed + project council
+	allExperts, err := loadAllExperts()
 	if err != nil {
 		return err
 	}
 
-	if len(experts) == 0 {
+	if len(allExperts) == 0 {
 		return fmt.Errorf("no experts to sync - add some with 'council add' or 'council setup --apply'")
 	}
 
@@ -128,12 +130,72 @@ func SyncAll(cfg *config.Config, opts Options) error {
 		}
 
 		fmt.Printf("Syncing to %s (%s)...\n", target.Name, target.Location)
-		if err := target.Sync(experts, cfg, opts); err != nil {
+		if err := target.Sync(allExperts, cfg, opts); err != nil {
 			return fmt.Errorf("failed to sync to %s: %w", targetName, err)
 		}
 	}
 
 	return nil
+}
+
+// loadAllExperts loads experts from all sources: custom, installed, and project
+func loadAllExperts() ([]*expert.Expert, error) {
+	var allExperts []*expert.Expert
+
+	// Load custom personas first
+	customPersonas, _ := creator.List()
+	for _, p := range customPersonas {
+		e := &expert.Expert{
+			ID:         p.ID,
+			Name:       p.Name,
+			Focus:      p.Focus,
+			Philosophy: p.Philosophy,
+			Principles: p.Principles,
+			RedFlags:   p.RedFlags,
+			Triggers:   p.Triggers,
+			Body:       p.Body,
+			Source:     "custom",
+		}
+		allExperts = append(allExperts, e)
+	}
+
+	// Load installed personas
+	installedPersonas, _ := creator.ListInstalledPersonas()
+	for _, p := range installedPersonas {
+		e := &expert.Expert{
+			ID:         p.ID,
+			Name:       p.Name,
+			Focus:      p.Focus,
+			Philosophy: p.Philosophy,
+			Principles: p.Principles,
+			RedFlags:   p.RedFlags,
+			Triggers:   p.Triggers,
+			Body:       p.Body,
+			Source:     p.Source,
+		}
+		allExperts = append(allExperts, e)
+	}
+
+	// Load project council experts
+	projectExperts, err := expert.List()
+	if err != nil {
+		return nil, err
+	}
+	allExperts = append(allExperts, projectExperts...)
+
+	return allExperts, nil
+}
+
+// agentFilename returns the appropriate filename for an expert based on source
+func agentFilename(e *expert.Expert) string {
+	switch {
+	case e.Source == "custom":
+		return "custom-" + e.ID + ".md"
+	case strings.HasPrefix(e.Source, "installed:"):
+		return "installed-" + e.ID + ".md"
+	default:
+		return e.ID + ".md"
+	}
 }
 
 // writeFile writes content to path, or prints what would be written in dry-run mode
@@ -172,17 +234,17 @@ func SyncTarget(targetName string, cfg *config.Config, opts Options) error {
 		return fmt.Errorf("unknown target: %s", targetName)
 	}
 
-	experts, err := expert.List()
+	allExperts, err := loadAllExperts()
 	if err != nil {
 		return err
 	}
 
-	if len(experts) == 0 {
+	if len(allExperts) == 0 {
 		return fmt.Errorf("no experts to sync")
 	}
 
 	fmt.Printf("Syncing to %s (%s)...\n", target.Name, target.Location)
-	return target.Sync(experts, cfg, opts)
+	return target.Sync(allExperts, cfg, opts)
 }
 
 // Claude Code sync
@@ -197,7 +259,8 @@ func syncClaude(experts []*expert.Expert, cfg *config.Config, opts Options) erro
 
 	// Sync each expert as an agent file
 	for _, e := range experts {
-		path := filepath.Join(agentsDir, e.ID+".md")
+		filename := agentFilename(e)
+		path := filepath.Join(agentsDir, filename)
 		if err := writeFile(path, generateAgentFile(e), opts.DryRun); err != nil {
 			return err
 		}
@@ -502,7 +565,7 @@ func generateCombinedRules(experts []*expert.Expert) string {
 	parts = append(parts, "")
 
 	for _, e := range experts {
-		parts = append(parts, fmt.Sprintf("## %s", e.Name))
+		parts = append(parts, fmt.Sprintf("## %s%s", e.Name, e.SourceMarker()))
 		parts = append(parts, fmt.Sprintf("**Focus**: %s", e.Focus))
 		parts = append(parts, "")
 
@@ -543,7 +606,7 @@ func generateAgentsMd(experts []*expert.Expert) string {
 	parts = append(parts, "")
 
 	for _, e := range experts {
-		parts = append(parts, fmt.Sprintf("### %s", e.Name))
+		parts = append(parts, fmt.Sprintf("### %s%s", e.Name, e.SourceMarker()))
 		parts = append(parts, fmt.Sprintf("- **ID**: %s", e.ID))
 		parts = append(parts, fmt.Sprintf("- **Focus**: %s", e.Focus))
 		parts = append(parts, "")
