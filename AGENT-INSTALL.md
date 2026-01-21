@@ -119,6 +119,7 @@ Based on the detection results and available personas, suggest **3-5 experts** (
 - **Framework expert** (1): DHH for Rails, Chris McCord for Phoenix, etc.
 - **Language expert** (1): Rob Pike for Go, Matz for Ruby, José Valim for Elixir, etc.
 - **Practice expert** (1): Kent Beck for TDD, Sandi Metz for OO design, etc.
+- **General** (1, cross-cutting principles): Cal Newport, Dieter Rams, Gene Kim, etc.
 
 **Suggest based on project context** (ask user if unclear):
 - **Product** (if building user-facing features): Marty Cagan, Jason Fried, Teresa Torres
