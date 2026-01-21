@@ -113,11 +113,24 @@ council personas --json
 
 This returns experts organized by category (languages, frameworks, practices, etc.) with pre-written philosophies, principles, and red flags. **Prefer suggesting from this list** as these personas are fully fleshed out.
 
-Based on the detection results and available personas, suggest **3-5 experts** (maximum 7) to the user. Consider:
+Based on the detection results and available personas, suggest **3-5 experts** (maximum 7) to the user. Mix technical and non-technical perspectives:
 
-- **Framework experts** (1-2): DHH for Rails, Chris McCord for Phoenix, etc.
-- **Language experts** (1-2): Rob Pike for Go, Matz for Ruby, José Valim for Elixir, etc.
-- **Practice experts** (1-2): Kent Beck for TDD, Sandi Metz for OO design, etc.
+**Always suggest (based on detected stack):**
+- **Framework expert** (1): DHH for Rails, Chris McCord for Phoenix, etc.
+- **Language expert** (1): Rob Pike for Go, Matz for Ruby, José Valim for Elixir, etc.
+- **Practice expert** (1): Kent Beck for TDD, Sandi Metz for OO design, etc.
+
+**Suggest based on project context** (ask user if unclear):
+- **Product** (if building user-facing features): Marty Cagan, Jason Fried, Teresa Torres
+- **Process** (if team/workflow questions): Ryan Singer, Allen Holub, Gene Kim
+- **Business** (if startup/monetization): Arvid Kahl, Rob Walling, Sahil Lavingia
+- **Design/UX** (if UI work): Dieter Rams, Steve Schoger, Maggie Appleton
+- **Growth** (if scaling): Andrew Chen, Brian Balfour, Hiten Shah
+- **Leadership** (if managing people): Camille Fournier, Will Larson, Lara Hogan
+- **Security** (if auth/data): Troy Hunt, Scott Helme, Tanya Janca
+- **Data** (if analytics/ML): DJ Patil, Hilary Mason, Monica Rogati
+
+Check `council personas --json` for the full list organized by category.
 
 Present your suggestions, then use **AskUserQuestion** (this is the key engagement moment!):
 
