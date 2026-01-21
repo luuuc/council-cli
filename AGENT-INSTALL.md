@@ -1,6 +1,8 @@
 # Install Council CLI
 
-You are an AI assistant helping a user install council-cli. Follow these steps:
+You are an AI assistant helping a user install council-cli. Follow these steps.
+
+**Note for Claude Code**: Use `AskUserQuestion` to present choices as clickable options where indicated. Keep labels short (2-4 words), put details in descriptions.
 
 ## First: Check Existing Setup
 
@@ -13,23 +15,17 @@ ls -la .council/ 2>/dev/null
 
 ### If council is installed with experts:
 
-Tell the user:
+Tell the user which experts exist, then use **AskUserQuestion** with these options:
 
----
+| Label | Description |
+|-------|-------------|
+| "Add more" | Keep current experts and add new ones |
+| "Start fresh" | Remove everything and set up from scratch |
+| "Cancel" | Keep everything as is |
 
-Council is already set up in this project with the following experts:
-{list the experts from council list output}
-
-Would you like to:
-1. **Keep existing** - Add more experts to your current council
-2. **Start fresh** - Remove existing council and set up from scratch
-3. **Cancel** - Keep everything as is
-
----
-
-- If they choose **Keep existing**: Skip to "Add Experts"
-- If they choose **Start fresh**: Run `council init --clean`, then continue with setup
-- If they choose **Cancel**: Stop here
+- If **Add more**: Skip to "Add Experts"
+- If **Start fresh**: Run `council init --clean`, then continue with setup
+- If **Cancel**: Stop here
 
 ### If council is installed but no experts:
 
@@ -37,22 +33,17 @@ Skip to "Add Experts" step.
 
 ### If council is not installed but .council/ directory exists:
 
-Tell the user:
+Tell the user a `.council/` directory exists from a previous installation, then use **AskUserQuestion**:
 
----
+| Label | Description |
+|-------|-------------|
+| "Keep it" | Install CLI and keep current experts |
+| "Start fresh" | Install CLI and set up from scratch |
+| "Cancel" | Stop here |
 
-I found a `.council/` directory from a previous installation, but the `council` CLI is not installed.
-
-Would you like to:
-1. **Keep existing** - Install CLI and keep current experts
-2. **Start fresh** - Install CLI and remove old council setup
-3. **Cancel** - Stop here
-
----
-
-- If they choose **Keep existing**: Install CLI, skip init, go to "Sync to Your AI Tool"
-- If they choose **Start fresh**: Install CLI, then run `council init --clean`
-- If they choose **Cancel**: Stop here
+- If **Keep it**: Install CLI, skip init, go to "Sync to Your AI Tool"
+- If **Start fresh**: Install CLI, then run `council init --clean`
+- If **Cancel**: Stop here
 
 ### If council is installed but no .council/ directory:
 
@@ -66,22 +57,9 @@ Continue with the full installation flow below.
 
 ## Tell the User What's Happening
 
-Before running install commands, explain:
+Briefly explain what you're about to do, then proceed (no confirmation needed - they asked for setup):
 
----
-
-I'll help you set up council-cli. Here's what will happen:
-
-1. **Install** the `council` CLI to ~/.local/bin
-2. **Initialize** a `.council/` directory in your project
-3. **Detect** your tech stack and help you choose relevant experts
-4. **Sync** expert profiles to your AI tool config
-
-Ready?
-
----
-
-Wait for confirmation before proceeding.
+> I'll set up council-cli: install the CLI, detect your stack, help you pick experts, and sync to your AI tool. Here we go!
 
 ## Step 1: Install the CLI
 
@@ -105,15 +83,12 @@ council init
 
 This creates the `.council/` directory structure.
 
-**If it fails with ".council/ already exists"**: Ask the user:
+**If it fails with ".council/ already exists"**: Use **AskUserQuestion**:
 
----
-
-A `.council/` directory already exists. Would you like to:
-1. **Start fresh** - Remove it and set up a new council
-2. **Keep it** - Skip initialization and add to existing council
-
----
+| Label | Description |
+|-------|-------------|
+| "Start fresh" | Remove existing council and start over |
+| "Keep it" | Skip init and add to existing council |
 
 - If **Start fresh**: Run `council init --clean`
 - If **Keep it**: Continue to next step
@@ -144,19 +119,22 @@ Based on the detection results and available personas, suggest **3-5 experts** (
 - **Language experts** (1-2): Rob Pike for Go, Matz for Ruby, José Valim for Elixir, etc.
 - **Practice experts** (1-2): Kent Beck for TDD, Sandi Metz for OO design, etc.
 
-Present your suggestions:
+Present your suggestions, then use **AskUserQuestion** (this is the key engagement moment!):
 
----
+| Label | Description |
+|-------|-------------|
+| "Add all" | Add all suggested experts to your council |
+| "Let me choose" | Pick specific experts from the list |
+| "Skip for now" | Continue without adding experts |
 
-Based on your {language} project using {frameworks}, I suggest these experts:
+If **Let me choose**: Present each expert as a selectable option (use `multiSelect: true`), with the expert's focus as the description.
 
-1. **{Name}** - {Focus} - {Why relevant to this project}
-2. **{Name}** - {Focus} - {Why relevant to this project}
-3. **{Name}** - {Focus} - {Why relevant to this project}
+After selection, ask if they want more suggestions:
 
-Which experts would you like to add? (all / numbers / none)
-
----
+| Label | Description |
+|-------|-------------|
+| "Looks good" | Proceed to sync |
+| "Suggest more" | Show additional expert recommendations |
 
 For each expert the user approves, run:
 
@@ -183,15 +161,16 @@ This generates slash commands for your AI tool:
 
 ## Done
 
-Tell the user:
+Tell the user setup is complete and list their experts, then use **AskUserQuestion**:
 
----
+| Label | Description |
+|-------|-------------|
+| "Try it now" | Run /council on a file or topic |
+| "I'm all set" | End the setup flow |
 
-Setup complete! Your council has {N} experts: {names}.
+If **Try it now**: Ask what they'd like the council to review (a file, function, or topic), then run `/council` for them.
 
-You can now use:
+Remind them of available commands:
 - `/council <topic>` - Get expert code reviews
 - `/council-add "Name" --focus "area"` - Add more experts
 - `/council-detect` - Re-analyze and get new suggestions
-
----
