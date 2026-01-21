@@ -130,7 +130,15 @@ This outputs the detected languages, frameworks, testing tools, and patterns.
 
 ## Step 4: Add Experts
 
-Based on the detection results, suggest **3-5 experts** (maximum 7) to the user. Consider:
+First, check available curated personas that match the detected stack:
+
+```bash
+council personas --json
+```
+
+This returns experts organized by category (languages, frameworks, practices, etc.) with pre-written philosophies, principles, and red flags. **Prefer suggesting from this list** as these personas are fully fleshed out.
+
+Based on the detection results and available personas, suggest **3-5 experts** (maximum 7) to the user. Consider:
 
 - **Framework experts** (1-2): DHH for Rails, Chris McCord for Phoenix, etc.
 - **Language experts** (1-2): Rob Pike for Go, Matz for Ruby, José Valim for Elixir, etc.
