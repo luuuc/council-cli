@@ -7,7 +7,7 @@ You are an AI assistant helping a user install council-cli. Follow these steps:
 Before doing anything, check the current state:
 
 ```bash
-council --version 2>/dev/null && council list 2>/dev/null
+council version 2>/dev/null && council list 2>/dev/null
 ls -la .council/ 2>/dev/null
 ```
 
@@ -53,6 +53,10 @@ Would you like to:
 - If they choose **Keep existing**: Install CLI, skip init, go to "Sync to Your AI Tool"
 - If they choose **Start fresh**: Install CLI, then run `council init --clean`
 - If they choose **Cancel**: Stop here
+
+### If council is installed but no .council/ directory:
+
+The CLI is installed but this project hasn't been initialized yet. Skip Step 1 (Install) and continue with Step 2 (Initialize).
 
 ### If council is not installed and no .council/ directory:
 
