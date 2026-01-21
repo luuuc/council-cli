@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -34,9 +35,13 @@ func Execute() error {
 }
 
 var initClean bool
+var versionJSON bool
 
 func init() {
+	rootCmd.Version = fmt.Sprintf("%s (%s)", version, commit)
+	rootCmd.SetVersionTemplate("council {{.Version}}\n")
 	rootCmd.AddCommand(versionCmd)
+	versionCmd.Flags().BoolVar(&versionJSON, "json", false, "Output version information as JSON")
 	rootCmd.AddCommand(initCmd)
 	initCmd.Flags().BoolVar(&initClean, "clean", false, "Remove existing council and synced files before initializing")
 }
@@ -45,6 +50,13 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Print version information",
 	Run: func(cmd *cobra.Command, args []string) {
+		if versionJSON {
+			_ = json.NewEncoder(os.Stdout).Encode(map[string]string{
+				"version": version,
+				"commit":  commit,
+			})
+			return
+		}
 		fmt.Printf("council %s (%s)\n", version, commit)
 	},
 }
