@@ -17,6 +17,8 @@ make build
 
 The binary will be in `bin/council`.
 
+**Note:** Always use `make build` - don't run `go build` directly to the project root. Build outputs belong in `bin/`.
+
 ### Install Locally
 
 ```bash
@@ -66,6 +68,7 @@ This runs build, tests, and lint.
 
 ```
 council-cli/
+├── bin/                  # Build output (gitignored)
 ├── cmd/council/          # CLI entry point
 ├── internal/
 │   ├── cmd/              # Cobra command definitions
