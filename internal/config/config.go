@@ -37,7 +37,7 @@ func Default() *Config {
 			Command: "claude",
 			Timeout: 120,
 		},
-		Targets: []string{"claude", "cursor", "opencode"},
+		Targets: []string{"claude", "opencode", "generic"},
 	}
 }
 

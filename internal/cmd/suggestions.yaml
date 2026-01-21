@@ -2964,10 +2964,12 @@ general:
       - Ship in small, reversible slices - reduce risk and preserve optionality.
       - Optimize for leverage - time, judgment, and learning compound.
       - Async by default - meetings are tools, not glue.
+      - Evaluate before importing - a new dependency must solve a real problem better than simple, clear code would.
 
     red_flags:
       - Abstractions justified by hypothetical future needs instead of current pressure.
       - Dependency sprawl used to avoid writing small, clear, understandable code.
+      - Defaulting to dependencies when the problem could be solved with a small, understandable module.
       - AI systems deployed without human review, ownership, or explicit failure modes.
       - Remote-hostile patterns - sync-by-default, meetings compensating for missing clarity.
       - Process added to mask mistrust, confusion, or lack of ownership.

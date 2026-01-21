@@ -2,85 +2,32 @@
 
 AI-agnostic expert council setup for coding assistants.
 
-Tired of generic AI code reviews that feel like talking to a wall? Getting the same bland suggestions over and over? Want your AI to actually challenge you like a real mentor would?
+## Get Started
 
-The Council Pattern is here for you. Build your own expert council and make AI code review feel sharp, opinionated, and actually useful.
+**In Claude Code or OpenCode, just say:**
 
-## 30-Second Start
+> Grab https://raw.githubusercontent.com/luuuc/council-cli/main/AGENT-INSTALL.md and get me set up
 
-```bash
-# Install
-curl -fsSL https://raw.githubusercontent.com/luuuc/council-cli/main/install.sh | sh
-
-# Create your council (interactive, no AI needed)
-council init && council setup -i
-
-# Sync to your AI tool
-council sync
-```
-
-Your AI now has an expert council. Try `/council`, `/council-add`, or `/council-detect` in Claude Code.
-
-### Or Let Your AI Do It
-
-Already in Claude Code or another AI assistant? Just say:
-
-```
-Grab https://raw.githubusercontent.com/luuuc/council-cli/main/AGENT-INSTALL.md and get me set up
-```
-
-Your AI will install council-cli, detect your stack, and set up experts for you.
+That's it. Your AI handles the rest.
 
 ## What is a Council?
 
-The council pattern establishes **expert personas** that represent excellence in specific domains:
+The council pattern establishes **expert personas** that represent excellence in specific domains. Instead of generic AI review, you get specific expertise in the domains that matter for your project.
 
 ```
 Your Project           council setup              AI Config Files
 ┌────────────┐         ┌──────────┐              ┌────────────┐
 │ Rails 8    │         │          │              │ .claude/   │
-│ Hotwire    │────────▶│ suggests │─────────────▶│ .cursor/   │
-│ Minitest   │         │ experts  │              │ .windsurf/ │
-│ SQLite     │         │          │              │ AGENTS.md  │
+│ Hotwire    │────────▶│ suggests │─────────────▶│ .opencode/ │
+│ Minitest   │         │ experts  │              │ AGENTS.md  │
 └────────────┘         └──────────┘              └────────────┘
 ```
 
-Instead of generic AI review, you get specific expertise in the domains that matter for your project.
+After setup, use `/council <topic>` to convene your experts for code review.
 
-> **Beyond code**: The council pattern works for any domain—marketing strategy, writing, business decisions, philosophy. If you want AI to think like your favorite experts, council-cli can help.
+## Manual Installation
 
-## Setup Modes
-
-Three ways to create your council:
-
-### Interactive (Recommended for first-timers)
-
-Built-in suggestions based on your tech stack. Works offline, no external AI needed.
-
-```bash
-council setup -i
-```
-
-### AI-Assisted
-
-Let an external AI CLI suggest experts tailored to your project.
-
-```bash
-council setup --apply        # Uses configured AI (claude, aichat, llm, etc.)
-council setup --apply --yes  # Skip confirmation
-```
-
-### Manual
-
-Generate a prompt to paste into any AI, then pipe the response back.
-
-```bash
-council setup                    # Output prompt to copy
-council setup -o prompt.md       # Save prompt to file
-council setup --apply < response.yaml  # Apply AI response
-```
-
-## Installation
+For contributors or power users who prefer manual setup:
 
 ```bash
 # Direct download (macOS/Linux)
@@ -89,190 +36,32 @@ curl -fsSL https://raw.githubusercontent.com/luuuc/council-cli/main/install.sh |
 # Go
 go install github.com/luuuc/council-cli/cmd/council@latest
 
-# From source
-git clone https://github.com/luuuc/council-cli.git
-cd council-cli
-make install
+# From source (see CONTRIBUTING.md)
+git clone https://github.com/luuuc/council-cli.git && cd council-cli && make install
 ```
 
-### Uninstall
-
-```bash
-# Find and remove the binary
-which council
-rm ~/.local/bin/council  # or wherever it's installed
-
-# Remove project files (optional, per-project)
-rm -rf .council/
-```
-
-## Integrations
-
-### Claude Code / Cursor / Windsurf / OpenCode
-
-After `council sync`, your experts are available as slash commands:
-
-```bash
-council sync           # Sync to all configured targets
-council sync claude    # Sync to specific target
-council sync --dry-run # Preview changes
-```
-
-| Target | Location | Description |
-|--------|----------|-------------|
-| `claude` | `.claude/agents/`, `.claude/commands/` | Claude Code |
-| `cursor` | `.cursor/rules/` or `.cursorrules` | Cursor |
-| `windsurf` | `.windsurfrules` | Windsurf |
-| `opencode` | `.opencode/agent/` | OpenCode |
-| `generic` | `AGENTS.md` | Any AI tool |
-
-#### Generated Slash Commands
-
-For Claude Code and OpenCode, `council sync` generates these AI-powered commands:
-
-| Command | Description |
-|---------|-------------|
-| `/council <topic>` | Convene the full council to review code or discuss a topic |
-| `/council-add <name> --focus "<area>"` | Add an expert with AI-generated philosophy, principles, and red flags |
-| `/council-detect` | Analyze the codebase and suggest relevant experts |
-
-**Example usage:**
-
-```bash
-# In Claude Code or OpenCode
-/council-add "Sandi Metz" --focus "Object-oriented design and practical refactoring"
-/council-detect
-/council review the authentication flow
-```
-
-These commands leverage your AI's context and knowledge to generate rich expert profiles, rather than creating hollow template files.
-
-> **Note on Cursor/Windsurf**: These targets receive combined expert rules but not the `/council-add` and `/council-detect` commands. These commands require AI execution context (file writing, codebase analysis) that Cursor and Windsurf rules don't support. Use Claude Code or OpenCode for the full command experience, or run `council setup -i` to add experts interactively.
-
-### Claude Desktop (MCP)
-
-Connect your council via Model Context Protocol.
-
-**1. Configure Claude Desktop**
-
-Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "council": {
-      "command": "council",
-      "args": ["mcp"]
-    }
-  }
-}
-```
-
-**2. Restart Claude Desktop**
-
-Claude can now list experts, get details, and consult your council.
-
-### ChatGPT / Gemini / Other AI
-
-Export your council as portable markdown:
-
-```bash
-council export              # Output to stdout
-council export | pbcopy     # Copy to clipboard (macOS)
-council export > council.md # Save to file
-```
-
-Use in Custom GPT instructions, Gemini custom instructions, or any AI chat.
-
----
-
-## Command Reference
-
-### `council init`
-
-Creates the `.council/` directory structure.
+Then initialize and set up your council:
 
 ```bash
 council init
+council setup -i      # Interactive mode
+council sync
 ```
 
-Creates:
-```
-.council/
-├── config.yaml     # Configuration
-├── experts/        # Expert persona files
-└── commands/       # Slash commands
-```
+## Commands
 
-### `council detect`
-
-Analyzes your project to detect languages, frameworks, and patterns.
-
-```bash
-council detect          # Human-readable output
-council detect --json   # JSON output
-```
-
-### `council setup`
-
-Generates expert suggestions. See [Setup Modes](#setup-modes) for details.
-
-### `council list`
-
-Shows all experts in your council.
-
-```bash
-council list
-```
-
-### `council show <id>`
-
-Displays full details of an expert.
-
-```bash
-council show dhh
-council show kent-beck
-```
-
-### `council add`
-
-Adds an expert manually.
-
-```bash
-council add "Sandi Metz" --focus "Object design, SOLID principles"
-```
-
-### `council remove`
-
-Removes an expert from the council.
-
-```bash
-council remove sandi-metz
-```
-
-### `council sync`
-
-Syncs your council to AI tool configs. See [Integrations](#integrations).
-
-### `council export`
-
-Exports council as portable markdown. See [ChatGPT / Gemini / Other AI](#chatgpt--gemini--other-ai).
-
-### `council mcp`
-
-Starts an MCP server. See [Claude Desktop (MCP)](#claude-desktop-mcp).
-
-### `council doctor`
-
-Validates your council configuration and reports issues.
-
-```bash
-council doctor
-```
-
-Checks directory structure, config syntax, expert files, and sync targets.
-
----
+| Command | Description |
+|---------|-------------|
+| `council init` | Initialize `.council/` directory |
+| `council setup -i` | Interactive expert selection |
+| `council setup --apply` | AI-assisted expert suggestions |
+| `council detect` | Detect project stack |
+| `council list` | List your experts |
+| `council add "Name" --focus "area"` | Add an expert |
+| `council remove <id>` | Remove an expert |
+| `council sync` | Sync to AI tool configs |
+| `council export` | Export as portable markdown |
+| `council doctor` | Validate configuration |
 
 ## Configuration
 
@@ -280,56 +69,41 @@ Checks directory structure, config syntax, expert files, and sync targets.
 # .council/config.yaml
 version: 1
 
-# AI CLI for setup --apply
 ai:
-  command: "claude"    # or "aichat", "llm", "sgpt"
-  timeout: 120         # seconds
+  command: "claude"
+  timeout: 120
 
-# Sync targets
 targets:
   - claude
-  - cursor
   - opencode
-
-# Commands to generate (list format)
-council:
-  commands:
-    - council          # /council - convene the full council
-    - council-add      # /council-add - add expert with AI-generated content
-    - council-detect   # /council-detect - detect stack and suggest experts
+  - generic
 ```
 
-## Expert Format
+## Other AI Tools
 
-Experts are markdown files with YAML frontmatter:
+For Cursor, Windsurf, ChatGPT, Gemini, or any other AI:
 
-```markdown
----
-id: dhh
-name: "David Heinemeier Hansson"
-focus: "Rails doctrine, conventions, architecture"
-triggers:
-  paths:
-    - "config/routes.rb"
-    - "app/controllers/**"
-  keywords:
-    - "architecture"
-    - "service object"
-philosophy: |
-  Convention over configuration is not just a technical choice.
-  It represents a philosophy of trading flexibility for productivity.
-principles:
-  - "RESTful routes only"
-  - "Fat models, skinny controllers"
-red_flags:
-  - "Service objects everywhere"
-  - "Abstract base classes"
----
+1. Set up council via Claude Code, OpenCode, or manual installation
+2. Run `council export | pbcopy`
+3. Paste into your AI tool's custom instructions
 
-# DHH - Rails Doctrine
+<details>
+<summary>Legacy targets (Cursor/Windsurf)</summary>
 
-You are channeling David Heinemeier Hansson...
+If you have an existing config with `cursor` or `windsurf` targets, they still work:
+
+```bash
+council sync cursor
+council sync windsurf
 ```
+
+For new projects, we recommend using `council export` instead.
+
+</details>
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
 ## License
 
