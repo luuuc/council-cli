@@ -113,12 +113,12 @@ council personas --json
 
 This returns experts organized by category (languages, frameworks, practices, etc.) with pre-written philosophies, principles, and red flags. **Prefer suggesting from this list** as these personas are fully fleshed out.
 
-Based on the detection results and available personas, suggest **3-5 experts** (maximum 7) to the user. Mix technical and non-technical perspectives:
+Based on the detection results and available personas, suggest **5 experts** (maximum 7) to the user. Mix technical and non-technical perspectives:
 
 **Always suggest (based on detected stack):**
 - **Framework expert** (1): DHH for Rails, Chris McCord for Phoenix, etc.
 - **Language expert** (1): Rob Pike for Go, Matz for Ruby, José Valim for Elixir, etc.
-- **Practice expert** (1): Kent Beck for TDD, Sandi Metz for OO design, etc.
+- **Practice expert** (2): Kent Beck for TDD, Sandi Metz for OO design, etc.
 - **General** (1, cross-cutting principles): Cal Newport, Dieter Rams, Gene Kim, etc.
 
 **Suggest based on project context** (ask user if unclear):
