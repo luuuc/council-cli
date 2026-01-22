@@ -1,6 +1,6 @@
 # council-cli
 
-AI-agnostic expert council setup for coding assistants.
+AI-tailored expert council setup for coding assistants.
 
 ## Get Started
 
@@ -43,10 +43,12 @@ git clone https://github.com/luuuc/council-cli.git && cd council-cli && make ins
 Then initialize and set up your council:
 
 ```bash
-council init
-council setup -i      # Interactive mode
+council init           # Auto-detects your AI tool
+council setup -i       # Interactive mode
 council sync
 ```
+
+The `init` command detects whether you're using Claude Code, OpenCode, or another tool and configures automatically.
 
 ## Commands
 
@@ -68,16 +70,21 @@ council sync
 ```yaml
 # .council/config.yaml
 version: 1
+tool: claude           # Primary tool (auto-detected)
 
 ai:
-  command: "claude"
+  command: "claude"    # CLI for setup --apply
   timeout: 120
 
-targets:
+targets:               # Optional: override to sync to multiple tools
   - claude
   - opencode
-  - generic
 ```
+
+The `tool` field determines which adapter is used for formatting. Each tool gets optimized UX:
+- **Claude Code**: Uses AskUserQuestion for interactive choices
+- **OpenCode**: Uses text-based option selection
+- **Generic**: Creates AGENTS.md in project root
 
 ## Other AI Tools
 

@@ -1,0 +1,99 @@
+package adapter
+
+import (
+	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council-cli/internal/fs"
+)
+
+// Adapter defines the interface for tool-specific behavior.
+// Each AI tool (Claude Code, OpenCode, etc.) has its own adapter
+// that handles paths, templates, and output formatting.
+type Adapter interface {
+	// Identity
+	Name() string        // "claude", "opencode", "generic"
+	DisplayName() string // "Claude Code", "OpenCode", "Generic"
+
+	// Detection
+	Detect() bool // Does this tool exist in current project?
+
+	// Paths returns the directory structure for this tool
+	Paths() Paths
+
+	// Templates returns embedded templates for this tool
+	Templates() Templates
+
+	// Generation
+	FormatAgent(e *expert.Expert) string
+	FormatCommand(name, description, body string) string
+}
+
+// Paths contains the directory structure for a tool
+type Paths struct {
+	Agents     string   // Directory for agent files (e.g., ".claude/agents")
+	Commands   string   // Directory for command files (e.g., ".claude/commands")
+	Deprecated []string // Old paths that should be migrated away from
+}
+
+// Templates contains embedded template content for a tool
+type Templates struct {
+	Install  string            // INSTALL.md content
+	Commands map[string]string // name -> template content (e.g., "council-add" -> content)
+}
+
+// registry holds all registered adapters
+var registry = make(map[string]Adapter)
+
+// Register adds an adapter to the registry.
+// Called by each adapter's init() function.
+func Register(a Adapter) {
+	registry[a.Name()] = a
+}
+
+// Get returns an adapter by name.
+// Returns (adapter, true) if found, (nil, false) if not.
+func Get(name string) (Adapter, bool) {
+	a, ok := registry[name]
+	return a, ok
+}
+
+// All returns all registered adapters.
+func All() map[string]Adapter {
+	return registry
+}
+
+// Detect returns all adapters that detect their tool in the current project.
+// Results are filtered to only include adapters where Detect() returns true.
+// The generic adapter is excluded from detection (it's a fallback).
+func Detect() []Adapter {
+	var detected []Adapter
+	for _, a := range registry {
+		if a.Name() == "generic" {
+			continue // Generic is always available, not detected
+		}
+		if a.Detect() {
+			detected = append(detected, a)
+		}
+	}
+	return detected
+}
+
+// Names returns all registered adapter names.
+func Names() []string {
+	var names []string
+	for name := range registry {
+		names = append(names, name)
+	}
+	return names
+}
+
+// DirExists checks if a directory exists (used by adapters for detection).
+// This is a convenience function that wraps fs.DirExists for adapter implementations.
+func DirExists(path string) bool {
+	return fs.DirExists(path)
+}
+
+// FileExists checks if a file exists (used by adapters for detection).
+// This is a convenience function that wraps fs.FileExists for adapter implementations.
+func FileExists(path string) bool {
+	return fs.FileExists(path)
+}

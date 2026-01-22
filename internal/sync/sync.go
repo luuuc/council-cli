@@ -2,84 +2,20 @@ package sync
 
 import (
 	"bytes"
-	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"text/template"
 
+	"github.com/luuuc/council-cli/internal/adapter"
 	"github.com/luuuc/council-cli/internal/config"
 	"github.com/luuuc/council-cli/internal/creator"
 	"github.com/luuuc/council-cli/internal/expert"
-	"github.com/luuuc/council-cli/internal/fs"
 )
 
-//go:embed templates/council.md.tmpl
-var councilCommandTemplateStr string
-
-//go:embed templates/council-add.md
-var councilAddCommand string
-
-//go:embed templates/council-detect.md
-var councilDetectCommand string
-
-//go:embed templates/council-remove.md
-var councilRemoveCommand string
-
 // Pre-compiled template for council command generation
-var councilCommandTemplate = template.Must(template.New("council").Parse(councilCommandTemplateStr))
-
-// Command defines a slash command with its template and metadata
-type Command struct {
-	Template    string // Embedded template content
-	Description string // OpenCode description
-}
-
-// commands is the single source of truth for all slash commands
-// Adding a new command only requires adding an entry here
-var commands = map[string]Command{
-	"council-add": {
-		Template:    councilAddCommand,
-		Description: "Add expert to council with AI-generated content",
-	},
-	"council-detect": {
-		Template:    councilDetectCommand,
-		Description: "Detect stack and suggest experts",
-	},
-	"council-remove": {
-		Template:    councilRemoveCommand,
-		Description: "Remove expert from council",
-	},
-}
-
-// allCommandNames returns all command names for cleanup operations
-func allCommandNames() []string {
-	names := []string{"council"} // council is special (dynamic)
-	for name := range commands {
-		names = append(names, name)
-	}
-	return names
-}
-
-// claudeCommandPaths returns paths to all Claude command files
-func claudeCommandPaths() []string {
-	var paths []string
-	for _, name := range allCommandNames() {
-		paths = append(paths, ".claude/commands/"+name+".md")
-	}
-	return paths
-}
-
-// AllCleanPaths returns all paths that should be cleaned across all targets
-func AllCleanPaths() []string {
-	var paths []string
-	for _, target := range Targets {
-		paths = append(paths, target.CleanPaths...)
-	}
-	return paths
-}
+var councilCommandTemplate = template.Must(template.New("council").Parse(adapter.CouncilCommandTemplate()))
 
 // Options configures sync behavior
 type Options struct {
@@ -87,63 +23,27 @@ type Options struct {
 	Clean  bool // Remove stale files not in current config
 }
 
-// Target represents a sync target
-type Target struct {
-	Name       string
-	Sync       func(experts []*expert.Expert, cfg *config.Config, opts Options) error
-	Check      func() bool
-	Location   string
-	CleanPaths []string // Paths to remove when cleaning
-}
-
-// Targets is the registry of available sync targets
-var Targets = map[string]*Target{
-	"claude": {
-		Name:     "Claude Code",
-		Location: ".claude/",
-		Sync:     syncClaude,
-		Check:    func() bool { return fs.DirExists(".claude") },
-		CleanPaths: append(
-			[]string{".claude/agents"},
-			claudeCommandPaths()...,
-		),
-	},
-	"generic": {
-		Name:       "Generic",
-		Location:   "AGENTS.md",
-		Sync:       syncGeneric,
-		Check:      func() bool { return fs.FileExists("AGENTS.md") },
-		CleanPaths: []string{"AGENTS.md"},
-	},
-	"opencode": {
-		Name:       "OpenCode",
-		Location:   ".opencode/agent/",
-		Sync:       syncOpenCode,
-		Check:      func() bool { return fs.DirExists(".opencode") || fs.FileExists("opencode.json") },
-		CleanPaths: []string{".opencode/agent"},
-	},
-}
-
-// DetectTargets returns targets that have existing config directories
-func DetectTargets() []string {
-	var targets []string
-	for name, target := range Targets {
-		if target.Check() {
-			targets = append(targets, name)
+// AllCleanPaths returns all paths that should be cleaned across all adapters
+func AllCleanPaths() []string {
+	var paths []string
+	for _, a := range adapter.All() {
+		p := a.Paths()
+		if p.Agents != "." {
+			paths = append(paths, p.Agents)
 		}
+		if p.Commands != "." && p.Commands != p.Agents {
+			paths = append(paths, p.Commands)
+		}
+		paths = append(paths, p.Deprecated...)
 	}
-	// Always include generic as fallback if nothing else found
-	if len(targets) == 0 {
-		targets = append(targets, "generic")
-	}
-	// Sort for deterministic output (map iteration order is random)
-	sort.Strings(targets)
-	return targets
+	// Add AGENTS.md for generic
+	paths = append(paths, "AGENTS.md")
+	return paths
 }
 
-// SyncAll syncs to all configured targets
+// SyncAll syncs to the configured tool (or detects and saves if missing)
 func SyncAll(cfg *config.Config, opts Options) error {
-	// Load all experts: custom + installed + project council
+	// Load all experts
 	allExperts, err := loadAllExperts()
 	if err != nil {
 		return err
@@ -153,27 +53,205 @@ func SyncAll(cfg *config.Config, opts Options) error {
 		return fmt.Errorf("no experts to sync - add some with 'council add' or 'council setup --apply'")
 	}
 
-	// Use configured targets, or detect if empty
-	targets := cfg.Targets
-	if len(targets) == 0 {
-		targets = DetectTargets()
-		fmt.Printf("Detected targets: %v\n", targets)
+	// Determine which adapter(s) to sync to
+	adapters, err := resolveAdapters(cfg)
+	if err != nil {
+		return err
 	}
 
-	for _, targetName := range targets {
-		target, ok := Targets[targetName]
-		if !ok {
-			fmt.Printf("Warning: unknown target '%s', skipping\n", targetName)
-			continue
+	// Sync to each adapter
+	for _, a := range adapters {
+		fmt.Printf("Syncing to %s...\n", a.DisplayName())
+		if err := syncToAdapter(a, allExperts, opts); err != nil {
+			return fmt.Errorf("failed to sync to %s: %w", a.Name(), err)
 		}
 
-		fmt.Printf("Syncing to %s (%s)...\n", target.Name, target.Location)
-		if err := target.Sync(allExperts, cfg, opts); err != nil {
-			return fmt.Errorf("failed to sync to %s: %w", targetName, err)
+		// Check for deprecated paths and warn
+		checkDeprecatedPaths(a, opts)
+	}
+
+	return nil
+}
+
+// resolveAdapters determines which adapters to sync to based on config
+func resolveAdapters(cfg *config.Config) ([]adapter.Adapter, error) {
+	var adapters []adapter.Adapter
+
+	// If targets explicitly set, use those
+	if len(cfg.Targets) > 0 {
+		for _, name := range cfg.Targets {
+			a, ok := adapter.Get(name)
+			if !ok {
+				fmt.Printf("Warning: unknown target '%s', skipping\n", name)
+				continue
+			}
+			adapters = append(adapters, a)
+		}
+		return adapters, nil
+	}
+
+	// Use configured tool
+	if cfg.Tool != "" {
+		a, ok := adapter.Get(cfg.Tool)
+		if !ok {
+			return nil, fmt.Errorf("unknown tool '%s' in config - valid tools: claude, opencode, generic", cfg.Tool)
+		}
+		return []adapter.Adapter{a}, nil
+	}
+
+	// Tool not configured - auto-detect and save
+	detected := adapter.Detect()
+	switch len(detected) {
+	case 0:
+		// Fall back to generic
+		a, _ := adapter.Get("generic")
+		fmt.Println("No AI tool detected, using generic (AGENTS.md)")
+		cfg.Tool = "generic"
+		if err := cfg.Save(); err != nil {
+			fmt.Printf("Warning: could not save config: %v\n", err)
+		}
+		return []adapter.Adapter{a}, nil
+
+	case 1:
+		// Single tool detected
+		a := detected[0]
+		fmt.Printf("Detected: %s\n", a.DisplayName())
+		cfg.Tool = a.Name()
+		if err := cfg.Save(); err != nil {
+			fmt.Printf("Warning: could not save config: %v\n", err)
+		}
+		return []adapter.Adapter{a}, nil
+
+	default:
+		// Multiple tools - use first one and warn
+		a := detected[0]
+		var names []string
+		for _, d := range detected {
+			names = append(names, d.Name())
+		}
+		fmt.Printf("Multiple tools detected (%s), using %s\n", strings.Join(names, ", "), a.DisplayName())
+		fmt.Println("Set 'tool:' in .council/config.yaml to choose a different default")
+		cfg.Tool = a.Name()
+		if err := cfg.Save(); err != nil {
+			fmt.Printf("Warning: could not save config: %v\n", err)
+		}
+		return []adapter.Adapter{a}, nil
+	}
+}
+
+// syncToAdapter syncs experts to a specific adapter
+func syncToAdapter(a adapter.Adapter, experts []*expert.Expert, opts Options) error {
+	paths := a.Paths()
+	templates := a.Templates()
+
+	// Special case for generic - writes single AGENTS.md file
+	if a.Name() == "generic" {
+		generic := a.(*adapter.Generic)
+		return writeFile("AGENTS.md", generic.GenerateAgentsMd(experts), opts.DryRun)
+	}
+
+	// Create agents directory
+	if paths.Agents != "." && !opts.DryRun {
+		if err := os.MkdirAll(paths.Agents, 0755); err != nil {
+			return err
+		}
+	}
+
+	// Sync each expert as an agent file
+	for _, e := range experts {
+		filename := adapter.AgentFilename(e)
+		path := filepath.Join(paths.Agents, filename)
+		if err := writeFile(path, a.FormatAgent(e), opts.DryRun); err != nil {
+			return err
+		}
+	}
+
+	// Create commands directory (if different from agents)
+	if paths.Commands != "." && paths.Commands != paths.Agents && !opts.DryRun {
+		if err := os.MkdirAll(paths.Commands, 0755); err != nil {
+			return err
+		}
+	}
+
+	// Create /council command (dynamic content based on experts)
+	councilContent := generateCouncilCommand(a, experts)
+	if councilContent != "" {
+		path := filepath.Join(paths.Commands, "council.md")
+		if err := writeFile(path, councilContent, opts.DryRun); err != nil {
+			return err
+		}
+	}
+
+	// Create other commands from adapter templates
+	for name, tmpl := range templates.Commands {
+		content := a.FormatCommand(name, commandDescription(name), tmpl)
+		if content == "" {
+			continue
+		}
+		path := filepath.Join(paths.Commands, name+".md")
+		if err := writeFile(path, content, opts.DryRun); err != nil {
+			return err
+		}
+	}
+
+	// Clean up stale files if requested
+	if opts.Clean {
+		if err := cleanStaleAgents(paths.Agents, experts, templates.Commands, opts.DryRun); err != nil {
+			return err
 		}
 	}
 
 	return nil
+}
+
+// generateCouncilCommand creates the /council command for an adapter
+func generateCouncilCommand(a adapter.Adapter, experts []*expert.Expert) string {
+	var buf bytes.Buffer
+	if err := councilCommandTemplate.Execute(&buf, experts); err != nil {
+		// Fallback to simple format if template fails
+		return "# Code Review Council\n\nConvene the council to review: $ARGUMENTS\n"
+	}
+	body := buf.String()
+
+	// Format according to adapter's command format
+	return a.FormatCommand("council", "Convene the council to review code", body)
+}
+
+// commandDescription returns a description for a command name
+func commandDescription(name string) string {
+	descriptions := map[string]string{
+		"council-add":    "Add expert to council with AI-generated content",
+		"council-detect": "Detect stack and suggest experts",
+		"council-remove": "Remove expert from council",
+	}
+	if desc, ok := descriptions[name]; ok {
+		return desc
+	}
+	return name
+}
+
+// checkDeprecatedPaths warns about deprecated paths and offers cleanup
+func checkDeprecatedPaths(a adapter.Adapter, opts Options) {
+	paths := a.Paths()
+	for _, deprecated := range paths.Deprecated {
+		if _, err := os.Stat(deprecated); err == nil {
+			if opts.Clean {
+				// Remove deprecated path
+				if !opts.DryRun {
+					if err := os.RemoveAll(deprecated); err != nil {
+						fmt.Printf("  Warning: could not remove deprecated %s: %v\n", deprecated, err)
+					} else {
+						fmt.Printf("  Removed deprecated: %s\n", deprecated)
+					}
+				} else {
+					fmt.Printf("  Would remove deprecated: %s\n", deprecated)
+				}
+			} else {
+				fmt.Printf("  Warning: deprecated path exists: %s\n", deprecated)
+				fmt.Printf("    Run 'council sync --clean' to remove\n")
+			}
+		}
+	}
 }
 
 // loadAllExperts loads experts from all sources: custom, installed, and project
@@ -196,18 +274,6 @@ func loadAllExperts() ([]*expert.Expert, error) {
 	allExperts = append(allExperts, projectExperts...)
 
 	return allExperts, nil
-}
-
-// agentFilename returns the appropriate filename for an expert based on source
-func agentFilename(e *expert.Expert) string {
-	switch {
-	case e.Source == "custom":
-		return "custom-" + e.ID + ".md"
-	case strings.HasPrefix(e.Source, "installed:"):
-		return "installed-" + e.ID + ".md"
-	default:
-		return e.ID + ".md"
-	}
 }
 
 // writeFile writes content to path, or prints what would be written in dry-run mode
@@ -239,9 +305,54 @@ func removeFile(path string, dryRun bool) error {
 	return nil
 }
 
-// SyncTarget syncs to a specific target
+// cleanStaleAgents removes agent files that no longer have corresponding experts
+func cleanStaleAgents(agentsDir string, experts []*expert.Expert, commandFiles map[string]string, dryRun bool) error {
+	entries, err := os.ReadDir(agentsDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	// Build set of current expert filenames
+	currentFiles := make(map[string]bool)
+	for _, e := range experts {
+		currentFiles[adapter.AgentFilename(e)] = true
+	}
+
+	// Build set of command file names to exclude
+	commandSet := make(map[string]bool)
+	for name := range commandFiles {
+		commandSet[name+".md"] = true
+	}
+	commandSet["council.md"] = true // Always exclude council command
+
+	// Remove files for experts that no longer exist
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
+			continue
+		}
+		// Skip command files
+		if commandSet[entry.Name()] {
+			continue
+		}
+		// Skip current expert files
+		if currentFiles[entry.Name()] {
+			continue
+		}
+		path := filepath.Join(agentsDir, entry.Name())
+		if err := removeFile(path, dryRun); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// SyncTarget syncs to a specific target by name
 func SyncTarget(targetName string, cfg *config.Config, opts Options) error {
-	target, ok := Targets[targetName]
+	a, ok := adapter.Get(targetName)
 	if !ok {
 		return fmt.Errorf("unknown target '%s' - valid targets: claude, opencode, generic", targetName)
 	}
@@ -255,300 +366,25 @@ func SyncTarget(targetName string, cfg *config.Config, opts Options) error {
 		return fmt.Errorf("no experts to sync - add some with 'council add' or 'council setup --apply'")
 	}
 
-	fmt.Printf("Syncing to %s (%s)...\n", target.Name, target.Location)
-	return target.Sync(allExperts, cfg, opts)
-}
-
-// Claude Code sync
-func syncClaude(experts []*expert.Expert, cfg *config.Config, opts Options) error {
-	// Create .claude/agents directory
-	agentsDir := ".claude/agents"
-	if !opts.DryRun {
-		if err := os.MkdirAll(agentsDir, 0755); err != nil {
-			return err
-		}
+	fmt.Printf("Syncing to %s...\n", a.DisplayName())
+	if err := syncToAdapter(a, allExperts, opts); err != nil {
+		return fmt.Errorf("failed to sync to %s: %w", targetName, err)
 	}
 
-	// Sync each expert as an agent file
-	for _, e := range experts {
-		filename := agentFilename(e)
-		path := filepath.Join(agentsDir, filename)
-		if err := writeFile(path, generateAgentFile(e), opts.DryRun); err != nil {
-			return err
-		}
-	}
-
-	// Create commands directory
-	commandsDir := ".claude/commands"
-	if !opts.DryRun {
-		if err := os.MkdirAll(commandsDir, 0755); err != nil {
-			return err
-		}
-	}
-
-	// Create /council command (special: needs experts for dynamic content)
-	path := filepath.Join(commandsDir, "council.md")
-	if err := writeFile(path, generateCouncilCommand(experts), opts.DryRun); err != nil {
-		return err
-	}
-
-	// Create other commands from registry
-	for name, cmd := range commands {
-		path := filepath.Join(commandsDir, name+".md")
-		if err := writeFile(path, cmd.Template, opts.DryRun); err != nil {
-			return err
-		}
-	}
-
-	// Clean up stale files if requested
-	if opts.Clean {
-		// Remove stale agent files (experts no longer in .council/experts/)
-		if err := cleanStaleAgents(agentsDir, experts, opts.DryRun); err != nil {
-			return err
-		}
-	}
-
+	checkDeprecatedPaths(a, opts)
 	return nil
 }
 
-// cleanStaleAgents removes agent files that no longer have corresponding experts
-func cleanStaleAgents(agentsDir string, experts []*expert.Expert, dryRun bool) error {
-	entries, err := os.ReadDir(agentsDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
+// DetectTargets returns target names that have existing config directories
+// This is for backward compatibility with existing code
+func DetectTargets() []string {
+	detected := adapter.Detect()
+	if len(detected) == 0 {
+		return []string{"generic"}
 	}
-
-	// Build set of current expert IDs
-	currentIDs := make(map[string]bool)
-	for _, e := range experts {
-		currentIDs[e.ID] = true
+	var names []string
+	for _, a := range detected {
+		names = append(names, a.Name())
 	}
-
-	// Remove files for experts that no longer exist
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
-			continue
-		}
-		id := strings.TrimSuffix(entry.Name(), ".md")
-		if !currentIDs[id] {
-			path := filepath.Join(agentsDir, entry.Name())
-			if err := removeFile(path, dryRun); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+	return names
 }
-
-// Generic AGENTS.md sync
-func syncGeneric(experts []*expert.Expert, cfg *config.Config, opts Options) error {
-	return writeFile("AGENTS.md", generateAgentsMd(experts), opts.DryRun)
-}
-
-// OpenCode sync
-func syncOpenCode(experts []*expert.Expert, cfg *config.Config, opts Options) error {
-	// Create .opencode/agent directory
-	agentDir := ".opencode/agent"
-	if !opts.DryRun {
-		if err := os.MkdirAll(agentDir, 0755); err != nil {
-			return err
-		}
-	}
-
-	// Sync each expert as an agent file
-	for _, e := range experts {
-		path := filepath.Join(agentDir, e.ID+".md")
-		if err := writeFile(path, generateOpenCodeAgent(e), opts.DryRun); err != nil {
-			return err
-		}
-	}
-
-	// Create commands from registry
-	for name, cmd := range commands {
-		path := filepath.Join(agentDir, name+".md")
-		if err := writeFile(path, generateOpenCodeCommand(cmd.Description, cmd.Template), opts.DryRun); err != nil {
-			return err
-		}
-	}
-
-	// Clean up stale files if requested
-	if opts.Clean {
-		// Build list of command names to exclude from agent cleanup
-		var cmdNames []string
-		for name := range commands {
-			cmdNames = append(cmdNames, name)
-		}
-
-		// Remove stale agent files (but keep command files)
-		if err := cleanStaleAgentsOpenCode(agentDir, experts, cmdNames, opts.DryRun); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-// cleanStaleAgentsOpenCode removes agent files that no longer have corresponding experts
-// It excludes command files (council-add, council-detect) from cleanup
-func cleanStaleAgentsOpenCode(agentDir string, experts []*expert.Expert, commandFiles []string, dryRun bool) error {
-	entries, err := os.ReadDir(agentDir)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-
-	// Build set of current expert IDs
-	currentIDs := make(map[string]bool)
-	for _, e := range experts {
-		currentIDs[e.ID] = true
-	}
-
-	// Build set of command file names to exclude
-	commandSet := make(map[string]bool)
-	for _, cmd := range commandFiles {
-		commandSet[cmd] = true
-	}
-
-	// Remove files for experts that no longer exist
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
-			continue
-		}
-		id := strings.TrimSuffix(entry.Name(), ".md")
-		// Skip command files
-		if commandSet[id] {
-			continue
-		}
-		if !currentIDs[id] {
-			path := filepath.Join(agentDir, entry.Name())
-			if err := removeFile(path, dryRun); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-// generateOpenCodeCommand creates OpenCode command file content
-func generateOpenCodeCommand(description, body string) string {
-	var parts []string
-	parts = append(parts, "---")
-	parts = append(parts, fmt.Sprintf("description: %s", description))
-	parts = append(parts, "mode: subagent")
-	parts = append(parts, "---")
-	parts = append(parts, "")
-	parts = append(parts, body)
-	return strings.Join(parts, "\n")
-}
-
-// generateOpenCodeAgent creates OpenCode agent file content
-func generateOpenCodeAgent(e *expert.Expert) string {
-	var parts []string
-
-	// OpenCode uses different frontmatter format
-	parts = append(parts, "---")
-	parts = append(parts, fmt.Sprintf("description: %s", e.Focus))
-	parts = append(parts, "mode: subagent")
-	parts = append(parts, "---")
-	parts = append(parts, "")
-	parts = append(parts, fmt.Sprintf("# %s", e.Name))
-	parts = append(parts, "")
-	parts = append(parts, fmt.Sprintf("You are channeling %s, known for expertise in %s.", e.Name, e.Focus))
-	parts = append(parts, "")
-
-	if e.Philosophy != "" {
-		parts = append(parts, "## Philosophy")
-		parts = append(parts, "")
-		parts = append(parts, strings.TrimSpace(e.Philosophy))
-		parts = append(parts, "")
-	}
-
-	if len(e.Principles) > 0 {
-		parts = append(parts, "## Principles")
-		parts = append(parts, "")
-		for _, p := range e.Principles {
-			parts = append(parts, fmt.Sprintf("- %s", p))
-		}
-		parts = append(parts, "")
-	}
-
-	if len(e.RedFlags) > 0 {
-		parts = append(parts, "## Red Flags")
-		parts = append(parts, "")
-		parts = append(parts, "Watch for these patterns:")
-		for _, r := range e.RedFlags {
-			parts = append(parts, fmt.Sprintf("- %s", r))
-		}
-		parts = append(parts, "")
-	}
-
-	parts = append(parts, "## Review Style")
-	parts = append(parts, "")
-	parts = append(parts, "When reviewing code, focus on your area of expertise. Be direct and specific.")
-	parts = append(parts, "Explain your reasoning. Suggest concrete improvements.")
-
-	return strings.Join(parts, "\n")
-}
-
-// generateAgentFile creates Claude Code agent file content
-func generateAgentFile(e *expert.Expert) string {
-	// Read the original expert file and return its content
-	data, err := os.ReadFile(e.Path())
-	if err != nil {
-		// Fallback to regenerating
-		return fmt.Sprintf("---\nid: %s\nname: %s\nfocus: %s\n---\n\n%s", e.ID, e.Name, e.Focus, e.Body)
-	}
-	return string(data)
-}
-
-// generateCouncilCommand creates the /council slash command
-func generateCouncilCommand(experts []*expert.Expert) string {
-	var buf bytes.Buffer
-	if err := councilCommandTemplate.Execute(&buf, experts); err != nil {
-		// Fallback to simple format if template fails
-		return "# Code Review Council\n\nConvene the council to review: $ARGUMENTS\n"
-	}
-	return buf.String()
-}
-
-// generateAgentsMd creates AGENTS.md content
-func generateAgentsMd(experts []*expert.Expert) string {
-	var parts []string
-
-	parts = append(parts, "# AGENTS.md - Expert Council")
-	parts = append(parts, "")
-	parts = append(parts, "This file defines expert personas for AI coding assistants.")
-	parts = append(parts, "")
-	parts = append(parts, "## Council Members")
-	parts = append(parts, "")
-
-	for _, e := range experts {
-		parts = append(parts, fmt.Sprintf("### %s%s", e.Name, e.SourceMarker()))
-		parts = append(parts, fmt.Sprintf("- **ID**: %s", e.ID))
-		parts = append(parts, fmt.Sprintf("- **Focus**: %s", e.Focus))
-		parts = append(parts, "")
-
-		if e.Philosophy != "" {
-			parts = append(parts, strings.TrimSpace(e.Philosophy))
-			parts = append(parts, "")
-		}
-
-		if len(e.Principles) > 0 {
-			parts = append(parts, "**Principles:**")
-			for _, p := range e.Principles {
-				parts = append(parts, fmt.Sprintf("- %s", p))
-			}
-			parts = append(parts, "")
-		}
-	}
-
-	return strings.Join(parts, "\n")
-}
-

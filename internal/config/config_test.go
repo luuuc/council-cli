@@ -12,6 +12,10 @@ func TestDefault(t *testing.T) {
 	if cfg.Version != 1 {
 		t.Errorf("Default().Version = %d, want 1", cfg.Version)
 	}
+	// Tool should be empty (detected at runtime)
+	if cfg.Tool != "" {
+		t.Errorf("Default().Tool = %q, want empty (detected at runtime)", cfg.Tool)
+	}
 	// AI.Command should be empty (detected at runtime)
 	if cfg.AI.Command != "" {
 		t.Errorf("Default().AI.Command = %q, want empty (detected at runtime)", cfg.AI.Command)
@@ -189,5 +193,64 @@ func TestConstants(t *testing.T) {
 	}
 	if CommandsDir != "commands" {
 		t.Errorf("CommandsDir = %s, want commands", CommandsDir)
+	}
+}
+
+func TestValidateTool(t *testing.T) {
+	tests := []struct {
+		tool    string
+		wantErr bool
+	}{
+		{"", false},         // Empty is valid (detected at runtime)
+		{"claude", false},   // Valid
+		{"opencode", false}, // Valid
+		{"generic", false},  // Valid
+		{"invalid", true},   // Invalid
+		{"Claude", true},    // Case sensitive
+		{"cursor", true},    // Not a valid tool
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.tool, func(t *testing.T) {
+			err := ValidateTool(tt.tool)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateTool(%q) error = %v, wantErr %v", tt.tool, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestConfigToolFieldPersistence(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "config-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	origDir, _ := os.Getwd()
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatalf("Failed to chdir: %v", err)
+	}
+	defer func() { _ = os.Chdir(origDir) }()
+
+	if err := os.MkdirAll(CouncilDir, 0755); err != nil {
+		t.Fatalf("Failed to create council dir: %v", err)
+	}
+
+	// Save config with tool field
+	cfg := Default()
+	cfg.Tool = "claude"
+	if err := cfg.Save(); err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+
+	// Load and verify
+	loaded, err := Load()
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if loaded.Tool != "claude" {
+		t.Errorf("Load().Tool = %q, want claude", loaded.Tool)
 	}
 }

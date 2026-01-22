@@ -2,7 +2,9 @@
 
 You are an AI assistant helping a user install council-cli. Follow these steps.
 
-**Note for Claude Code**: Use `AskUserQuestion` to present choices as clickable options where indicated. Keep labels short (2-4 words), put details in descriptions.
+**Tool-Specific Notes:**
+- **Claude Code**: Use `AskUserQuestion` to present choices as clickable options where indicated. Keep labels short (2-4 words), put details in descriptions.
+- **OpenCode**: Present choices as numbered lists. Wait for user to type a number.
 
 ## First: Check Existing Setup
 
@@ -81,7 +83,14 @@ Note: The install script will skip download if the latest version is already ins
 council init
 ```
 
-This creates the `.council/` directory structure.
+This creates the `.council/` directory structure and auto-detects your AI tool (Claude Code, OpenCode, or generic).
+
+If multiple tools are detected, it will prompt you to choose. You can also specify explicitly:
+```bash
+council init --tool=claude
+council init --tool=opencode
+council init --tool=generic
+```
 
 **Configure yourself as the AI command:**
 

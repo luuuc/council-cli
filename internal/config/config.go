@@ -19,8 +19,9 @@ const (
 // Config represents the council configuration
 type Config struct {
 	Version int      `yaml:"version"`
+	Tool    string   `yaml:"tool,omitempty"` // Primary tool: "claude", "opencode", "generic"
 	AI      AIConfig `yaml:"ai"`
-	Targets []string `yaml:"targets"`
+	Targets []string `yaml:"targets,omitempty"` // Optional: override sync targets
 }
 
 // AIConfig holds AI CLI configuration
@@ -117,4 +118,20 @@ func (c *Config) Save() error {
 	}
 
 	return nil
+}
+
+// ValidTools is the list of valid tool values
+var ValidTools = []string{"claude", "opencode", "generic"}
+
+// ValidateTool checks if the tool name is valid
+func ValidateTool(tool string) error {
+	if tool == "" {
+		return nil // Empty is valid (will be detected)
+	}
+	for _, valid := range ValidTools {
+		if tool == valid {
+			return nil
+		}
+	}
+	return fmt.Errorf("invalid tool '%s': must be one of: claude, opencode, generic", tool)
 }

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/luuuc/council-cli/internal/adapter"
 	"github.com/luuuc/council-cli/internal/config"
 	"github.com/luuuc/council-cli/internal/expert"
 	"github.com/luuuc/council-cli/internal/fs"
@@ -24,7 +25,8 @@ func TestGenerateCouncilCommand(t *testing.T) {
 		},
 	}
 
-	result := generateCouncilCommand(experts)
+	claude, _ := adapter.Get("claude")
+	result := generateCouncilCommand(claude, experts)
 
 	// Check for key elements
 	if !strings.Contains(result, "Code Review Council") {
@@ -48,7 +50,8 @@ func TestGenerateCouncilCommand_EmptyExperts(t *testing.T) {
 	// Test with empty expert list - should not panic
 	experts := []*expert.Expert{}
 
-	result := generateCouncilCommand(experts)
+	claude, _ := adapter.Get("claude")
+	result := generateCouncilCommand(claude, experts)
 
 	// Should still have the header and instructions
 	if !strings.Contains(result, "Code Review Council") {
@@ -69,7 +72,8 @@ func TestGenerateCouncilCommand_SpecialCharacters(t *testing.T) {
 		},
 	}
 
-	result := generateCouncilCommand(experts)
+	claude, _ := adapter.Get("claude")
+	result := generateCouncilCommand(claude, experts)
 
 	// Should not panic and should contain the special characters
 	if !strings.Contains(result, "<html>") {
@@ -77,7 +81,7 @@ func TestGenerateCouncilCommand_SpecialCharacters(t *testing.T) {
 	}
 }
 
-func TestGenerateAgentsMd(t *testing.T) {
+func TestGenericGenerateAgentsMd(t *testing.T) {
 	experts := []*expert.Expert{
 		{
 			ID:         "expert-1",
@@ -88,23 +92,24 @@ func TestGenerateAgentsMd(t *testing.T) {
 		},
 	}
 
-	result := generateAgentsMd(experts)
+	generic := &adapter.Generic{}
+	result := generic.GenerateAgentsMd(experts)
 
 	if !strings.Contains(result, "AGENTS.md") {
-		t.Error("generateAgentsMd() missing AGENTS.md header")
+		t.Error("GenerateAgentsMd() missing AGENTS.md header")
 	}
 	if !strings.Contains(result, "Expert One") {
-		t.Error("generateAgentsMd() missing expert name")
+		t.Error("GenerateAgentsMd() missing expert name")
 	}
 	if !strings.Contains(result, "expert-1") {
-		t.Error("generateAgentsMd() missing expert ID")
+		t.Error("GenerateAgentsMd() missing expert ID")
 	}
 	if !strings.Contains(result, "Philosophy here.") {
-		t.Error("generateAgentsMd() missing philosophy")
+		t.Error("GenerateAgentsMd() missing philosophy")
 	}
 }
 
-func TestSyncClaude(t *testing.T) {
+func TestSyncToAdapterClaude(t *testing.T) {
 	// Create a temp directory for testing
 	tmpDir, err := os.MkdirTemp("", "council-sync-test-*")
 	if err != nil {
@@ -126,36 +131,36 @@ func TestSyncClaude(t *testing.T) {
 	}
 	_ = testExpert.Save()
 
-	cfg := config.Default()
+	claude, _ := adapter.Get("claude")
 	experts := []*expert.Expert{testExpert}
 
 	// Test dry run
-	err = syncClaude(experts, cfg, Options{DryRun: true})
+	err = syncToAdapter(claude, experts, Options{DryRun: true})
 	if err != nil {
-		t.Errorf("syncClaude() dry run error = %v", err)
+		t.Errorf("syncToAdapter() dry run error = %v", err)
 	}
 
 	// Verify nothing was created in dry run
 	if _, err := os.Stat(".claude/agents"); !os.IsNotExist(err) {
-		t.Error("syncClaude() dry run should not create directories")
+		t.Error("syncToAdapter() dry run should not create directories")
 	}
 
 	// Test actual sync
-	err = syncClaude(experts, cfg, Options{DryRun: false})
+	err = syncToAdapter(claude, experts, Options{DryRun: false})
 	if err != nil {
-		t.Errorf("syncClaude() error = %v", err)
+		t.Errorf("syncToAdapter() error = %v", err)
 	}
 
 	// Verify agent file was created
 	agentPath := ".claude/agents/test.md"
 	if _, err := os.Stat(agentPath); os.IsNotExist(err) {
-		t.Errorf("syncClaude() did not create agent file at %s", agentPath)
+		t.Errorf("syncToAdapter() did not create agent file at %s", agentPath)
 	}
 
 	// Verify council command was created
 	commandPath := ".claude/commands/council.md"
 	if _, err := os.Stat(commandPath); os.IsNotExist(err) {
-		t.Errorf("syncClaude() did not create council command at %s", commandPath)
+		t.Errorf("syncToAdapter() did not create council command at %s", commandPath)
 	}
 
 	// Read and verify council command content
@@ -165,7 +170,7 @@ func TestSyncClaude(t *testing.T) {
 	}
 }
 
-func TestSyncGeneric(t *testing.T) {
+func TestSyncToAdapterGeneric(t *testing.T) {
 	// Create a temp directory for testing
 	tmpDir, err := os.MkdirTemp("", "council-sync-test-*")
 	if err != nil {
@@ -178,7 +183,7 @@ func TestSyncGeneric(t *testing.T) {
 	_ = os.Chdir(tmpDir)
 	defer func() { _ = os.Chdir(origDir) }()
 
-	cfg := config.Default()
+	generic, _ := adapter.Get("generic")
 	experts := []*expert.Expert{
 		{
 			ID:    "test",
@@ -187,13 +192,13 @@ func TestSyncGeneric(t *testing.T) {
 		},
 	}
 
-	err = syncGeneric(experts, cfg, Options{DryRun: false})
+	err = syncToAdapter(generic, experts, Options{DryRun: false})
 	if err != nil {
-		t.Errorf("syncGeneric() error = %v", err)
+		t.Errorf("syncToAdapter() error = %v", err)
 	}
 
 	if _, err := os.Stat("AGENTS.md"); os.IsNotExist(err) {
-		t.Error("syncGeneric() should create AGENTS.md")
+		t.Error("syncToAdapter() should create AGENTS.md for generic")
 	}
 
 	content, _ := os.ReadFile("AGENTS.md")
@@ -226,27 +231,21 @@ func TestSyncAllNoExperts(t *testing.T) {
 	}
 }
 
-func TestTargetsRegistry(t *testing.T) {
-	// Verify all expected targets are registered
-	expectedTargets := []string{"claude", "generic", "opencode"}
+func TestAdaptersRegistry(t *testing.T) {
+	// Verify all expected adapters are registered
+	expectedAdapters := []string{"claude", "generic", "opencode"}
 
-	for _, name := range expectedTargets {
-		target, ok := Targets[name]
+	for _, name := range expectedAdapters {
+		a, ok := adapter.Get(name)
 		if !ok {
-			t.Errorf("Target %s not found in registry", name)
+			t.Errorf("Adapter %s not found in registry", name)
 			continue
 		}
-		if target.Name == "" {
-			t.Errorf("Target %s has empty Name", name)
+		if a.Name() == "" {
+			t.Errorf("Adapter %s has empty Name()", name)
 		}
-		if target.Location == "" {
-			t.Errorf("Target %s has empty Location", name)
-		}
-		if target.Sync == nil {
-			t.Errorf("Target %s has nil Sync function", name)
-		}
-		if target.Check == nil {
-			t.Errorf("Target %s has nil Check function", name)
+		if a.DisplayName() == "" {
+			t.Errorf("Adapter %s has empty DisplayName()", name)
 		}
 	}
 }
@@ -289,7 +288,7 @@ func TestFileExistsAndDirExists(t *testing.T) {
 	}
 }
 
-func TestGenerateAgentFile(t *testing.T) {
+func TestClaudeFormatAgent(t *testing.T) {
 	// Create a temp directory for testing
 	tmpDir, err := os.MkdirTemp("", "council-sync-test-*")
 	if err != nil {
@@ -312,18 +311,19 @@ func TestGenerateAgentFile(t *testing.T) {
 	}
 	_ = testExpert.Save()
 
-	// Test generateAgentFile reads from disk
-	result := generateAgentFile(testExpert)
+	// Test Claude adapter FormatAgent reads from disk
+	claude, _ := adapter.Get("claude")
+	result := claude.FormatAgent(testExpert)
 
 	if !strings.Contains(result, "Test Expert") {
-		t.Error("generateAgentFile() should contain expert name")
+		t.Error("FormatAgent() should contain expert name")
 	}
 	if !strings.Contains(result, "Custom body content") {
-		t.Error("generateAgentFile() should contain custom body")
+		t.Error("FormatAgent() should contain custom body")
 	}
 }
 
-func TestSyncOpenCode(t *testing.T) {
+func TestSyncToAdapterOpenCode(t *testing.T) {
 	// Create a temp directory for testing
 	tmpDir, err := os.MkdirTemp("", "council-sync-test-*")
 	if err != nil {
@@ -336,7 +336,7 @@ func TestSyncOpenCode(t *testing.T) {
 	_ = os.Chdir(tmpDir)
 	defer func() { _ = os.Chdir(origDir) }()
 
-	cfg := config.Default()
+	opencode, _ := adapter.Get("opencode")
 	experts := []*expert.Expert{
 		{
 			ID:         "test",
@@ -349,26 +349,26 @@ func TestSyncOpenCode(t *testing.T) {
 	}
 
 	// Test dry run
-	err = syncOpenCode(experts, cfg, Options{DryRun: true})
+	err = syncToAdapter(opencode, experts, Options{DryRun: true})
 	if err != nil {
-		t.Errorf("syncOpenCode() dry run error = %v", err)
+		t.Errorf("syncToAdapter() dry run error = %v", err)
 	}
 
 	// Verify nothing was created in dry run
-	if _, err := os.Stat(".opencode/agent"); !os.IsNotExist(err) {
-		t.Error("syncOpenCode() dry run should not create directories")
+	if _, err := os.Stat(".opencode/agents"); !os.IsNotExist(err) {
+		t.Error("syncToAdapter() dry run should not create directories")
 	}
 
 	// Test actual sync
-	err = syncOpenCode(experts, cfg, Options{DryRun: false})
+	err = syncToAdapter(opencode, experts, Options{DryRun: false})
 	if err != nil {
-		t.Errorf("syncOpenCode() error = %v", err)
+		t.Errorf("syncToAdapter() error = %v", err)
 	}
 
-	// Verify agent file was created
-	agentPath := ".opencode/agent/test.md"
+	// Verify agent file was created (new path: .opencode/agents/)
+	agentPath := ".opencode/agents/test.md"
 	if _, err := os.Stat(agentPath); os.IsNotExist(err) {
-		t.Errorf("syncOpenCode() did not create agent file at %s", agentPath)
+		t.Errorf("syncToAdapter() did not create agent file at %s", agentPath)
 	}
 
 	// Read and verify content
@@ -396,7 +396,7 @@ func TestSyncOpenCode(t *testing.T) {
 	}
 }
 
-func TestGenerateOpenCodeAgent(t *testing.T) {
+func TestOpenCodeFormatAgent(t *testing.T) {
 	e := &expert.Expert{
 		ID:         "kent-beck",
 		Name:       "Kent Beck",
@@ -406,37 +406,38 @@ func TestGenerateOpenCodeAgent(t *testing.T) {
 		RedFlags:   []string{"No tests", "Complex mocking"},
 	}
 
-	result := generateOpenCodeAgent(e)
+	opencode, _ := adapter.Get("opencode")
+	result := opencode.FormatAgent(e)
 
 	// Verify frontmatter structure
 	if !strings.HasPrefix(result, "---\n") {
-		t.Error("generateOpenCodeAgent() should start with YAML frontmatter delimiter")
+		t.Error("FormatAgent() should start with YAML frontmatter delimiter")
 	}
 	if !strings.Contains(result, "description: TDD and clean code") {
-		t.Error("generateOpenCodeAgent() should have description matching focus")
+		t.Error("FormatAgent() should have description matching focus")
 	}
 	if !strings.Contains(result, "mode: subagent") {
-		t.Error("generateOpenCodeAgent() should have mode: subagent")
+		t.Error("FormatAgent() should have mode: subagent")
 	}
 
 	// Verify body content
 	if !strings.Contains(result, "# Kent Beck") {
-		t.Error("generateOpenCodeAgent() should have expert name as heading")
+		t.Error("FormatAgent() should have expert name as heading")
 	}
 	if !strings.Contains(result, "channeling Kent Beck") {
-		t.Error("generateOpenCodeAgent() should have channeling intro")
+		t.Error("FormatAgent() should have channeling intro")
 	}
 	if !strings.Contains(result, "## Philosophy") {
-		t.Error("generateOpenCodeAgent() should have Philosophy section")
+		t.Error("FormatAgent() should have Philosophy section")
 	}
 	if !strings.Contains(result, "## Principles") {
-		t.Error("generateOpenCodeAgent() should have Principles section")
+		t.Error("FormatAgent() should have Principles section")
 	}
 	if !strings.Contains(result, "## Red Flags") {
-		t.Error("generateOpenCodeAgent() should have Red Flags section")
+		t.Error("FormatAgent() should have Red Flags section")
 	}
 	if !strings.Contains(result, "## Review Style") {
-		t.Error("generateOpenCodeAgent() should have Review Style section")
+		t.Error("FormatAgent() should have Review Style section")
 	}
 }
 
@@ -448,5 +449,57 @@ func TestSyncTargetUnknown(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "unknown target") {
 		t.Errorf("Error should mention 'unknown target', got: %v", err)
+	}
+}
+
+func TestAllCleanPaths(t *testing.T) {
+	paths := AllCleanPaths()
+	if len(paths) == 0 {
+		t.Error("AllCleanPaths() should return paths")
+	}
+
+	// Should include AGENTS.md
+	found := false
+	for _, p := range paths {
+		if p == "AGENTS.md" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("AllCleanPaths() should include AGENTS.md")
+	}
+}
+
+func TestDetectTargets(t *testing.T) {
+	// Create a temp directory for testing
+	tmpDir, err := os.MkdirTemp("", "council-sync-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Change to temp directory
+	origDir, _ := os.Getwd()
+	_ = os.Chdir(tmpDir)
+	defer func() { _ = os.Chdir(origDir) }()
+
+	// With no directories, should return generic
+	targets := DetectTargets()
+	if len(targets) != 1 || targets[0] != "generic" {
+		t.Errorf("DetectTargets() with no dirs should return [generic], got %v", targets)
+	}
+
+	// Create .claude directory
+	_ = os.MkdirAll(".claude", 0755)
+	targets = DetectTargets()
+	found := false
+	for _, t := range targets {
+		if t == "claude" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("DetectTargets() should detect claude, got %v", targets)
 	}
 }

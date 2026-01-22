@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os/exec"
 
+	"github.com/luuuc/council-cli/internal/adapter"
 	"github.com/luuuc/council-cli/internal/config"
 	"github.com/luuuc/council-cli/internal/expert"
-	"github.com/luuuc/council-cli/internal/sync"
 	"github.com/spf13/cobra"
 )
 
@@ -166,10 +166,18 @@ func collectDoctorResults() *DoctorResult {
 		}
 	}
 
-	// Check 4: Sync targets
+	// Check 4: Sync targets (use tool or targets from config)
 	if cfg != nil {
-		for _, targetName := range cfg.Targets {
-			target, ok := sync.Targets[targetName]
+		// Determine targets to check
+		var targetsToCheck []string
+		if len(cfg.Targets) > 0 {
+			targetsToCheck = cfg.Targets
+		} else if cfg.Tool != "" {
+			targetsToCheck = []string{cfg.Tool}
+		}
+
+		for _, targetName := range targetsToCheck {
+			a, ok := adapter.Get(targetName)
 			if !ok {
 				result.SyncTargets = append(result.SyncTargets, SyncCheckResult{
 					Name:    targetName,
@@ -180,17 +188,23 @@ func collectDoctorResults() *DoctorResult {
 				continue
 			}
 
-			exists := target.Check()
+			paths := a.Paths()
+			location := paths.Agents
+			if location == "." {
+				location = "AGENTS.md"
+			}
+
+			exists := a.Detect()
 			if exists {
 				result.SyncTargets = append(result.SyncTargets, SyncCheckResult{
-					Name:     target.Name,
-					Location: target.Location,
+					Name:     a.DisplayName(),
+					Location: location,
 					Status:   "ok",
 				})
 			} else {
 				result.SyncTargets = append(result.SyncTargets, SyncCheckResult{
-					Name:     target.Name,
-					Location: target.Location,
+					Name:     a.DisplayName(),
+					Location: location,
 					Status:   "info",
 					Message:  "not synced yet",
 				})
