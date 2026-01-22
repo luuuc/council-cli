@@ -81,25 +81,7 @@ targets:
 
 ## Other AI Tools
 
-For Cursor, Windsurf, ChatGPT, Gemini, or any other AI:
-
-1. Set up council via Claude Code, OpenCode, or manual installation
-2. Run `council export | pbcopy`
-3. Paste into your AI tool's custom instructions
-
-<details>
-<summary>Legacy targets (Cursor/Windsurf)</summary>
-
-If you have an existing config with `cursor` or `windsurf` targets, they still work:
-
-```bash
-council sync cursor
-council sync windsurf
-```
-
-For new projects, we recommend using `council export` instead.
-
-</details>
+For other AI tools, use `council export | pbcopy` and paste into your tool's custom instructions.
 
 ## Contributing
 

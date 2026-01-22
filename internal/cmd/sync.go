@@ -31,8 +31,7 @@ With a target name, syncs only to that target.
 
 Supported targets:
   claude     .claude/agents/ and .claude/commands/
-  cursor     .cursor/rules/ or .cursorrules
-  windsurf   .windsurfrules
+  opencode   .opencode/agent/
   generic    AGENTS.md`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {

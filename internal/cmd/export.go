@@ -19,7 +19,7 @@ var exportCmd = &cobra.Command{
 	Long: `Exports your council as clean markdown for use anywhere.
 
 The output can be:
-- Pasted into any AI chat (Claude, ChatGPT, Gemini)
+- Pasted into any AI chat
 - Used as custom instructions in desktop apps
 - Saved to a file for sharing
 - Piped to clipboard with pbcopy/xclip

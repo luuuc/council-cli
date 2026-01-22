@@ -77,40 +77,6 @@ func TestGenerateCouncilCommand_SpecialCharacters(t *testing.T) {
 	}
 }
 
-func TestGenerateCombinedRules(t *testing.T) {
-	experts := []*expert.Expert{
-		{
-			ID:         "kent-beck",
-			Name:       "Kent Beck",
-			Focus:      "TDD",
-			Philosophy: "Test first, code second.",
-			Principles: []string{"Red-green-refactor", "Simple design"},
-			RedFlags:   []string{"No tests"},
-		},
-	}
-
-	result := generateCombinedRules(experts)
-
-	if !strings.Contains(result, "Expert Council") {
-		t.Error("generateCombinedRules() missing header")
-	}
-	if !strings.Contains(result, "Kent Beck") {
-		t.Error("generateCombinedRules() missing expert name")
-	}
-	if !strings.Contains(result, "TDD") {
-		t.Error("generateCombinedRules() missing focus")
-	}
-	if !strings.Contains(result, "Test first, code second.") {
-		t.Error("generateCombinedRules() missing philosophy")
-	}
-	if !strings.Contains(result, "Red-green-refactor") {
-		t.Error("generateCombinedRules() missing principle")
-	}
-	if !strings.Contains(result, "No tests") {
-		t.Error("generateCombinedRules() missing red flag")
-	}
-}
-
 func TestGenerateAgentsMd(t *testing.T) {
 	experts := []*expert.Expert{
 		{
@@ -199,91 +165,6 @@ func TestSyncClaude(t *testing.T) {
 	}
 }
 
-func TestSyncCursor(t *testing.T) {
-	// Create a temp directory for testing
-	tmpDir, err := os.MkdirTemp("", "council-sync-test-*")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	// Change to temp directory
-	origDir, _ := os.Getwd()
-	_ = os.Chdir(tmpDir)
-	defer func() { _ = os.Chdir(origDir) }()
-
-	cfg := config.Default()
-	experts := []*expert.Expert{
-		{
-			ID:    "test",
-			Name:  "Test Expert",
-			Focus: "Testing",
-		},
-	}
-
-	// Test without .cursor directory (should create .cursorrules)
-	err = syncCursor(experts, cfg, Options{DryRun: false})
-	if err != nil {
-		t.Errorf("syncCursor() error = %v", err)
-	}
-
-	if _, err := os.Stat(".cursorrules"); os.IsNotExist(err) {
-		t.Error("syncCursor() should create .cursorrules when .cursor doesn't exist")
-	}
-
-	// Clean up
-	_ = os.Remove(".cursorrules")
-
-	// Test with .cursor directory
-	_ = os.MkdirAll(".cursor", 0755)
-	err = syncCursor(experts, cfg, Options{DryRun: false})
-	if err != nil {
-		t.Errorf("syncCursor() with .cursor error = %v", err)
-	}
-
-	rulesPath := ".cursor/rules/council.md"
-	if _, err := os.Stat(rulesPath); os.IsNotExist(err) {
-		t.Errorf("syncCursor() should create %s when .cursor exists", rulesPath)
-	}
-}
-
-func TestSyncWindsurf(t *testing.T) {
-	// Create a temp directory for testing
-	tmpDir, err := os.MkdirTemp("", "council-sync-test-*")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	// Change to temp directory
-	origDir, _ := os.Getwd()
-	_ = os.Chdir(tmpDir)
-	defer func() { _ = os.Chdir(origDir) }()
-
-	cfg := config.Default()
-	experts := []*expert.Expert{
-		{
-			ID:    "test",
-			Name:  "Test Expert",
-			Focus: "Testing",
-		},
-	}
-
-	err = syncWindsurf(experts, cfg, Options{DryRun: false})
-	if err != nil {
-		t.Errorf("syncWindsurf() error = %v", err)
-	}
-
-	if _, err := os.Stat(".windsurfrules"); os.IsNotExist(err) {
-		t.Error("syncWindsurf() should create .windsurfrules")
-	}
-
-	content, _ := os.ReadFile(".windsurfrules")
-	if !strings.Contains(string(content), "Test Expert") {
-		t.Error(".windsurfrules should contain expert name")
-	}
-}
-
 func TestSyncGeneric(t *testing.T) {
 	// Create a temp directory for testing
 	tmpDir, err := os.MkdirTemp("", "council-sync-test-*")
@@ -347,7 +228,7 @@ func TestSyncAllNoExperts(t *testing.T) {
 
 func TestTargetsRegistry(t *testing.T) {
 	// Verify all expected targets are registered
-	expectedTargets := []string{"claude", "cursor", "windsurf", "generic", "opencode"}
+	expectedTargets := []string{"claude", "generic", "opencode"}
 
 	for _, name := range expectedTargets {
 		target, ok := Targets[name]

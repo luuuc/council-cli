@@ -108,20 +108,6 @@ var Targets = map[string]*Target{
 			claudeCommandPaths()...,
 		),
 	},
-	"cursor": {
-		Name:       "Cursor",
-		Location:   ".cursor/rules/ or .cursorrules",
-		Sync:       syncCursor,
-		Check:      func() bool { return fs.DirExists(".cursor") || fs.FileExists(".cursorrules") },
-		CleanPaths: []string{".cursorrules", ".cursor/rules/council.md"},
-	},
-	"windsurf": {
-		Name:       "Windsurf",
-		Location:   ".windsurfrules",
-		Sync:       syncWindsurf,
-		Check:      func() bool { return fs.FileExists(".windsurfrules") },
-		CleanPaths: []string{".windsurfrules"},
-	},
 	"generic": {
 		Name:       "Generic",
 		Location:   "AGENTS.md",
@@ -257,7 +243,7 @@ func removeFile(path string, dryRun bool) error {
 func SyncTarget(targetName string, cfg *config.Config, opts Options) error {
 	target, ok := Targets[targetName]
 	if !ok {
-		return fmt.Errorf("unknown target '%s' - valid targets: claude, cursor, windsurf, opencode, generic", targetName)
+		return fmt.Errorf("unknown target '%s' - valid targets: claude, opencode, generic", targetName)
 	}
 
 	allExperts, err := loadAllExperts()
@@ -356,30 +342,6 @@ func cleanStaleAgents(agentsDir string, experts []*expert.Expert, dryRun bool) e
 	}
 
 	return nil
-}
-
-// Cursor sync
-func syncCursor(experts []*expert.Expert, cfg *config.Config, opts Options) error {
-	// Prefer .cursor/rules/ if .cursor exists, otherwise .cursorrules
-	var path string
-	if fs.DirExists(".cursor") {
-		rulesDir := ".cursor/rules"
-		if !opts.DryRun {
-			if err := os.MkdirAll(rulesDir, 0755); err != nil {
-				return err
-			}
-		}
-		path = filepath.Join(rulesDir, "council.md")
-	} else {
-		path = ".cursorrules"
-	}
-
-	return writeFile(path, generateCombinedRules(experts), opts.DryRun)
-}
-
-// Windsurf sync
-func syncWindsurf(experts []*expert.Expert, cfg *config.Config, opts Options) error {
-	return writeFile(".windsurfrules", generateCombinedRules(experts), opts.DryRun)
 }
 
 // Generic AGENTS.md sync
@@ -554,45 +516,6 @@ func generateCouncilCommand(experts []*expert.Expert) string {
 		return "# Code Review Council\n\nConvene the council to review: $ARGUMENTS\n"
 	}
 	return buf.String()
-}
-
-// generateCombinedRules creates combined rules for Cursor/Windsurf
-func generateCombinedRules(experts []*expert.Expert) string {
-	var parts []string
-
-	parts = append(parts, "# Expert Council")
-	parts = append(parts, "")
-	parts = append(parts, "This project uses an expert council pattern for code review guidance.")
-	parts = append(parts, "")
-
-	for _, e := range experts {
-		parts = append(parts, fmt.Sprintf("## %s%s", e.Name, e.SourceMarker()))
-		parts = append(parts, fmt.Sprintf("**Focus**: %s", e.Focus))
-		parts = append(parts, "")
-
-		if e.Philosophy != "" {
-			parts = append(parts, strings.TrimSpace(e.Philosophy))
-			parts = append(parts, "")
-		}
-
-		if len(e.Principles) > 0 {
-			parts = append(parts, "**Principles:**")
-			for _, p := range e.Principles {
-				parts = append(parts, fmt.Sprintf("- %s", p))
-			}
-			parts = append(parts, "")
-		}
-
-		if len(e.RedFlags) > 0 {
-			parts = append(parts, "**Watch for:**")
-			for _, r := range e.RedFlags {
-				parts = append(parts, fmt.Sprintf("- %s", r))
-			}
-			parts = append(parts, "")
-		}
-	}
-
-	return strings.Join(parts, "\n")
 }
 
 // generateAgentsMd creates AGENTS.md content

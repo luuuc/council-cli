@@ -115,7 +115,7 @@ func runDoctor() error {
 		fmt.Println()
 		fmt.Println("Next steps:")
 		fmt.Println("  council sync    Sync to AI tool configs")
-		fmt.Println("  /council        Use in Claude Code or Cursor")
+		fmt.Println("  /council        Use in Claude Code or OpenCode")
 	} else {
 		fmt.Println("Some issues found. See above for details.")
 	}
