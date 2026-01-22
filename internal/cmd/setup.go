@@ -17,16 +17,14 @@ import (
 )
 
 var (
-	setupApply       bool
-	setupOutput      string
-	setupYes         bool
-	setupInteractive bool
+	setupApply  bool
+	setupOutput string
+	setupYes    bool
 )
 
 func init() {
 	rootCmd.AddCommand(setupCmd)
 	setupCmd.Flags().BoolVar(&setupApply, "apply", false, "Send prompt to AI and apply suggestions")
-	setupCmd.Flags().BoolVarP(&setupInteractive, "interactive", "i", false, "Interactive setup without external AI")
 	setupCmd.Flags().StringVarP(&setupOutput, "output", "o", "", "Write prompt to file instead of stdout")
 	setupCmd.Flags().BoolVarP(&setupYes, "yes", "y", false, "Skip confirmation when applying")
 }
@@ -39,14 +37,8 @@ for an AI assistant to suggest appropriate expert personas.
 
 Modes:
   (default)       Output prompt for you to copy to any AI
-  --interactive   Guided setup with built-in suggestions (no external AI needed)
   --apply         Send prompt to configured AI CLI and create experts`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Interactive mode - no external AI needed
-		if setupInteractive {
-			return InteractiveSetup()
-		}
-
 		dir, err := os.Getwd()
 		if err != nil {
 			return err
@@ -87,7 +79,6 @@ Modes:
 		fmt.Println()
 		fmt.Println("Then run: council setup --apply < response.yaml")
 		fmt.Println("Or use:   council setup --apply  (to send to configured AI)")
-		fmt.Println("Or try:   council setup --interactive  (no AI needed)")
 
 		return nil
 	},

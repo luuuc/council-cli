@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"cmp"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -11,7 +12,20 @@ import (
 	"github.com/luuuc/council-cli/internal/creator"
 	"github.com/luuuc/council-cli/internal/expert"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
+
+//go:embed suggestions.yaml
+var suggestionsYAML []byte
+
+// suggestionBank holds all expert suggestions loaded from YAML
+var suggestionBank map[string][]expert.Expert
+
+func init() {
+	if err := yaml.Unmarshal(suggestionsYAML, &suggestionBank); err != nil {
+		panic(fmt.Sprintf("failed to parse suggestions.yaml: %v", err))
+	}
+}
 
 var personasJSON bool
 
@@ -128,8 +142,8 @@ Examples:
 			fmt.Println()
 		}
 
-		fmt.Println("Use in setup:")
-		fmt.Println("  council setup --interactive")
+		fmt.Println("Personas available via:")
+		fmt.Println("  council personas --json")
 
 		return nil
 	},

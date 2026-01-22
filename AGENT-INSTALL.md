@@ -103,6 +103,26 @@ council detect --json
 
 This outputs the detected languages, frameworks, testing tools, and patterns.
 
+### If Detection Is Sparse
+
+If `council detect --json` returns no frameworks and no patterns (only languages or empty), the project context is unclear. Ask the user what they're building using **AskUserQuestion**:
+
+| Label | Description |
+|-------|-------------|
+| "Code quality" | Code review, refactoring, testing, architecture |
+| "Product/UX" | User-facing features, design decisions, frontend work |
+| "Ops/Process" | DevOps, CI/CD, team workflow, infrastructure |
+| "Business" | Strategy, growth, monetization, leadership |
+
+Use this to weight expert suggestions:
+
+- **Code quality**: Prioritize practice experts (Kent Beck, Sandi Metz, Martin Fowler)
+- **Product/UX**: Include design experts (Dieter Rams, Steve Schoger, Jason Fried)
+- **Ops/Process**: Include ops experts (Gene Kim, Charity Majors, Kelsey Hightower)
+- **Business**: Include business experts (Arvid Kahl, Rob Walling, Sahil Lavingia)
+
+Continue to Step 4 with this context in mind.
+
 ## Step 4: Add Experts
 
 First, check available curated personas that match the detected stack:

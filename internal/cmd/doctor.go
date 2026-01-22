@@ -64,7 +64,7 @@ func runDoctor() error {
 			}
 		} else {
 			printCheck(false, "No experts found")
-			fmt.Println("     Run 'council setup --interactive' or 'council add <name>'")
+			fmt.Println("     Run 'council setup --apply' or 'council add <name>'")
 			allGood = false
 		}
 
