@@ -12,14 +12,37 @@ func TestDefault(t *testing.T) {
 	if cfg.Version != 1 {
 		t.Errorf("Default().Version = %d, want 1", cfg.Version)
 	}
-	if cfg.AI.Command != "claude" {
-		t.Errorf("Default().AI.Command = %s, want claude", cfg.AI.Command)
+	// AI.Command should be empty (detected at runtime)
+	if cfg.AI.Command != "" {
+		t.Errorf("Default().AI.Command = %q, want empty (detected at runtime)", cfg.AI.Command)
 	}
 	if cfg.AI.Timeout != 120 {
 		t.Errorf("Default().AI.Timeout = %d, want 120", cfg.AI.Timeout)
 	}
-	if len(cfg.Targets) != 3 {
-		t.Errorf("Default().Targets length = %d, want 3", len(cfg.Targets))
+	// Targets should be empty (detected at sync time)
+	if len(cfg.Targets) != 0 {
+		t.Errorf("Default().Targets length = %d, want 0 (detected at sync time)", len(cfg.Targets))
+	}
+}
+
+func TestDetectAICommand(t *testing.T) {
+	// Test with explicit command - should return it directly
+	cfg := &Config{AI: AIConfig{Command: "myai"}}
+	cmd, err := cfg.DetectAICommand()
+	if err != nil {
+		t.Errorf("DetectAICommand() with explicit command should not error: %v", err)
+	}
+	if cmd != "myai" {
+		t.Errorf("DetectAICommand() = %q, want myai", cmd)
+	}
+
+	// Test with empty command - should detect or error
+	cfg = &Config{}
+	cmd, err = cfg.DetectAICommand()
+	// Result depends on test environment - we just verify it doesn't panic
+	// and returns a non-empty string if successful, or an error if not
+	if err == nil && cmd == "" {
+		t.Error("DetectAICommand() should return non-empty command or error")
 	}
 }
 

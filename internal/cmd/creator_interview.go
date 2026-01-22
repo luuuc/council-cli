@@ -164,13 +164,15 @@ func generateExpertFromDescription(description string) (*expert.Expert, error) {
 		return nil, fmt.Errorf("failed to load config: %w\nHint: run 'council init' first", err)
 	}
 
-	if cfg.AI.Command == "" {
-		return nil, fmt.Errorf("no AI command configured\n\nSet in .council/config.yaml:\n  ai:\n    command: \"claude\"")
+	// Detect or use configured AI command
+	aiCmd, err := cfg.DetectAICommand()
+	if err != nil {
+		return nil, err
 	}
 
 	// Check if command exists
-	if _, err := exec.LookPath(cfg.AI.Command); err != nil {
-		return nil, fmt.Errorf("AI command '%s' not found\n\nInstall it or configure a different command", cfg.AI.Command)
+	if _, err := exec.LookPath(aiCmd); err != nil {
+		return nil, fmt.Errorf("AI command '%s' not found\n\nInstall it or configure a different command", aiCmd)
 	}
 
 	// Generate prompt
@@ -216,7 +218,7 @@ red_flags:
 	defer cancel()
 
 	args := append(cfg.AI.Args, "-p", prompt)
-	cmd := exec.CommandContext(ctx, cfg.AI.Command, args...)
+	cmd := exec.CommandContext(ctx, aiCmd, args...)
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout

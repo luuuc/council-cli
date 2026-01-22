@@ -98,18 +98,19 @@ func runSetupApply(promptText string) error {
 		return fmt.Errorf("failed to load config: %w\nHint: run 'council init' first", err)
 	}
 
-	// Check if AI command is configured
-	if cfg.AI.Command == "" {
-		return fmt.Errorf("no AI command configured\n\nSet in .council/config.yaml:\n  ai:\n    command: \"claude\"  # or \"aichat\", \"llm\", etc.")
+	// Detect or use configured AI command
+	aiCmd, err := cfg.DetectAICommand()
+	if err != nil {
+		return err
 	}
 
 	// Check if command exists
-	if _, err := exec.LookPath(cfg.AI.Command); err != nil {
-		return fmt.Errorf("AI command '%s' not found\n\nInstall it or configure a different command in .council/config.yaml", cfg.AI.Command)
+	if _, err := exec.LookPath(aiCmd); err != nil {
+		return fmt.Errorf("AI command '%s' not found\n\nInstall it or configure a different command in .council/config.yaml", aiCmd)
 	}
 
 	// Execute AI command
-	fmt.Fprintf(os.Stderr, "Sending to %s...\n", cfg.AI.Command)
+	fmt.Fprintf(os.Stderr, "Sending to %s...\n", aiCmd)
 
 	timeout := cfg.AI.Timeout
 	if timeout == 0 {
@@ -120,7 +121,7 @@ func runSetupApply(promptText string) error {
 	defer cancel()
 
 	args := append(cfg.AI.Args, "-p", promptText)
-	cmd := exec.CommandContext(ctx, cfg.AI.Command, args...)
+	cmd := exec.CommandContext(ctx, aiCmd, args...)
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout

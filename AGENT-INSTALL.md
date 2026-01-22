@@ -83,6 +83,19 @@ council init
 
 This creates the `.council/` directory structure.
 
+**Configure yourself as the AI command:**
+
+After init, edit `.council/config.yaml` and set your CLI as the AI command:
+
+```yaml
+version: 1
+ai:
+  command: claude  # Set this to your own CLI: claude, opencode, etc.
+  timeout: 120
+```
+
+This ensures `council setup --apply` uses you for AI operations.
+
 **If it fails with ".council/ already exists"**: Use **AskUserQuestion**:
 
 | Label | Description |

@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"gopkg.in/yaml.v3"
@@ -30,15 +31,33 @@ type AIConfig struct {
 }
 
 // Default returns a default configuration
+// AI.Command and Targets are intentionally empty - detected at runtime or set by installer
 func Default() *Config {
 	return &Config{
 		Version: 1,
 		AI: AIConfig{
-			Command: "claude",
 			Timeout: 120,
 		},
-		Targets: []string{"claude", "opencode", "generic"},
 	}
+}
+
+// KnownAICLIs is the list of AI CLIs to detect, in order of preference
+var KnownAICLIs = []string{"claude", "opencode", "aichat", "llm"}
+
+// DetectAICommand returns the configured AI command, or detects one if not set
+func (c *Config) DetectAICommand() (string, error) {
+	if c.AI.Command != "" {
+		return c.AI.Command, nil
+	}
+
+	// Try known CLIs in order of preference
+	for _, cmd := range KnownAICLIs {
+		if _, err := exec.LookPath(cmd); err == nil {
+			return cmd, nil
+		}
+	}
+
+	return "", fmt.Errorf("no AI command configured and none detected\n\nInstall claude, opencode, aichat, or llm, or set ai.command in .council/config.yaml")
 }
 
 // Path returns the full path to a council file or directory
@@ -76,18 +95,9 @@ func Load() (*Config, error) {
 }
 
 // applyDefaults fills in missing configuration with sensible defaults
+// Note: AI.Command and Targets are NOT defaulted here - they are detected at runtime
 func (c *Config) applyDefaults() {
 	defaults := Default()
-
-	// If no targets specified, use defaults
-	if len(c.Targets) == 0 {
-		c.Targets = defaults.Targets
-	}
-
-	// If no AI command specified, use default
-	if c.AI.Command == "" {
-		c.AI.Command = defaults.AI.Command
-	}
 
 	// If no timeout specified, use default
 	if c.AI.Timeout == 0 {

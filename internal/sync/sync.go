@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -137,6 +138,23 @@ var Targets = map[string]*Target{
 	},
 }
 
+// DetectTargets returns targets that have existing config directories
+func DetectTargets() []string {
+	var targets []string
+	for name, target := range Targets {
+		if target.Check() {
+			targets = append(targets, name)
+		}
+	}
+	// Always include generic as fallback if nothing else found
+	if len(targets) == 0 {
+		targets = append(targets, "generic")
+	}
+	// Sort for deterministic output (map iteration order is random)
+	sort.Strings(targets)
+	return targets
+}
+
 // SyncAll syncs to all configured targets
 func SyncAll(cfg *config.Config, opts Options) error {
 	// Load all experts: custom + installed + project council
@@ -149,7 +167,14 @@ func SyncAll(cfg *config.Config, opts Options) error {
 		return fmt.Errorf("no experts to sync - add some with 'council add' or 'council setup --apply'")
 	}
 
-	for _, targetName := range cfg.Targets {
+	// Use configured targets, or detect if empty
+	targets := cfg.Targets
+	if len(targets) == 0 {
+		targets = DetectTargets()
+		fmt.Printf("Detected targets: %v\n", targets)
+	}
+
+	for _, targetName := range targets {
 		target, ok := Targets[targetName]
 		if !ok {
 			fmt.Printf("Warning: unknown target '%s', skipping\n", targetName)
