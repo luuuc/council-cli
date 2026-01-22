@@ -197,7 +197,13 @@ council add "Kent Beck"
 ```
 
 **For custom experts** (not in curated library):
-Use `/council-add "{Name}"` to have the AI generate a full profile.
+Use `/council-add` to search and discover experts:
+```
+/council-add a testing expert
+/council-add someone for API design
+```
+
+The skill searches curated personas first, presents 4 options, and generates profiles for non-curated selections.
 
 ## Step 5: Sync to Your AI Tool
 
@@ -207,7 +213,7 @@ council sync
 
 This generates slash commands for your AI tool:
 - `/council` - Convene the full council for code review
-- `/council-add` - Add experts with AI-generated content
+- `/council-add` - Search and add experts (describes needs, not just names)
 - `/council-detect` - Analyze codebase and suggest experts
 
 ## Done
@@ -223,5 +229,5 @@ If **Try it now**: Ask what they'd like the council to review (a file, function,
 
 Remind them of available commands:
 - `/council <topic>` - Get expert code reviews
-- `/council-add "Name"` - Add custom experts (AI creates profile)
+- `/council-add a testing expert` - Search and add experts by description
 - `/council-detect` - Re-analyze and get new suggestions

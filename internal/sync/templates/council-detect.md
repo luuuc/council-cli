@@ -66,6 +66,11 @@ Present your findings:
 
 ## After Analysis
 
-Ask the user which experts they want to add. For curated experts (from `council personas --json`), use `council add "{Name}"`. For custom experts not in the library, use `/council-add {Name}` to create them with rich AI-generated content.
+Ask the user which experts they want to add. For curated experts (from `council personas --json`), use `council add "{Name}"`. For custom experts or discovery, use `/council-add` with a description:
+```
+/council-add a testing expert
+/council-add someone for API design
+```
+The skill searches curated personas first and always presents 4 options.
 
 If the user says "all" or "add them", add all suggested experts.
