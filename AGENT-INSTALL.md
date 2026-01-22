@@ -185,15 +185,19 @@ After selection, ask if they want more suggestions:
 
 For each expert the user approves, run:
 
+**For curated experts** (from `council personas --json`):
 ```bash
-council add "{Name}" --focus "{Focus}"
+council add "{Name}"
 ```
 
 Example:
 ```bash
-council add "Rob Pike" --focus "Go simplicity and idiomatic code"
-council add "Kent Beck" --focus "TDD and incremental design"
+council add "Rob Pike"
+council add "Kent Beck"
 ```
+
+**For custom experts** (not in curated library):
+Use `/council-add "{Name}"` to have the AI generate a full profile.
 
 ## Step 5: Sync to Your AI Tool
 
@@ -219,5 +223,5 @@ If **Try it now**: Ask what they'd like the council to review (a file, function,
 
 Remind them of available commands:
 - `/council <topic>` - Get expert code reviews
-- `/council-add "Name" --focus "area"` - Add more experts
+- `/council-add "Name"` - Add custom experts (AI creates profile)
 - `/council-detect` - Re-analyze and get new suggestions

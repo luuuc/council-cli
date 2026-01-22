@@ -5,8 +5,7 @@ Add a new expert to the council: $ARGUMENTS
 ## Instructions
 
 You are creating a rich expert profile for the council. Parse the arguments to extract:
-- **Name**: The expert's name (e.g., "Kent Beck", "Sandi Metz")
-- **Focus** (optional): Their area of expertise after `--focus` flag
+- **Name**: The expert's name or persona concept (e.g., "Kent Beck", "Security Reviewer")
 
 ## Step 1: Check Current Council & Suggest Alternatives
 
@@ -15,7 +14,14 @@ First, run this command to see which experts are already installed:
 council list --json
 ```
 
-If the user didn't provide a `--focus` flag:
+Also check if this expert is available as a curated persona:
+```bash
+council personas --json | grep -i "{name}"
+```
+
+If the expert is available as a curated persona, suggest using `council add "{Name}"` instead, which provides pre-written content.
+
+If not a curated persona:
 1. Based on the requested name/persona, infer what kind of expertise they're looking for
 2. Check if there are similar experts already in the council (avoid duplicates)
 3. Suggest 2-3 alternative experts that would complement the council well, based on:
@@ -26,7 +32,7 @@ If the user didn't provide a `--focus` flag:
 
 Example suggestions format:
 > Based on your request for "{name}", here are some options:
-> 1. **{Name A}** - {their known focus area}
+> 1. **{Name A}** - {their known focus area} (curated: use `council add`)
 > 2. **{Name B}** - {their known focus area}
 > 3. **Custom** - Create a persona with specific focus
 >

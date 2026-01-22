@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var addFocus string
 var listJSON bool
 
 func init() {
@@ -20,8 +19,6 @@ func init() {
 	rootCmd.AddCommand(removeCmd)
 
 	listCmd.Flags().BoolVar(&listJSON, "json", false, "Output in JSON format")
-	addCmd.Flags().StringVar(&addFocus, "focus", "", "Expert's focus area (required)")
-	_ = addCmd.MarkFlagRequired("focus")
 }
 
 var listCmd = &cobra.Command{
@@ -58,7 +55,7 @@ var listCmd = &cobra.Command{
 			fmt.Println()
 			fmt.Println("Add experts with:")
 			fmt.Println("  council setup --apply   (AI-assisted)")
-			fmt.Println("  council add \"Name\" --focus \"area\"")
+			fmt.Println("  council add \"Name\"      (curated personas)")
 			return nil
 		}
 
@@ -117,35 +114,38 @@ var showCmd = &cobra.Command{
 
 var addCmd = &cobra.Command{
 	Use:   "add <name>",
-	Short: "Add an expert to the council",
-	Long:  `Creates a new expert with the given name and focus area.`,
-	Args:  cobra.ExactArgs(1),
+	Short: "Add a curated expert to the council",
+	Long: `Adds a curated expert from the built-in persona library to your council.
+
+The expert will include pre-written philosophy, principles, and red flags
+from the suggestions.yaml database.
+
+For custom experts not in the library, use /council-add with your AI assistant.`,
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if !config.Exists() {
 			return fmt.Errorf("council not initialized: run 'council init' first")
 		}
 
 		name := args[0]
-		id := expert.ToID(name)
 
-		if expert.Exists(id) {
-			return fmt.Errorf("expert '%s' already exists", id)
+		// Try curated lookup first
+		if persona := LookupPersona(name); persona != nil {
+			if expert.Exists(persona.ID) {
+				return fmt.Errorf("expert '%s' already exists", persona.ID)
+			}
+			if err := persona.Save(); err != nil {
+				return err
+			}
+			fmt.Printf("Added %s (%s)\n", persona.Name, persona.ID)
+			fmt.Printf("File: %s\n", persona.Path())
+			return nil
 		}
 
-		e := &expert.Expert{
-			ID:    id,
-			Name:  name,
-			Focus: addFocus,
-		}
-
-		if err := e.Save(); err != nil {
-			return err
-		}
-
-		fmt.Printf("Added %s (%s)\n", e.Name, e.ID)
-		fmt.Printf("Edit: %s\n", e.Path())
-
-		return nil
+		// Not found - helpful error
+		return fmt.Errorf("persona %q not found in curated library\n\n"+
+			"To create a custom expert, ask your AI:\n  /council-add %s\n\n"+
+			"Or browse available personas:\n  council personas", name, name)
 	},
 }
 

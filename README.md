@@ -57,7 +57,7 @@ council sync
 | `council setup --apply` | AI-assisted expert suggestions |
 | `council detect` | Detect project stack |
 | `council list` | List your experts |
-| `council add "Name" --focus "area"` | Add an expert |
+| `council add "Name"` | Add a curated expert |
 | `council remove <id>` | Remove an expert |
 | `council sync` | Sync to AI tool configs |
 | `council export` | Export as portable markdown |

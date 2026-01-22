@@ -86,3 +86,36 @@ func TestSuggestionsTriggers(t *testing.T) {
 		}
 	}
 }
+
+func TestLookupPersona(t *testing.T) {
+	tests := []struct {
+		input   string
+		wantID  string
+		wantNil bool
+	}{
+		{"Rob Pike", "rob-pike", false},
+		{"rob-pike", "rob-pike", false},
+		{"ROB PIKE", "rob-pike", false},
+		{"  Rob Pike  ", "rob-pike", false},
+		{"Kent Beck", "kent-beck", false},
+		{"Unknown Person", "", true},
+		{"Brad Pitt", "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			result := LookupPersona(tt.input)
+			if tt.wantNil {
+				if result != nil {
+					t.Errorf("LookupPersona(%q) = %v, want nil", tt.input, result)
+				}
+			} else {
+				if result == nil {
+					t.Errorf("LookupPersona(%q) = nil, want ID %q", tt.input, tt.wantID)
+				} else if result.ID != tt.wantID {
+					t.Errorf("LookupPersona(%q).ID = %q, want %q", tt.input, result.ID, tt.wantID)
+				}
+			}
+		})
+	}
+}

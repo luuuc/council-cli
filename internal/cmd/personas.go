@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/luuuc/council-cli/internal/creator"
@@ -253,4 +254,31 @@ var personasUninstallCmd = &cobra.Command{
 		fmt.Printf("Uninstalled %s\n", name)
 		return nil
 	},
+}
+
+// LookupPersona finds a curated persona by name or ID (case-insensitive).
+// Returns nil if not found.
+func LookupPersona(nameOrID string) *expert.Expert {
+	normalized := strings.ToLower(strings.TrimSpace(nameOrID))
+
+	for _, experts := range suggestionBank {
+		for _, e := range experts {
+			// Match by ID
+			if strings.ToLower(e.ID) == normalized {
+				copy := e
+				return &copy
+			}
+			// Match by name (case-insensitive)
+			if strings.ToLower(e.Name) == normalized {
+				copy := e
+				return &copy
+			}
+			// Match by name converted to ID format (spaces → dashes)
+			if strings.ToLower(strings.ReplaceAll(e.Name, " ", "-")) == normalized {
+				copy := e
+				return &copy
+			}
+		}
+	}
+	return nil
 }
