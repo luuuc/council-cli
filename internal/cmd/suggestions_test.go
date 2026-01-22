@@ -87,6 +87,70 @@ func TestSuggestionsTriggers(t *testing.T) {
 	}
 }
 
+func TestLevenshtein(t *testing.T) {
+	tests := []struct {
+		a, b string
+		want int
+	}{
+		{"", "", 0},
+		{"abc", "", 3},
+		{"", "abc", 3},
+		{"abc", "abc", 0},
+		{"abc", "ab", 1},
+		{"ab", "abc", 1},
+		{"kitten", "sitting", 3},
+		{"saturday", "sunday", 3},
+		{"rob pike", "rob pik", 1},
+	}
+
+	for _, tt := range tests {
+		got := levenshtein(tt.a, tt.b)
+		if got != tt.want {
+			t.Errorf("levenshtein(%q, %q) = %d, want %d", tt.a, tt.b, got, tt.want)
+		}
+	}
+}
+
+func TestSuggestSimilar(t *testing.T) {
+	tests := []struct {
+		input    string
+		wantName string // empty means expect nil
+	}{
+		// Single character typos
+		{"Luc Perussault-Diall", "Luc Perussault-Diallo"},
+		{"kent-bek", "Kent Beck"},
+		{"Rob Pik", "Rob Pike"},
+
+		// Case insensitive - exact matches should return nil (use LookupPersona)
+		{"ROB PIKE", ""},
+		{"rob pike", ""},
+
+		// No close match
+		{"xyz", ""},
+		{"completely unknown person", ""},
+
+		// Too far (distance > 3)
+		{"abcdefgh", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			got, _ := SuggestSimilar(tt.input)
+			if tt.wantName == "" {
+				if got != nil {
+					t.Errorf("SuggestSimilar(%q) = %q, want nil", tt.input, got.Name)
+				}
+			} else {
+				if got == nil {
+					t.Errorf("SuggestSimilar(%q) = nil, want %q", tt.input, tt.wantName)
+				} else if got.Name != tt.wantName {
+					t.Errorf("SuggestSimilar(%q) = %q, want %q", tt.input, got.Name, tt.wantName)
+				}
+			}
+		})
+	}
+}
+
 func TestLookupPersona(t *testing.T) {
 	tests := []struct {
 		input   string

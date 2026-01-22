@@ -7,6 +7,15 @@ import (
 	"strings"
 )
 
+// isInteractive returns true if stdin is a terminal (not piped).
+func isInteractive() bool {
+	fi, err := os.Stdin.Stat()
+	if err != nil {
+		return false
+	}
+	return (fi.Mode() & os.ModeCharDevice) != 0
+}
+
 // Confirm asks user for confirmation with a y/n prompt
 func Confirm(prompt string) bool {
 	fmt.Print(prompt + " [Y/n] ")

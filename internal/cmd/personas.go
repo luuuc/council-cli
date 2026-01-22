@@ -282,3 +282,72 @@ func LookupPersona(nameOrID string) *expert.Expert {
 	}
 	return nil
 }
+
+// levenshtein computes the edit distance between two strings.
+func levenshtein(a, b string) int {
+	if len(a) == 0 {
+		return len(b)
+	}
+	if len(b) == 0 {
+		return len(a)
+	}
+
+	d := make([][]int, len(a)+1)
+	for i := range d {
+		d[i] = make([]int, len(b)+1)
+		d[i][0] = i
+	}
+	for j := range d[0] {
+		d[0][j] = j
+	}
+
+	for i := 1; i <= len(a); i++ {
+		for j := 1; j <= len(b); j++ {
+			cost := 0
+			if a[i-1] != b[j-1] {
+				cost = 1
+			}
+			d[i][j] = min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+cost)
+		}
+	}
+	return d[len(a)][len(b)]
+}
+
+// SuggestSimilar finds the closest persona match using edit distance.
+// Returns nil if no close match (distance > 3), if exact match exists,
+// or if the input is too short to match reliably.
+// The second return value is the edit distance of the match.
+func SuggestSimilar(input string) (*expert.Expert, int) {
+	// If LookupPersona would find this, don't suggest
+	if LookupPersona(input) != nil {
+		return nil, 0
+	}
+
+	normalized := strings.ToLower(strings.TrimSpace(input))
+
+	// Require minimum input length to avoid false matches
+	if len(normalized) < 4 {
+		return nil, 0
+	}
+
+	var bestMatch *expert.Expert
+	bestDistance := 4 // Threshold: only consider distance <= 3
+
+	for _, experts := range suggestionBank {
+		for _, e := range experts {
+			// Check distance against name
+			if d := levenshtein(normalized, strings.ToLower(e.Name)); d < bestDistance && d > 0 {
+				bestDistance = d
+				copy := e
+				bestMatch = &copy
+			}
+			// Check distance against ID
+			if d := levenshtein(normalized, strings.ToLower(e.ID)); d < bestDistance && d > 0 {
+				bestDistance = d
+				copy := e
+				bestMatch = &copy
+			}
+		}
+	}
+	return bestMatch, bestDistance
+}

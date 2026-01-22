@@ -142,7 +142,31 @@ For custom experts not in the library, use /council-add with your AI assistant.`
 			return nil
 		}
 
-		// Not found - helpful error
+		// Not found - try suggestion
+		if suggestion, distance := SuggestSimilar(name); suggestion != nil {
+			// Interactive mode: prompt for confirmation (only for high confidence matches)
+			if isInteractive() && distance <= 2 {
+				if Confirm(fmt.Sprintf("Did you mean %q?", suggestion.Name)) {
+					if expert.Exists(suggestion.ID) {
+						return fmt.Errorf("expert '%s' already exists", suggestion.ID)
+					}
+					if err := suggestion.Save(); err != nil {
+						return err
+					}
+					fmt.Printf("Added %s (%s)\n", suggestion.Name, suggestion.ID)
+					fmt.Printf("File: %s\n", suggestion.Path())
+					return nil
+				}
+			}
+
+			// Non-interactive or user declined: show suggestion in error
+			return fmt.Errorf("persona %q not found\n\n"+
+				"Did you mean: %s?\n  council add %q\n\n"+
+				"Or browse available personas:\n  council personas",
+				name, suggestion.Name, suggestion.Name)
+		}
+
+		// No close match - helpful error
 		return fmt.Errorf("persona %q not found in curated library\n\n"+
 			"To create a custom expert, ask your AI:\n  /council-add %s\n\n"+
 			"Or browse available personas:\n  council personas", name, name)
