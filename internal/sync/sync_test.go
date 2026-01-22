@@ -503,3 +503,57 @@ func TestDetectTargets(t *testing.T) {
 		t.Errorf("DetectTargets() should detect claude, got %v", targets)
 	}
 }
+
+func TestDetectTargets_ReturnsDeterministicOrder(t *testing.T) {
+	// Create a temp directory for testing
+	tmpDir, err := os.MkdirTemp("", "council-sync-test-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Change to temp directory
+	origDir, _ := os.Getwd()
+	_ = os.Chdir(tmpDir)
+	defer func() { _ = os.Chdir(origDir) }()
+
+	// Create both directories
+	_ = os.MkdirAll(".claude", 0755)
+	_ = os.MkdirAll(".opencode", 0755)
+
+	// Run multiple times to verify deterministic order
+	var firstResult []string
+	for i := 0; i < 5; i++ {
+		targets := DetectTargets()
+		if i == 0 {
+			firstResult = targets
+		} else {
+			for j, target := range targets {
+				if j < len(firstResult) && target != firstResult[j] {
+					t.Errorf("DetectTargets() not deterministic: iteration %d got %v, want %v", i, targets, firstResult)
+					break
+				}
+			}
+		}
+	}
+}
+
+func TestGenerateCouncilCommand_TemplateContent(t *testing.T) {
+	experts := []*expert.Expert{
+		{ID: "test", Name: "Test Expert", Focus: "Testing"},
+	}
+
+	claude, _ := adapter.Get("claude")
+	result := generateCouncilCommand(claude, experts)
+
+	// Verify template was executed (contains expert data)
+	if !strings.Contains(result, "Test Expert") {
+		t.Error("generateCouncilCommand() should contain expert name from template")
+	}
+	if !strings.Contains(result, "Testing") {
+		t.Error("generateCouncilCommand() should contain expert focus from template")
+	}
+	if !strings.Contains(result, "Council Members") {
+		t.Error("generateCouncilCommand() should contain Council Members section")
+	}
+}

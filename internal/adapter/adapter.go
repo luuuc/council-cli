@@ -1,6 +1,8 @@
 package adapter
 
 import (
+	"sort"
+
 	"github.com/luuuc/council-cli/internal/expert"
 	"github.com/luuuc/council-cli/internal/fs"
 )
@@ -56,20 +58,29 @@ func Get(name string) (Adapter, bool) {
 	return a, ok
 }
 
-// All returns all registered adapters.
+// All returns a copy of all registered adapters.
+// Returns a copy to prevent external mutation of the registry.
 func All() map[string]Adapter {
-	return registry
+	copy := make(map[string]Adapter, len(registry))
+	for k, v := range registry {
+		copy[k] = v
+	}
+	return copy
 }
 
 // Detect returns all adapters that detect their tool in the current project.
 // Results are filtered to only include adapters where Detect() returns true.
 // The generic adapter is excluded from detection (it's a fallback).
+// Results are sorted by name for deterministic ordering.
 func Detect() []Adapter {
 	var detected []Adapter
-	for _, a := range registry {
-		if a.Name() == "generic" {
+	// Get sorted names for deterministic order
+	names := Names()
+	for _, name := range names {
+		if name == "generic" {
 			continue // Generic is always available, not detected
 		}
+		a := registry[name]
 		if a.Detect() {
 			detected = append(detected, a)
 		}
@@ -77,12 +88,13 @@ func Detect() []Adapter {
 	return detected
 }
 
-// Names returns all registered adapter names.
+// Names returns all registered adapter names in sorted order.
 func Names() []string {
-	var names []string
+	names := make([]string, 0, len(registry))
 	for name := range registry {
 		names = append(names, name)
 	}
+	sort.Strings(names)
 	return names
 }
 

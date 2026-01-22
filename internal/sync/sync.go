@@ -259,14 +259,28 @@ func loadAllExperts() ([]*expert.Expert, error) {
 	var allExperts []*expert.Expert
 
 	// Load custom experts first (from personal council)
-	customExperts, _ := creator.List()
-	allExperts = append(allExperts, customExperts...)
+	// Errors here are non-fatal (user may not have personal council)
+	customExperts, err := creator.List()
+	if err != nil {
+		if !os.IsNotExist(err) {
+			fmt.Printf("Warning: could not load custom experts: %v\n", err)
+		}
+	} else {
+		allExperts = append(allExperts, customExperts...)
+	}
 
 	// Load installed experts (from cloned repositories)
-	installedExperts, _ := creator.ListInstalledExperts()
-	allExperts = append(allExperts, installedExperts...)
+	// Errors here are non-fatal (user may not have installed councils)
+	installedExperts, err := creator.ListInstalledExperts()
+	if err != nil {
+		if !os.IsNotExist(err) {
+			fmt.Printf("Warning: could not load installed experts: %v\n", err)
+		}
+	} else {
+		allExperts = append(allExperts, installedExperts...)
+	}
 
-	// Load project council experts
+	// Load project council experts - this is required
 	projectExperts, err := expert.List()
 	if err != nil {
 		return nil, err

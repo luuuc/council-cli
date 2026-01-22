@@ -517,3 +517,104 @@ func TestAgentFilename(t *testing.T) {
 		})
 	}
 }
+
+// Test that All() returns a copy that can't mutate the registry
+func TestAll_ReturnsCopy(t *testing.T) {
+	all := All()
+	originalLen := len(all)
+
+	// Try to mutate the returned map
+	all["fake-adapter"] = nil
+	delete(all, "claude")
+
+	// Verify the registry wasn't affected
+	all2 := All()
+	if len(all2) != originalLen {
+		t.Errorf("All() returned mutable reference: original len %d, after mutation %d", originalLen, len(all2))
+	}
+	if _, ok := all2["claude"]; !ok {
+		t.Error("All() returned mutable reference: claude adapter was deleted from registry")
+	}
+}
+
+// Test that Names() returns sorted output
+func TestNames_ReturnsSorted(t *testing.T) {
+	names := Names()
+	if len(names) < 2 {
+		t.Skip("Need at least 2 adapters to test sorting")
+	}
+
+	for i := 1; i < len(names); i++ {
+		if names[i] < names[i-1] {
+			t.Errorf("Names() not sorted: %q comes after %q", names[i], names[i-1])
+		}
+	}
+}
+
+// Test that Detect() returns deterministic (sorted) output
+func TestDetect_ReturnsDeterministicOrder(t *testing.T) {
+	tmpDir, cleanup := setupTempDir(t)
+	defer cleanup()
+
+	// Create both .claude and .opencode directories
+	if err := os.MkdirAll(filepath.Join(tmpDir, ".claude"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(tmpDir, ".opencode"), 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Run detect multiple times and verify order is consistent
+	var firstOrder []string
+	for i := 0; i < 5; i++ {
+		detected := Detect()
+		var names []string
+		for _, a := range detected {
+			names = append(names, a.Name())
+		}
+		if i == 0 {
+			firstOrder = names
+		} else {
+			if len(names) != len(firstOrder) {
+				t.Errorf("Detect() returned different number of adapters: got %d, want %d", len(names), len(firstOrder))
+			}
+			for j, name := range names {
+				if name != firstOrder[j] {
+					t.Errorf("Detect() order not deterministic: iteration %d got %v, want %v", i, names, firstOrder)
+					break
+				}
+			}
+		}
+	}
+
+	// Verify claude comes before opencode (alphabetical)
+	if len(firstOrder) >= 2 && firstOrder[0] != "claude" {
+		t.Errorf("Detect() should return claude before opencode, got %v", firstOrder)
+	}
+}
+
+// Test Claude FormatAgent fallback when file doesn't exist
+func TestClaude_FormatAgent_FallbackWhenFileNotFound(t *testing.T) {
+	claude, _ := Get("claude")
+
+	// Expert with no file on disk
+	e := &expert.Expert{
+		ID:    "nonexistent",
+		Name:  "Nonexistent Expert",
+		Focus: "Testing fallback",
+		Body:  "Fallback body content",
+	}
+
+	result := claude.FormatAgent(e)
+
+	// Should use fallback format
+	if !strings.Contains(result, "id: nonexistent") {
+		t.Error("FormatAgent() fallback should include id")
+	}
+	if !strings.Contains(result, "name: Nonexistent Expert") {
+		t.Error("FormatAgent() fallback should include name")
+	}
+	if !strings.Contains(result, "focus: Testing fallback") {
+		t.Error("FormatAgent() fallback should include focus")
+	}
+}
