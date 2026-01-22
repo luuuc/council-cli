@@ -67,52 +67,44 @@ Count curated matches and build 4 options:
 
 ### Step 4a: Name Found in Curated
 
-If the user provided a name and it matches a curated persona:
+If the user provided a name and it matches a curated persona, tell the user what you found, then use **AskUserQuestion** with these options:
 
-```
-Found "{Name}" in curated personas:
-- Focus: {focus from persona}
-- Philosophy: {brief summary}
+| Label | Description |
+|-------|-------------|
+| "Add {Name}" | Install this expert from the curated library |
+| "Show alternatives" | See related experts before deciding |
+| "Cancel" | Don't add anyone |
 
-Add {Name}? [Yes / Show alternatives / Cancel]
-```
-
-If "Yes": Run `council add "{name}"` to install the curated persona.
-If "Show alternatives": Present 4 options including the match and related experts.
+- If **Add {Name}**: Run `council add "{name}"` to install the curated persona.
+- If **Show alternatives**: Present 4 options including the match and related experts.
 
 ### Step 4b: Name Not Found
 
-If the user provided a name but it's not in the curated library:
+If the user provided a name but it's not in the curated library, tell the user the name wasn't found, then use **AskUserQuestion** with these options:
 
-```
-"{Name}" isn't in the curated library. Options:
+| Label | Description |
+|-------|-------------|
+| "Create {Name}" | I'll research and build a custom profile |
+| "Show similar" | Browse related curated personas |
+| "Cancel" | Don't add anyone |
 
-1. **Create {Name}** - I'll research and build a custom profile
-2. **Show similar** - Browse related curated personas
-3. **Cancel**
-```
-
-If "Create": Proceed to Step 5 to generate a custom profile.
-If "Show similar": Search curated personas by inferred domain and present 4 options.
+- If **Create {Name}**: Proceed to Step 5 to generate a custom profile.
+- If **Show similar**: Search curated personas by inferred domain and present 4 options.
 
 ### Step 4c: Description or Keyword
 
-For description or keyword inputs, present exactly 4 options:
+For description or keyword inputs, build exactly 4 options and use **AskUserQuestion** to present them:
 
-```
-Based on "{input}", here are 4 options:
+| Label | Description |
+|-------|-------------|
+| "{Name}" | {focus} - from curated library |
+| "{Name}" | {focus} - from curated library |
+| "{Name}" | {brief expertise} - will create custom profile |
+| "Custom" | Create a persona matching your description |
 
-1. **{Name}** (curated) - {focus}
-2. **{Name}** (curated) - {focus}
-3. **{Name}** (suggested) - {brief expertise description}
-4. **Custom** - Create a persona matching your description
-
-Which would you like to add?
-```
-
-Labels:
-- **(curated)** - Available via `council add "{name}"`, has pre-written philosophy/principles
-- **(suggested)** - Well-known expert not in the curated library, will need custom profile
+Labels should indicate source:
+- **(curated)** options use `council add "{name}"` - has pre-written philosophy/principles
+- **(suggested)** options need custom profile generation
 
 When the user selects:
 - **Curated option**: Run `council add "{name}"` to install

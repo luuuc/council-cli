@@ -96,6 +96,14 @@ ai:
 
 This ensures `council setup --apply` uses you for AI operations.
 
+**Run initial sync to enable slash commands:**
+
+```bash
+council sync
+```
+
+This makes `/council`, `/council-add`, and `/council-detect` available immediately, so you can use them during this setup session without needing to restart.
+
 **If it fails with ".council/ already exists"**: Use **AskUserQuestion**:
 
 | Label | Description |
@@ -211,10 +219,7 @@ The skill searches curated personas first, presents 4 options, and generates pro
 council sync
 ```
 
-This generates slash commands for your AI tool:
-- `/council` - Convene the full council for code review
-- `/council-add` - Search and add experts (describes needs, not just names)
-- `/council-detect` - Analyze codebase and suggest experts
+This updates the slash commands with the newly added experts. The council member list in `/council` will now include all the experts you added.
 
 ## Done
 

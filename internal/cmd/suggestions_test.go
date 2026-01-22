@@ -125,6 +125,15 @@ func TestSuggestSimilar(t *testing.T) {
 		{"ROB PIKE", ""},
 		{"rob pike", ""},
 
+		// First-name found by LookupPersona - should return nil
+		{"Luc", ""},    // LookupPersona finds this now
+		{"luc", ""},    // LookupPersona finds this now
+		{"Dieter", ""},  // LookupPersona finds this now
+		{"Cal", ""},     // LookupPersona finds Cal Newport (exact first-name match)
+
+		// Prefix matching for short inputs (2-3 chars) - unique prefix
+		{"Di", "Dieter Rams"}, // "Di" prefix matches only Dieter Rams
+
 		// No close match
 		{"xyz", ""},
 		{"completely unknown person", ""},
@@ -157,11 +166,24 @@ func TestLookupPersona(t *testing.T) {
 		wantID  string
 		wantNil bool
 	}{
+		// Exact matches
 		{"Rob Pike", "rob-pike", false},
 		{"rob-pike", "rob-pike", false},
 		{"ROB PIKE", "rob-pike", false},
 		{"  Rob Pike  ", "rob-pike", false},
 		{"Kent Beck", "kent-beck", false},
+
+		// First-name matching (unique first names)
+		{"Luc", "luc-perussault-diallo", false},
+		{"luc", "luc-perussault-diallo", false},
+		{"Dieter", "dieter-rams", false},
+
+		// First-name matching should NOT work for ambiguous names
+		// (e.g., "Rob" could match multiple people - Rob Pike, Rob Walling)
+		// This returns nil because there are multiple matches
+		{"Rob", "", true},
+
+		// Unknown
 		{"Unknown Person", "", true},
 		{"Brad Pitt", "", true},
 	}

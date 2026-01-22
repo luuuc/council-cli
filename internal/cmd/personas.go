@@ -261,6 +261,7 @@ var personasUninstallCmd = &cobra.Command{
 func LookupPersona(nameOrID string) *expert.Expert {
 	normalized := strings.ToLower(strings.TrimSpace(nameOrID))
 
+	// First pass: exact matches
 	for _, experts := range suggestionBank {
 		for _, e := range experts {
 			// Match by ID
@@ -280,6 +281,30 @@ func LookupPersona(nameOrID string) *expert.Expert {
 			}
 		}
 	}
+
+	// Second pass: first-name matching (for inputs like "Luc" → "Luc Perussault-Diallo")
+	// Only if input looks like a single word (no spaces, no dashes)
+	if !strings.Contains(normalized, " ") && !strings.Contains(normalized, "-") {
+		var firstNameMatch *expert.Expert
+		matchCount := 0
+		for _, experts := range suggestionBank {
+			for _, e := range experts {
+				nameParts := strings.Split(e.Name, " ")
+				if len(nameParts) > 0 && strings.ToLower(nameParts[0]) == normalized {
+					matchCount++
+					if matchCount == 1 {
+						copy := e
+						firstNameMatch = &copy
+					}
+				}
+			}
+		}
+		// Only return if exactly one match (avoid ambiguity)
+		if matchCount == 1 {
+			return firstNameMatch
+		}
+	}
+
 	return nil
 }
 
@@ -325,8 +350,27 @@ func SuggestSimilar(input string) (*expert.Expert, int) {
 
 	normalized := strings.ToLower(strings.TrimSpace(input))
 
-	// Require minimum input length to avoid false matches
-	if len(normalized) < 4 {
+	// For short inputs (< 4 chars), try prefix matching on first names
+	// This handles cases like "Rob" → "Rob Pike", "Cal" → "Cal Newport"
+	if len(normalized) < 4 && len(normalized) >= 2 {
+		var prefixMatches []*expert.Expert
+		for _, experts := range suggestionBank {
+			for _, e := range experts {
+				nameParts := strings.Split(e.Name, " ")
+				if len(nameParts) > 0 {
+					firstName := strings.ToLower(nameParts[0])
+					if strings.HasPrefix(firstName, normalized) {
+						copy := e
+						prefixMatches = append(prefixMatches, &copy)
+					}
+				}
+			}
+		}
+		// Return first match if only one, or nil if ambiguous
+		if len(prefixMatches) == 1 {
+			return prefixMatches[0], 1 // Distance 1 for prefix match
+		}
+		// Multiple matches or none - fall through to return nil for short inputs
 		return nil, 0
 	}
 
