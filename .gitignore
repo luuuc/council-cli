@@ -23,7 +23,9 @@ Thumbs.db
 .council
 .council-test/
 .project
+.logs
 
 # Development specifics
 .doc
 .shape
+.grepai/
