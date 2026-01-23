@@ -11,6 +11,7 @@ import (
 )
 
 var listJSON bool
+var addYes bool
 
 func init() {
 	rootCmd.AddCommand(listCmd)
@@ -19,6 +20,7 @@ func init() {
 	rootCmd.AddCommand(removeCmd)
 
 	listCmd.Flags().BoolVar(&listJSON, "json", false, "Output in JSON format")
+	addCmd.Flags().BoolVarP(&addYes, "yes", "y", false, "Skip confirmation prompts")
 }
 
 var listCmd = &cobra.Command{
@@ -139,24 +141,31 @@ For custom experts not in the library, use /council-add with your AI assistant.`
 			}
 			fmt.Printf("Added %s (%s)\n", persona.Name, persona.ID)
 			fmt.Printf("File: %s\n", persona.Path())
+			fmt.Println()
+			fmt.Println("Run 'council sync' to update AI tool configurations.")
 			return nil
 		}
 
 		// Not found - try suggestion
 		if suggestion, distance := SuggestSimilar(name); suggestion != nil {
-			// Interactive mode: prompt for confirmation (only for high confidence matches)
-			if isInteractive() && distance <= 2 {
-				if Confirm(fmt.Sprintf("Did you mean %q?", suggestion.Name)) {
-					if expert.Exists(suggestion.ID) {
-						return fmt.Errorf("expert '%s' already exists", suggestion.ID)
-					}
-					if err := suggestion.Save(); err != nil {
-						return err
-					}
-					fmt.Printf("Added %s (%s)\n", suggestion.Name, suggestion.ID)
-					fmt.Printf("File: %s\n", suggestion.Path())
-					return nil
+			// Auto-accept with --yes flag, or prompt for confirmation in interactive mode
+			shouldAdd := addYes
+			if !shouldAdd && !addYes && isInteractive() && distance <= 2 {
+				shouldAdd = Confirm(fmt.Sprintf("Did you mean %q?", suggestion.Name))
+			}
+
+			if shouldAdd {
+				if expert.Exists(suggestion.ID) {
+					return fmt.Errorf("expert '%s' already exists", suggestion.ID)
 				}
+				if err := suggestion.Save(); err != nil {
+					return err
+				}
+				fmt.Printf("Added %s (%s)\n", suggestion.Name, suggestion.ID)
+				fmt.Printf("File: %s\n", suggestion.Path())
+				fmt.Println()
+				fmt.Println("Run 'council sync' to update AI tool configurations.")
+				return nil
 			}
 
 			// Non-interactive or user declined: show suggestion in error

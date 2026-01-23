@@ -28,7 +28,7 @@ func setupTempDir(t *testing.T) (string, func()) {
 	}
 
 	return tmpDir, func() {
-		os.Chdir(original)
+		_ = os.Chdir(original)
 		os.RemoveAll(tmpDir)
 	}
 }

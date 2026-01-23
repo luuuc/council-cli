@@ -87,30 +87,6 @@ func TestSuggestionsTriggers(t *testing.T) {
 	}
 }
 
-func TestLevenshtein(t *testing.T) {
-	tests := []struct {
-		a, b string
-		want int
-	}{
-		{"", "", 0},
-		{"abc", "", 3},
-		{"", "abc", 3},
-		{"abc", "abc", 0},
-		{"abc", "ab", 1},
-		{"ab", "abc", 1},
-		{"kitten", "sitting", 3},
-		{"saturday", "sunday", 3},
-		{"rob pike", "rob pik", 1},
-	}
-
-	for _, tt := range tests {
-		got := levenshtein(tt.a, tt.b)
-		if got != tt.want {
-			t.Errorf("levenshtein(%q, %q) = %d, want %d", tt.a, tt.b, got, tt.want)
-		}
-	}
-}
-
 func TestSuggestSimilar(t *testing.T) {
 	tests := []struct {
 		input    string

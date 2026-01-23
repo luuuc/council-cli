@@ -1,0 +1,279 @@
+package cmd
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/luuuc/council-cli/internal/config"
+)
+
+// testInTempDir runs a test function in a temporary directory,
+// setting up a council project structure.
+func testInTempDir(t *testing.T, fn func(t *testing.T, dir string)) {
+	t.Helper()
+
+	// Save current directory
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to get current directory: %v", err)
+	}
+
+	// Create temp directory
+	tmpDir, err := os.MkdirTemp("", "council-test-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Change to temp directory
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatalf("failed to change to temp dir: %v", err)
+	}
+	defer func() { _ = os.Chdir(origDir) }()
+
+	// Initialize council structure
+	if err := os.MkdirAll(config.Path(config.ExpertsDir), 0755); err != nil {
+		t.Fatalf("failed to create experts dir: %v", err)
+	}
+	cfg := config.Default()
+	if err := cfg.Save(); err != nil {
+		t.Fatalf("failed to save config: %v", err)
+	}
+
+	fn(t, tmpDir)
+}
+
+func TestAddCmd_Success(t *testing.T) {
+	testInTempDir(t, func(t *testing.T, dir string) {
+		// Run addCmd with a known persona
+		err := addCmd.RunE(addCmd, []string{"Rob Pike"})
+		if err != nil {
+			t.Fatalf("addCmd failed: %v", err)
+		}
+
+		// Verify file was created
+		expertPath := config.Path(config.ExpertsDir, "rob-pike.md")
+		if _, err := os.Stat(expertPath); os.IsNotExist(err) {
+			t.Errorf("expert file not created at %s", expertPath)
+		}
+
+		// Verify file content
+		data, err := os.ReadFile(expertPath)
+		if err != nil {
+			t.Fatalf("failed to read expert file: %v", err)
+		}
+
+		content := string(data)
+		if !strings.Contains(content, "Rob Pike") {
+			t.Error("expert file does not contain 'Rob Pike'")
+		}
+		if !strings.Contains(content, "id: rob-pike") {
+			t.Error("expert file does not contain 'id: rob-pike'")
+		}
+	})
+}
+
+func TestAddCmd_DuplicateExpert(t *testing.T) {
+	testInTempDir(t, func(t *testing.T, dir string) {
+		// Add expert first time
+		err := addCmd.RunE(addCmd, []string{"Rob Pike"})
+		if err != nil {
+			t.Fatalf("first addCmd failed: %v", err)
+		}
+
+		// Try to add again
+		err = addCmd.RunE(addCmd, []string{"Rob Pike"})
+		if err == nil {
+			t.Fatal("expected error for duplicate expert, got nil")
+		}
+
+		if !strings.Contains(err.Error(), "already exists") {
+			t.Errorf("error message should contain 'already exists', got: %v", err)
+		}
+	})
+}
+
+func TestAddCmd_NotFound(t *testing.T) {
+	testInTempDir(t, func(t *testing.T, dir string) {
+		err := addCmd.RunE(addCmd, []string{"Unknown Person XYZ"})
+		if err == nil {
+			t.Fatal("expected error for unknown persona, got nil")
+		}
+
+		if !strings.Contains(err.Error(), "not found") {
+			t.Errorf("error message should contain 'not found', got: %v", err)
+		}
+	})
+}
+
+func TestAddCmd_FuzzySuggestion(t *testing.T) {
+	testInTempDir(t, func(t *testing.T, dir string) {
+		// Test with a typo that should suggest Rob Pike
+		// When isInteractive() returns true and user confirms (or auto-confirms),
+		// the expert should be added. When in non-interactive mode,
+		// an error with suggestion should be returned.
+		//
+		// This test may pass in different ways depending on the test environment:
+		// - Interactive: auto-confirms empty input, expert is added
+		// - Non-interactive: returns error with "Did you mean"
+		err := addCmd.RunE(addCmd, []string{"Rob Pik"})
+
+		if err == nil {
+			// Expert was added (interactive mode with auto-confirm)
+			expertPath := config.Path(config.ExpertsDir, "rob-pike.md")
+			if _, statErr := os.Stat(expertPath); os.IsNotExist(statErr) {
+				t.Errorf("expert should have been added at %s", expertPath)
+			}
+		} else {
+			// Non-interactive mode - should have suggestion
+			errMsg := err.Error()
+			if !strings.Contains(errMsg, "Did you mean") && !strings.Contains(errMsg, "Rob Pike") {
+				t.Errorf("error should contain suggestion, got: %v", err)
+			}
+		}
+	})
+}
+
+func TestAddCmd_FirstNameMatch(t *testing.T) {
+	testInTempDir(t, func(t *testing.T, dir string) {
+		// Test first-name lookup for unique first name
+		err := addCmd.RunE(addCmd, []string{"Dieter"})
+		if err != nil {
+			t.Fatalf("addCmd failed: %v", err)
+		}
+
+		// Verify the correct expert was added
+		expertPath := config.Path(config.ExpertsDir, "dieter-rams.md")
+		if _, err := os.Stat(expertPath); os.IsNotExist(err) {
+			t.Errorf("expert file not created at %s", expertPath)
+		}
+	})
+}
+
+func TestAddCmd_CaseInsensitive(t *testing.T) {
+	testInTempDir(t, func(t *testing.T, dir string) {
+		// Test case insensitive lookup
+		err := addCmd.RunE(addCmd, []string{"ROB PIKE"})
+		if err != nil {
+			t.Fatalf("addCmd failed: %v", err)
+		}
+
+		// Verify file was created with correct ID
+		expertPath := config.Path(config.ExpertsDir, "rob-pike.md")
+		if _, err := os.Stat(expertPath); os.IsNotExist(err) {
+			t.Errorf("expert file not created at %s", expertPath)
+		}
+	})
+}
+
+func TestAddCmd_IDFormat(t *testing.T) {
+	testInTempDir(t, func(t *testing.T, dir string) {
+		// Test using ID format directly
+		err := addCmd.RunE(addCmd, []string{"kent-beck"})
+		if err != nil {
+			t.Fatalf("addCmd failed: %v", err)
+		}
+
+		expertPath := config.Path(config.ExpertsDir, "kent-beck.md")
+		if _, err := os.Stat(expertPath); os.IsNotExist(err) {
+			t.Errorf("expert file not created at %s", expertPath)
+		}
+	})
+}
+
+func TestAddCmd_NoCouncilInit(t *testing.T) {
+	// Save current directory
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("failed to get current directory: %v", err)
+	}
+
+	// Create temp directory WITHOUT council init
+	tmpDir, err := os.MkdirTemp("", "council-test-noinit-*")
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.Chdir(origDir) }()
+
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatalf("failed to change to temp dir: %v", err)
+	}
+
+	// Try to add without council init
+	err = addCmd.RunE(addCmd, []string{"Rob Pike"})
+	if err == nil {
+		t.Fatal("expected error when council not initialized, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "council not initialized") {
+		t.Errorf("error should mention 'council not initialized', got: %v", err)
+	}
+}
+
+func TestAddCmd_YesFlag(t *testing.T) {
+	testInTempDir(t, func(t *testing.T, dir string) {
+		// Set --yes flag
+		addYes = true
+		defer func() { addYes = false }()
+
+		// Test with a typo - should auto-accept suggestion with --yes
+		err := addCmd.RunE(addCmd, []string{"Rob Pik"})
+		if err != nil {
+			t.Fatalf("addCmd with --yes failed: %v", err)
+		}
+
+		// Verify Rob Pike was added
+		expertPath := config.Path(config.ExpertsDir, "rob-pike.md")
+		if _, err := os.Stat(expertPath); os.IsNotExist(err) {
+			t.Errorf("expert file not created at %s", expertPath)
+		}
+	})
+}
+
+func TestAddCmd_YesFlagDuplicate(t *testing.T) {
+	testInTempDir(t, func(t *testing.T, dir string) {
+		// Add expert first
+		err := addCmd.RunE(addCmd, []string{"Rob Pike"})
+		if err != nil {
+			t.Fatalf("first addCmd failed: %v", err)
+		}
+
+		// Set --yes flag and try with typo
+		addYes = true
+		defer func() { addYes = false }()
+
+		err = addCmd.RunE(addCmd, []string{"Rob Pik"})
+		if err == nil {
+			t.Fatal("expected error for duplicate expert, got nil")
+		}
+
+		if !strings.Contains(err.Error(), "already exists") {
+			t.Errorf("error message should contain 'already exists', got: %v", err)
+		}
+	})
+}
+
+func TestListExperts(t *testing.T) {
+	testInTempDir(t, func(t *testing.T, dir string) {
+		// Add two experts
+		if err := addCmd.RunE(addCmd, []string{"Rob Pike"}); err != nil {
+			t.Fatalf("failed to add Rob Pike: %v", err)
+		}
+		if err := addCmd.RunE(addCmd, []string{"Kent Beck"}); err != nil {
+			t.Fatalf("failed to add Kent Beck: %v", err)
+		}
+
+		// Verify both files exist
+		files, err := filepath.Glob(config.Path(config.ExpertsDir, "*.md"))
+		if err != nil {
+			t.Fatalf("failed to glob expert files: %v", err)
+		}
+
+		if len(files) != 2 {
+			t.Errorf("expected 2 expert files, got %d", len(files))
+		}
+	})
+}

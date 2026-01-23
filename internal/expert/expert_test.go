@@ -674,30 +674,112 @@ func TestSaveToPath(t *testing.T) {
 	}
 }
 
-func TestToJSON(t *testing.T) {
+func TestSaveToPath_RoundtripValidation(t *testing.T) {
+	// Create a temp directory for testing
+	tmpDir, err := os.MkdirTemp("", "council-test-roundtrip-*")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	// Test that saving and loading produces consistent data
 	expert := &Expert{
-		ID:         "test-json",
-		Name:       "Test JSON",
-		Focus:      "Testing JSON conversion",
-		Philosophy: "JSON all the things.",
-		Principles: []string{"Serialize", "Deserialize"},
-		RedFlags:   []string{"Invalid JSON"},
-		Category:   "testing",
+		ID:         "roundtrip-test",
+		Name:       "Roundtrip Test",
+		Focus:      "Testing roundtrip validation",
+		Philosophy: "Validate all saves.",
+		Principles: []string{"Test", "Verify", "Repeat"},
+		RedFlags:   []string{"Untested saves"},
+		Category:   "test",
 		Priority:   "high",
 	}
 
-	json := expert.ToJSON()
+	path := filepath.Join(tmpDir, "experts", "roundtrip.md")
 
-	if json.ID != expert.ID {
-		t.Errorf("ToJSON() ID = %v, want %v", json.ID, expert.ID)
+	err = SaveToPath(expert, path)
+	if err != nil {
+		t.Fatalf("SaveToPath() error = %v", err)
 	}
-	if json.Name != expert.Name {
-		t.Errorf("ToJSON() Name = %v, want %v", json.Name, expert.Name)
+
+	// Verify the file exists (roundtrip validation passed)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		t.Errorf("SaveToPath() file was removed, likely due to roundtrip failure")
 	}
-	if json.Category != expert.Category {
-		t.Errorf("ToJSON() Category = %v, want %v", json.Category, expert.Category)
+
+	// Load and verify all fields match
+	loaded, err := LoadFile(path)
+	if err != nil {
+		t.Fatalf("LoadFile() error = %v", err)
 	}
-	if json.Priority != expert.Priority {
-		t.Errorf("ToJSON() Priority = %v, want %v", json.Priority, expert.Priority)
+
+	if loaded.ID != expert.ID {
+		t.Errorf("ID = %q, want %q", loaded.ID, expert.ID)
+	}
+	if loaded.Name != expert.Name {
+		t.Errorf("Name = %q, want %q", loaded.Name, expert.Name)
+	}
+	if loaded.Focus != expert.Focus {
+		t.Errorf("Focus = %q, want %q", loaded.Focus, expert.Focus)
+	}
+	if loaded.Philosophy != expert.Philosophy {
+		t.Errorf("Philosophy = %q, want %q", loaded.Philosophy, expert.Philosophy)
+	}
+	if len(loaded.Principles) != len(expert.Principles) {
+		t.Errorf("Principles len = %d, want %d", len(loaded.Principles), len(expert.Principles))
+	}
+}
+
+func TestMarshalExpertsJSON(t *testing.T) {
+	experts := []*Expert{
+		{
+			ID:         "test-json",
+			Name:       "Test JSON",
+			Focus:      "Testing JSON conversion",
+			Philosophy: "JSON all the things.",
+			Principles: []string{"Serialize", "Deserialize"},
+			RedFlags:   []string{"Invalid JSON"},
+			Category:   "testing",
+			Priority:   "high",
+			// Internal fields should NOT be in JSON output
+			Core:     true,
+			Triggers: []string{"test"},
+			Body:     "# Body content",
+			Source:   "custom",
+		},
+	}
+
+	data, err := MarshalExpertsJSON(experts)
+	if err != nil {
+		t.Fatalf("MarshalExpertsJSON() error = %v", err)
+	}
+
+	jsonStr := string(data)
+
+	// Verify included fields
+	if !strings.Contains(jsonStr, `"id": "test-json"`) {
+		t.Error("JSON should contain id field")
+	}
+	if !strings.Contains(jsonStr, `"name": "Test JSON"`) {
+		t.Error("JSON should contain name field")
+	}
+	if !strings.Contains(jsonStr, `"category": "testing"`) {
+		t.Error("JSON should contain category field")
+	}
+	if !strings.Contains(jsonStr, `"red_flags"`) {
+		t.Error("JSON should contain red_flags field")
+	}
+
+	// Verify excluded fields (internal metadata)
+	if strings.Contains(jsonStr, `"core"`) {
+		t.Error("JSON should NOT contain core field")
+	}
+	if strings.Contains(jsonStr, `"triggers"`) {
+		t.Error("JSON should NOT contain triggers field")
+	}
+	if strings.Contains(jsonStr, `"body"`) && strings.Contains(jsonStr, "Body content") {
+		t.Error("JSON should NOT contain body field")
+	}
+	if strings.Contains(jsonStr, `"source"`) {
+		t.Error("JSON should NOT contain source field")
 	}
 }

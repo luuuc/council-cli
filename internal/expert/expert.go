@@ -47,26 +47,26 @@ Explain your reasoning. Suggest concrete improvements.
 // This is the canonical type used throughout the codebase for both
 // project experts and custom/installed personas.
 type Expert struct {
-	ID         string   `yaml:"id"`
-	Name       string   `yaml:"name"`
-	Focus      string   `yaml:"focus"`
-	Philosophy string   `yaml:"philosophy,omitempty"`
-	Principles []string `yaml:"principles,omitempty"`
-	RedFlags   []string `yaml:"red_flags,omitempty"`
+	ID         string   `yaml:"id" json:"id"`
+	Name       string   `yaml:"name" json:"name"`
+	Focus      string   `yaml:"focus" json:"focus"`
+	Philosophy string   `yaml:"philosophy,omitempty" json:"philosophy,omitempty"`
+	Principles []string `yaml:"principles,omitempty" json:"principles,omitempty"`
+	RedFlags   []string `yaml:"red_flags,omitempty" json:"red_flags,omitempty"`
 
 	// Suggestion metadata
-	Core     bool     `yaml:"core,omitempty"`     // Always suggest for matching intention
-	Triggers []string `yaml:"triggers,omitempty"` // Only suggest when patterns detected
+	Core     bool     `yaml:"core,omitempty" json:"-"`     // Always suggest for matching intention
+	Triggers []string `yaml:"triggers,omitempty" json:"-"` // Only suggest when patterns detected
 
 	// Personal council metadata (used by creator commands)
-	Category string `yaml:"category,omitempty"` // e.g., "custom", "rails", "go"
-	Priority string `yaml:"priority,omitempty"` // "always", "high", "normal"
+	Category string `yaml:"category,omitempty" json:"category,omitempty"` // e.g., "custom", "rails", "go"
+	Priority string `yaml:"priority,omitempty" json:"priority,omitempty"` // "always", "high", "normal"
 
 	// Body is the markdown content after frontmatter
-	Body string `yaml:"-"`
+	Body string `yaml:"-" json:"-"`
 
 	// Source indicates where this expert came from: "", "custom", or "installed:<name>"
-	Source string `yaml:"-"`
+	Source string `yaml:"-" json:"-"`
 }
 
 // ExpertSuggestions is the expected AI response format
@@ -78,32 +78,6 @@ type ExpertSuggestions struct {
 type ListResult struct {
 	Experts  []*Expert
 	Warnings []string
-}
-
-// ExpertJSON is the JSON representation of an expert
-type ExpertJSON struct {
-	ID         string   `json:"id"`
-	Name       string   `json:"name"`
-	Focus      string   `json:"focus"`
-	Philosophy string   `json:"philosophy,omitempty"`
-	Principles []string `json:"principles,omitempty"`
-	RedFlags   []string `json:"red_flags,omitempty"`
-	Category   string   `json:"category,omitempty"`
-	Priority   string   `json:"priority,omitempty"`
-}
-
-// ToJSON converts an expert to its JSON representation
-func (e *Expert) ToJSON() ExpertJSON {
-	return ExpertJSON{
-		ID:         e.ID,
-		Name:       e.Name,
-		Focus:      e.Focus,
-		Philosophy: e.Philosophy,
-		Principles: e.Principles,
-		RedFlags:   e.RedFlags,
-		Category:   e.Category,
-		Priority:   e.Priority,
-	}
 }
 
 // ApplyDefaults sets default values for optional fields.
@@ -118,11 +92,7 @@ func (e *Expert) ApplyDefaults() {
 
 // MarshalExpertsJSON marshals a list of experts to JSON
 func MarshalExpertsJSON(experts []*Expert) ([]byte, error) {
-	jsonExperts := make([]ExpertJSON, 0, len(experts))
-	for _, e := range experts {
-		jsonExperts = append(jsonExperts, e.ToJSON())
-	}
-	return json.MarshalIndent(jsonExperts, "", "  ")
+	return json.MarshalIndent(experts, "", "  ")
 }
 
 // Path returns the file path for this expert
@@ -132,31 +102,7 @@ func (e *Expert) Path() string {
 
 // Save writes the expert to disk
 func (e *Expert) Save() error {
-	// Generate body if empty
-	if e.Body == "" {
-		e.Body = e.generateBody()
-	}
-
-	// Generate frontmatter
-	fm, err := yaml.Marshal(e)
-	if err != nil {
-		return fmt.Errorf("failed to marshal expert: %w", err)
-	}
-
-	// Combine frontmatter and body
-	content := fmt.Sprintf("---\n%s---\n\n%s", string(fm), e.Body)
-
-	// Ensure directory exists
-	dir := filepath.Dir(e.Path())
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("failed to create directory: %w", err)
-	}
-
-	if err := os.WriteFile(e.Path(), []byte(content), 0644); err != nil {
-		return fmt.Errorf("failed to write expert file: %w", err)
-	}
-
-	return nil
+	return SaveToPath(e, e.Path())
 }
 
 func (e *Expert) generateBody() string {
@@ -210,7 +156,12 @@ func Parse(data []byte) (*Expert, error) {
 	return &e, nil
 }
 
-// formatYAMLError provides helpful context for YAML parsing errors
+// formatYAMLError provides helpful context for YAML parsing errors.
+// Design decision: This function is intentionally verbose (~45 lines) because
+// the enhanced error messages with line context and hints significantly improve
+// the user experience when debugging malformed expert files. The UX benefit
+// justifies the code complexity. If YAML error formatting is needed elsewhere,
+// consider extracting to internal/yamlutil/error.go.
 func formatYAMLError(content string, err error) error {
 	errStr := err.Error()
 	lines := strings.Split(content, "\n")
@@ -399,6 +350,20 @@ func SaveToPath(e *Expert, path string) error {
 
 	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
 		return fmt.Errorf("failed to write expert file: %w", err)
+	}
+
+	// Verify round-trip: ensure the saved file can be parsed back
+	loaded, err := LoadFile(path)
+	if err != nil {
+		// Clean up the bad file
+		os.Remove(path)
+		return fmt.Errorf("saved file is invalid: %w", err)
+	}
+
+	// Verify key fields match
+	if loaded.ID != e.ID || loaded.Name != e.Name {
+		os.Remove(path)
+		return fmt.Errorf("saved file has corrupted data: id or name mismatch")
 	}
 
 	return nil
