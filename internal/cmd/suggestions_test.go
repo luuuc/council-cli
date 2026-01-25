@@ -3,16 +3,16 @@ package cmd
 import "testing"
 
 func TestSuggestionsSchema(t *testing.T) {
-	// suggestionBank is loaded in init() from suggestions.yaml
+	bank := loadSuggestionBank()
 
-	if len(suggestionBank) == 0 {
+	if len(bank) == 0 {
 		t.Fatal("suggestionBank is empty - suggestions.yaml failed to load")
 	}
 
 	seenIDs := make(map[string]string) // id -> category for duplicate detection
 	totalExperts := 0
 
-	for category, experts := range suggestionBank {
+	for category, experts := range bank {
 		if len(experts) == 0 {
 			t.Errorf("category %q has no experts", category)
 			continue
@@ -70,12 +70,12 @@ func TestSuggestionsSchema(t *testing.T) {
 		}
 	}
 
-	t.Logf("Validated %d experts across %d categories", totalExperts, len(suggestionBank))
+	t.Logf("Validated %d experts across %d categories", totalExperts, len(bank))
 }
 
 func TestSuggestionsTriggers(t *testing.T) {
 	// Check that general experts have either Core=true or Triggers defined
-	generalExperts := suggestionBank["general"]
+	generalExperts := loadSuggestionBank()["general"]
 	if len(generalExperts) == 0 {
 		t.Skip("no general category found")
 	}

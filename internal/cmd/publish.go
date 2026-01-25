@@ -114,9 +114,15 @@ func filterCustomExperts(experts []*expert.Expert) []*expert.Expert {
 }
 
 // isFromCuratedLibrary checks if an expert ID exists in the suggestion bank.
-// Uses pre-built curatedIDs map for O(1) lookup.
 func isFromCuratedLibrary(id string) bool {
-	return curatedIDs[id]
+	for _, experts := range loadSuggestionBank() {
+		for _, e := range experts {
+			if e.ID == id {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // copyFile copies a file from src to dst.

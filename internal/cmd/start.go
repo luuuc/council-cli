@@ -167,7 +167,7 @@ func selectExperts(d *detect.Detection) []*expert.Expert {
 		if len(selected) >= maxStackExperts {
 			break
 		}
-		if experts, ok := suggestionBank[cat]; ok && len(experts) > 0 {
+		if experts, ok := loadSuggestionBank()[cat]; ok && len(experts) > 0 {
 			e := &experts[0] // Get first (primary) expert from category
 			if !seen[e.ID] {
 				selected = append(selected, expertFromSuggestion(e))
@@ -265,7 +265,7 @@ func mapDetectionToCategories(d *detect.Detection) []string {
 
 // findExpertByID searches the suggestion bank for an expert by ID
 func findExpertByID(id string) *expert.Expert {
-	for _, experts := range suggestionBank {
+	for _, experts := range loadSuggestionBank() {
 		for i := range experts {
 			if experts[i].ID == id {
 				return expertFromSuggestion(&experts[i])

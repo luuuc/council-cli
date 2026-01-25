@@ -98,6 +98,12 @@ func Names() []string {
 	return names
 }
 
+// ResetRegistry clears the adapter registry.
+// This is intended for testing purposes only to enable test isolation.
+func ResetRegistry() {
+	registry = make(map[string]Adapter)
+}
+
 // DirExists checks if a directory exists (used by adapters for detection).
 // This is a convenience function that wraps fs.DirExists for adapter implementations.
 func DirExists(path string) bool {

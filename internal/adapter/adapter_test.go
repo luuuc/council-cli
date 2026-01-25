@@ -618,3 +618,31 @@ func TestClaude_FormatAgent_FallbackWhenFileNotFound(t *testing.T) {
 		t.Error("FormatAgent() fallback should include focus")
 	}
 }
+
+// Test ResetRegistry clears the registry
+func TestResetRegistry(t *testing.T) {
+	// Save the current registry state
+	originalCount := len(All())
+	if originalCount == 0 {
+		t.Skip("No adapters registered to test reset")
+	}
+
+	// Reset the registry
+	ResetRegistry()
+
+	// Verify registry is empty
+	if len(All()) != 0 {
+		t.Errorf("ResetRegistry() did not clear registry, got %d adapters", len(All()))
+	}
+
+	// Re-register adapters for other tests (they're registered via init())
+	// We need to manually re-register since init() only runs once
+	Register(&Claude{})
+	Register(&OpenCode{})
+	Register(&Generic{})
+
+	// Verify adapters were re-registered
+	if len(All()) != 3 {
+		t.Errorf("Failed to re-register adapters after reset, got %d", len(All()))
+	}
+}

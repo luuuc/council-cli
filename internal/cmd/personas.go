@@ -8,10 +8,11 @@ import (
 	"os"
 	"slices"
 	"strings"
+	"sync"
 	"text/tabwriter"
 
-	"github.com/luuuc/council-cli/internal/install"
 	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council-cli/internal/install"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )
@@ -19,24 +20,20 @@ import (
 //go:embed suggestions.yaml
 var suggestionsYAML []byte
 
-// suggestionBank holds all expert suggestions loaded from YAML
-var suggestionBank map[string][]expert.Expert
+// suggestionBank holds all expert suggestions loaded from YAML (lazy loaded)
+var (
+	suggestionBank     map[string][]expert.Expert
+	suggestionBankOnce sync.Once
+)
 
-// curatedIDs is a set of all expert IDs in the curated library for O(1) lookup
-var curatedIDs map[string]bool
-
-func init() {
-	if err := yaml.Unmarshal(suggestionsYAML, &suggestionBank); err != nil {
-		panic(fmt.Sprintf("failed to parse suggestions.yaml: %v", err))
-	}
-
-	// Build lookup map for curated IDs
-	curatedIDs = make(map[string]bool)
-	for _, experts := range suggestionBank {
-		for _, e := range experts {
-			curatedIDs[e.ID] = true
+// loadSuggestionBank lazily loads the suggestion bank on first access.
+func loadSuggestionBank() map[string][]expert.Expert {
+	suggestionBankOnce.Do(func() {
+		if err := yaml.Unmarshal(suggestionsYAML, &suggestionBank); err != nil {
+			panic(fmt.Sprintf("failed to parse suggestions.yaml: %v", err))
 		}
-	}
+	})
+	return suggestionBank
 }
 
 var (
@@ -91,7 +88,7 @@ Examples:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var personas []PersonaJSON
 
-		for category, experts := range suggestionBank {
+		for category, experts := range loadSuggestionBank() {
 			for _, e := range experts {
 				personas = append(personas, PersonaJSON{
 					ID:         e.ID,
@@ -331,7 +328,7 @@ var personasUninstallCmd = &cobra.Command{
 // LookupPersona finds a curated persona by name or ID (case-insensitive).
 // Returns nil if not found.
 func LookupPersona(nameOrID string) *expert.Expert {
-	return expert.LookupPersona(expert.SuggestionBank(suggestionBank), nameOrID)
+	return expert.LookupPersona(expert.SuggestionBank(loadSuggestionBank()), nameOrID)
 }
 
 // SuggestSimilar finds the closest persona match using edit distance.
@@ -339,5 +336,5 @@ func LookupPersona(nameOrID string) *expert.Expert {
 // or if the input is too short to match reliably.
 // The second return value is the edit distance of the match.
 func SuggestSimilar(input string) (*expert.Expert, int) {
-	return expert.SuggestSimilar(expert.SuggestionBank(suggestionBank), input)
+	return expert.SuggestSimilar(expert.SuggestionBank(loadSuggestionBank()), input)
 }

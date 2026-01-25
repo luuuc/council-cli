@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -249,7 +250,7 @@ func (d *Detection) detectFrameworks(dir string) {
 				d.Patterns = append(d.Patterns, "Hotwire")
 			}
 			if _, ok := deps["@hotwired/stimulus"]; ok {
-				if !contains(d.Patterns, "Hotwire") {
+				if !slices.Contains(d.Patterns, "Hotwire") {
 					d.Patterns = append(d.Patterns, "Stimulus")
 				}
 			}
@@ -490,15 +491,6 @@ func mergeDeps(pkg map[string]interface{}) map[string]interface{} {
 		}
 	}
 	return deps
-}
-
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
 }
 
 func hasLanguage(langs []Language, name string) bool {
