@@ -6,64 +6,15 @@ You are an AI assistant helping a user install council-cli. Follow these steps.
 - **Claude Code**: Use `AskUserQuestion` to present choices as clickable options where indicated. Keep labels short (2-4 words), put details in descriptions.
 - **OpenCode**: Present choices as numbered lists. Wait for user to type a number.
 
-## First: Check Existing Setup
-
-Before doing anything, check the current state:
-
-```bash
-council version 2>/dev/null && council list 2>/dev/null
-ls -la .council/ 2>/dev/null
-```
-
-### If council is installed with experts:
-
-Tell the user which experts exist, then use **AskUserQuestion** with these options:
-
-| Label | Description |
-|-------|-------------|
-| "Add more" | Keep current experts and add new ones |
-| "Start fresh" | Remove everything and set up from scratch |
-| "Cancel" | Keep everything as is |
-
-- If **Add more**: Skip to "Add Experts"
-- If **Start fresh**: Run `council init --clean`, then continue with setup
-- If **Cancel**: Stop here
-
-### If council is installed but no experts:
-
-Skip to "Add Experts" step.
-
-### If council is not installed but .council/ directory exists:
-
-Tell the user a `.council/` directory exists from a previous installation, then use **AskUserQuestion**:
-
-| Label | Description |
-|-------|-------------|
-| "Keep it" | Install CLI and keep current experts |
-| "Start fresh" | Install CLI and set up from scratch |
-| "Cancel" | Stop here |
-
-- If **Keep it**: Install CLI, skip init, go to "Sync to Your AI Tool"
-- If **Start fresh**: Install CLI, then run `council init --clean`
-- If **Cancel**: Stop here
-
-### If council is installed but no .council/ directory:
-
-The CLI is installed but this project hasn't been initialized yet. Skip Step 1 (Install) and continue with Step 2 (Initialize).
-
-### If council is not installed and no .council/ directory:
-
-Continue with the full installation flow below.
-
----
-
 ## Tell the User What's Happening
 
 Briefly explain what you're about to do, then proceed (no confirmation needed - they asked for setup):
 
-> I'll set up council-cli: install the CLI, detect your stack, help you pick experts, and sync to your AI tool. Here we go!
+> I'll set up council-cli: install/update the CLI, detect your stack, help you pick experts, and sync to your AI tool. Here we go!
 
-## Step 1: Install the CLI
+## Step 1: Install or Update the CLI
+
+**Always run this first**, regardless of whether council is already installed. The script is idempotent: it installs if missing, updates if outdated, and does nothing if current.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/luuuc/council-cli/main/install.sh | sh
@@ -75,9 +26,49 @@ If that fails (permissions, curl not available, etc.), try:
 go install github.com/luuuc/council-cli/cmd/council@latest
 ```
 
-Note: The install script will skip download if the latest version is already installed.
+## Step 2: Check Existing Setup
 
-## Step 2: Initialize
+After ensuring the CLI is current, check for existing configuration:
+
+```bash
+council list 2>/dev/null
+```
+
+### If experts already exist:
+
+Tell the user which experts exist, then use **AskUserQuestion**:
+
+| Label | Description |
+|-------|-------------|
+| "Add more" | Keep current experts and add new ones |
+| "Start fresh" | Remove everything and set up from scratch |
+| "Cancel" | Keep everything as is |
+
+- If **Add more**: Skip to "Add Experts" (Step 5)
+- If **Start fresh**: Run `council init --clean`, then continue with setup
+- If **Cancel**: Stop here
+
+### If .council/ exists but no experts:
+
+Continue to "Detect Stack" (Step 4).
+
+### If .council/ directory exists but council list returns non-zero exit code:
+
+A `.council/` directory exists from a previous or incompatible installation. Use **AskUserQuestion**:
+
+| Label | Description |
+|-------|-------------|
+| "Start fresh" | Remove and reinitialize |
+| "Cancel" | Stop here |
+
+- If **Start fresh**: Run `council init --clean`, then continue
+- If **Cancel**: Stop here
+
+### If no .council/ directory:
+
+Continue to "Initialize" (Step 3).
+
+## Step 3: Initialize
 
 ```bash
 council init
@@ -113,17 +104,7 @@ council sync
 
 This makes `/council`, `/council-add`, and `/council-detect` available immediately, so you can use them during this setup session without needing to restart.
 
-**If it fails with ".council/ already exists"**: Use **AskUserQuestion**:
-
-| Label | Description |
-|-------|-------------|
-| "Start fresh" | Remove existing council and start over |
-| "Keep it" | Skip init and add to existing council |
-
-- If **Start fresh**: Run `council init --clean`
-- If **Keep it**: Continue to next step
-
-## Step 3: Detect Stack
+## Step 4: Detect Stack
 
 Run detection to understand the project:
 
@@ -151,9 +132,9 @@ Use this to weight expert suggestions:
 - **Ops/Process**: Include ops experts (Gene Kim, Charity Majors, Kelsey Hightower)
 - **Business**: Include business experts (Arvid Kahl, Rob Walling, Sahil Lavingia)
 
-Continue to Step 4 with this context in mind.
+Continue to Step 5 with this context in mind.
 
-## Step 4: Add Experts
+## Step 5: Add Experts
 
 First, check available curated personas that match the detected stack:
 
@@ -222,7 +203,7 @@ Use `/council-add` to search and discover experts:
 
 The skill searches curated personas first, presents 4 options, and generates profiles for non-curated selections.
 
-## Step 5: Sync to Your AI Tool
+## Step 6: Sync to Your AI Tool
 
 ```bash
 council sync
