@@ -34,8 +34,7 @@ func runAddInterview() error {
 	emptyCount := 0
 	for {
 		line, err := reader.ReadString('\n')
-		line = strings.TrimSuffix(line, "\n")
-		line = strings.TrimSuffix(line, "\r") // Handle Windows line endings
+		line = strings.TrimRight(line, "\r\n")
 		if line == "" {
 			emptyCount++
 			if emptyCount >= 1 || err != nil {

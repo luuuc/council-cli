@@ -179,8 +179,3 @@ func TestWrapText(t *testing.T) {
 	}
 }
 
-func TestFormatExpertForEdit(t *testing.T) {
-	// Import expert package types would be needed, but we can test via integration
-	// For now, verify the function exists and basic structure
-	// Full integration tests would require setting up expert.Expert
-}
