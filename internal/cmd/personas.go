@@ -22,9 +22,20 @@ var suggestionsYAML []byte
 // suggestionBank holds all expert suggestions loaded from YAML
 var suggestionBank map[string][]expert.Expert
 
+// curatedIDs is a set of all expert IDs in the curated library for O(1) lookup
+var curatedIDs map[string]bool
+
 func init() {
 	if err := yaml.Unmarshal(suggestionsYAML, &suggestionBank); err != nil {
 		panic(fmt.Sprintf("failed to parse suggestions.yaml: %v", err))
+	}
+
+	// Build lookup map for curated IDs
+	curatedIDs = make(map[string]bool)
+	for _, experts := range suggestionBank {
+		for _, e := range experts {
+			curatedIDs[e.ID] = true
+		}
 	}
 }
 

@@ -29,10 +29,15 @@ Works with any public URL hosting a valid persona markdown file:
 The file must be valid persona markdown with YAML frontmatter containing
 at least: id, name, and focus fields.
 
+GitHub Shorthand:
+  user/repo/path expands to raw.githubusercontent.com URL.
+  Note: Shorthand assumes the 'main' branch. For repos using 'master' or
+  other branches, use the full raw URL instead.
+
 Examples:
   council install https://raw.githubusercontent.com/user/repo/main/expert.md
   council install https://gist.githubusercontent.com/user/abc123/raw/expert.md
-  council install user/repo/expert    # GitHub shorthand`,
+  council install user/repo/expert    # GitHub shorthand (assumes main branch)`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if !config.Exists() {
@@ -42,6 +47,10 @@ Examples:
 		return runInstall(args[0])
 	},
 }
+
+// maxPersonaSize is the maximum size of a persona file (1MB).
+// This prevents memory exhaustion from malicious or misconfigured URLs.
+const maxPersonaSize = 1 << 20 // 1MB
 
 func runInstall(input string) error {
 	url := expandGitHubShorthand(input)
@@ -58,13 +67,17 @@ func runInstall(input string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to fetch URL: HTTP %d", resp.StatusCode)
+		return fmt.Errorf("failed to fetch %s: HTTP %d", url, resp.StatusCode)
 	}
 
-	// Read body
-	body, err := io.ReadAll(resp.Body)
+	// Read body with size limit to prevent memory exhaustion
+	limitedReader := io.LimitReader(resp.Body, maxPersonaSize+1)
+	body, err := io.ReadAll(limitedReader)
 	if err != nil {
 		return fmt.Errorf("failed to read response: %w", err)
+	}
+	if len(body) > maxPersonaSize {
+		return fmt.Errorf("persona file too large (max %d bytes)", maxPersonaSize)
 	}
 
 	// Parse as expert (validates frontmatter)
