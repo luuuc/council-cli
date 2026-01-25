@@ -77,6 +77,8 @@ council sync     # Syncs to your AI tool
 |---------|--------------|
 | `council start` | Zero-config setup (init + detect + add experts + sync) |
 | `council add "Name"` | Add expert from library or create custom |
+| `council add --interview` | AI-assisted persona creation |
+| `council add --from ID` | Fork existing persona as starting point |
 | `council list` | See your council members |
 | `council remove <id>` | Remove an expert |
 | `council sync` | Sync to your AI tool |

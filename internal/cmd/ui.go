@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -23,4 +24,30 @@ func Confirm(prompt string) bool {
 	response, _ := reader.ReadString('\n')
 	response = strings.TrimSpace(strings.ToLower(response))
 	return response == "" || response == "y" || response == "yes"
+}
+
+// openInEditor opens a file in the user's configured editor.
+func openInEditor(path string) error {
+	editor := os.Getenv("EDITOR")
+	if editor == "" {
+		editor = os.Getenv("VISUAL")
+	}
+	if editor == "" {
+		if _, err := exec.LookPath("vim"); err == nil {
+			editor = "vim"
+		} else if _, err := exec.LookPath("nano"); err == nil {
+			editor = "nano"
+		} else if _, err := exec.LookPath("notepad"); err == nil {
+			editor = "notepad"
+		} else {
+			return fmt.Errorf("no editor found: set $EDITOR environment variable")
+		}
+	}
+
+	cmd := exec.Command(editor, path)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
 }

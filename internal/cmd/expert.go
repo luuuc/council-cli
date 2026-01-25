@@ -14,6 +14,8 @@ import (
 
 var listJSON bool
 var addYes bool
+var addInterview bool
+var addFrom string
 
 func init() {
 	rootCmd.AddCommand(listCmd)
@@ -23,6 +25,8 @@ func init() {
 
 	listCmd.Flags().BoolVar(&listJSON, "json", false, "Output in JSON format")
 	addCmd.Flags().BoolVarP(&addYes, "yes", "y", false, "Skip confirmation prompts")
+	addCmd.Flags().BoolVar(&addInterview, "interview", false, "AI-assisted persona creation")
+	addCmd.Flags().StringVar(&addFrom, "from", "", "Fork from existing persona ID")
 }
 
 var listCmd = &cobra.Command{
@@ -116,21 +120,43 @@ var showCmd = &cobra.Command{
 }
 
 var addCmd = &cobra.Command{
-	Use:   "add <name>",
-	Short: "Add expert to council (from library or create custom)",
+	Use:   "add [name]",
+	Short: "Add expert to council (from library, custom, --interview, or --from)",
 	Long: `Adds an expert to your council.
 
 If the name matches a curated expert from the library, adds it directly.
 If no match is found, guides you through creating a custom expert.
 
-Examples:
-  council add "Kent Beck"     # Found in library - adds directly
-  council add "My CTO"        # Not found - creates custom persona
-  council add "rob pike"      # Case-insensitive matching`,
-	Args: cobra.ExactArgs(1),
+Modes:
+  council add "Kent Beck"       # Found in library - adds directly
+  council add "My CTO"          # Not found - creates custom persona
+  council add --interview       # AI-assisted persona creation
+  council add --from kent-beck  # Fork existing persona as starting point`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if !config.Exists() {
 			return fmt.Errorf("council not initialized: run 'council start' first")
+		}
+
+		// Interview mode - AI-assisted creation
+		if addInterview {
+			if !isInteractive() {
+				return fmt.Errorf("--interview requires an interactive terminal")
+			}
+			return runAddInterview()
+		}
+
+		// Fork mode - copy existing persona
+		if addFrom != "" {
+			if !isInteractive() {
+				return fmt.Errorf("--from requires an interactive terminal")
+			}
+			return runAddFork(addFrom)
+		}
+
+		// Standard add mode - requires a name argument
+		if len(args) == 0 {
+			return fmt.Errorf("requires a persona name argument\n\nUsage:\n  council add \"Name\"         Add from library or create custom\n  council add --interview    AI-assisted creation\n  council add --from ID      Fork existing persona")
 		}
 
 		name := args[0]
@@ -271,4 +297,79 @@ func runAddCreationFlow(name string) error {
 // trimNewline removes trailing newline characters from a string
 func trimNewline(s string) string {
 	return strings.TrimRight(s, "\r\n")
+}
+
+// runAddFork creates a new expert based on an existing one.
+func runAddFork(fromID string) error {
+	// Try to load from project council first
+	var source *expert.Expert
+	var err error
+
+	source, err = expert.Load(fromID)
+	if err != nil {
+		// Try to find in curated library
+		source = LookupPersona(fromID)
+		if source == nil {
+			return fmt.Errorf("expert '%s' not found in project council or curated library\n\nBrowse available personas with: council personas", fromID)
+		}
+	}
+
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Printf("Fork '%s' as starting point\n", source.Name)
+	fmt.Println()
+
+	// Prompt for new name
+	fmt.Printf("New name: [%s (Custom)] ", source.Name)
+	nameInput, _ := reader.ReadString('\n')
+	nameInput = trimNewline(nameInput)
+	if nameInput == "" {
+		nameInput = source.Name + " (Custom)"
+	}
+
+	// Generate and prompt for ID
+	suggestedID := expert.ToID(nameInput)
+	fmt.Printf("New ID: [%s] ", suggestedID)
+	idInput, _ := reader.ReadString('\n')
+	idInput = trimNewline(idInput)
+	if idInput == "" {
+		idInput = suggestedID
+	}
+
+	if expert.Exists(idInput) {
+		return fmt.Errorf("expert '%s' already exists", idInput)
+	}
+
+	// Create new expert based on source
+	e := &expert.Expert{
+		ID:         idInput,
+		Name:       nameInput,
+		Focus:      source.Focus,
+		Category:   "custom",
+		Priority:   source.Priority,
+		Philosophy: source.Philosophy,
+		Principles: source.Principles,
+		RedFlags:   source.RedFlags,
+		Triggers:   source.Triggers,
+	}
+
+	// Save to project council
+	if err := e.Save(); err != nil {
+		return err
+	}
+
+	fmt.Println()
+	fmt.Printf("Created %s (forked from %s)\n", e.Name, source.Name)
+	fmt.Printf("File: %s\n", e.Path())
+
+	// Offer to edit
+	fmt.Println()
+	if Confirm("Open in editor to customize?") {
+		return openInEditor(e.Path())
+	}
+
+	fmt.Println()
+	fmt.Println("Run 'council sync' to update AI tool configurations.")
+
+	return nil
 }

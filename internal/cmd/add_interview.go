@@ -7,15 +7,16 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/luuuc/council-cli/internal/config"
-	"github.com/luuuc/council-cli/internal/creator"
 	"github.com/luuuc/council-cli/internal/expert"
 )
 
-// runInterviewMode uses AI to generate an expert from a description.
-func runInterviewMode() error {
+// runAddInterview uses AI to generate an expert from a description
+// and saves it to the project council (.council/experts/).
+func runAddInterview() error {
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Println("Interview Mode")
@@ -49,13 +50,7 @@ func runInterviewMode() error {
 		return fmt.Errorf("no description provided")
 	}
 
-	description := ""
-	for i, l := range lines {
-		if i > 0 {
-			description += "\n"
-		}
-		description += l
-	}
+	description := strings.Join(lines, "\n")
 
 	fmt.Println()
 	fmt.Println("Generating expert from your description...")
@@ -82,24 +77,27 @@ func runInterviewMode() error {
 			// Accept - prompt for ID and save
 			fmt.Println()
 			suggestedID := expert.ToID(exp.Name)
-			id := creator.PromptDefault(reader, "ID:", suggestedID)
-
-			if creator.Exists(id) {
-				return fmt.Errorf("expert '%s' already exists", id)
+			fmt.Printf("ID: [%s] ", suggestedID)
+			idInput, _ := reader.ReadString('\n')
+			idInput = strings.TrimSpace(idInput)
+			if idInput == "" {
+				idInput = suggestedID
 			}
 
-			exp.ID = id
-			if err := creator.SaveAndCommit(exp, true); err != nil {
+			if expert.Exists(idInput) {
+				return fmt.Errorf("expert '%s' already exists", idInput)
+			}
+
+			exp.ID = idInput
+			if err := exp.Save(); err != nil {
 				return err
 			}
 
-			path, err := creator.ExpertPath(exp.ID)
-			if err != nil {
-				return fmt.Errorf("failed to get expert path: %w", err)
-			}
 			fmt.Println()
 			fmt.Printf("Created %s\n", exp.Name)
-			fmt.Printf("File: %s\n", path)
+			fmt.Printf("File: %s\n", exp.Path())
+			fmt.Println()
+			fmt.Println("Run 'council sync' to update AI tool configurations.")
 			return nil
 
 		case "e", "E":
@@ -128,7 +126,7 @@ func runInterviewMode() error {
 				return fmt.Errorf("failed to read temp file: %w", err)
 			}
 
-			edited, err := creator.Parse(data)
+			edited, err := expert.Parse(data)
 			if err != nil {
 				fmt.Printf("Error parsing edited file: %v\n", err)
 				fmt.Println("Please fix the formatting and try again.")
@@ -161,7 +159,7 @@ func generateExpertFromDescription(description string) (*expert.Expert, error) {
 	// Load config for AI command
 	cfg, err := config.Load()
 	if err != nil {
-		return nil, fmt.Errorf("failed to load config: %w\nHint: run 'council init' first", err)
+		return nil, fmt.Errorf("failed to load config: %w\nHint: run 'council start' first", err)
 	}
 
 	// Detect or use configured AI command
@@ -239,7 +237,7 @@ red_flags:
 		response = response[idx:]
 	}
 
-	exp, err := creator.Parse([]byte(response))
+	exp, err := expert.Parse([]byte(response))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse AI response: %w\n\nRaw response:\n%s", err, stdout.String())
 	}
@@ -262,35 +260,35 @@ func findYAMLStart(s string) int {
 
 // displayExpertPreview shows a formatted preview of an expert.
 func displayExpertPreview(e *expert.Expert) {
-	fmt.Println("┌─────────────────────────────────────────────────────┐")
-	fmt.Printf("│ Name: %-45s │\n", truncate(e.Name, 45))
-	fmt.Printf("│ Focus: %-44s │\n", truncate(e.Focus, 44))
-	fmt.Println("│                                                     │")
+	fmt.Println("+---------------------------------------------------------+")
+	fmt.Printf("| Name: %-49s |\n", truncate(e.Name, 49))
+	fmt.Printf("| Focus: %-48s |\n", truncate(e.Focus, 48))
+	fmt.Println("|                                                         |")
 
 	if e.Philosophy != "" {
-		fmt.Println("│ Philosophy:                                         │")
-		for _, line := range wrapText(e.Philosophy, 49) {
-			fmt.Printf("│   %-48s │\n", line)
+		fmt.Println("| Philosophy:                                             |")
+		for _, line := range wrapText(e.Philosophy, 53) {
+			fmt.Printf("|   %-54s |\n", line)
 		}
 	}
 
 	if len(e.Principles) > 0 {
-		fmt.Println("│                                                     │")
-		fmt.Println("│ Principles:                                         │")
+		fmt.Println("|                                                         |")
+		fmt.Println("| Principles:                                             |")
 		for _, pr := range e.Principles {
-			fmt.Printf("│   • %-46s │\n", truncate(pr, 46))
+			fmt.Printf("|   - %-52s |\n", truncate(pr, 52))
 		}
 	}
 
 	if len(e.RedFlags) > 0 {
-		fmt.Println("│                                                     │")
-		fmt.Println("│ Red Flags:                                          │")
+		fmt.Println("|                                                         |")
+		fmt.Println("| Red Flags:                                              |")
 		for _, rf := range e.RedFlags {
-			fmt.Printf("│   • %-46s │\n", truncate(rf, 46))
+			fmt.Printf("|   - %-52s |\n", truncate(rf, 52))
 		}
 	}
 
-	fmt.Println("└─────────────────────────────────────────────────────┘")
+	fmt.Println("+---------------------------------------------------------+")
 }
 
 // formatExpertForEdit formats an expert for editing in a text editor.
@@ -301,8 +299,12 @@ func formatExpertForEdit(e *expert.Expert) string {
 	buf.WriteString(fmt.Sprintf("id: %s\n", e.ID))
 	buf.WriteString(fmt.Sprintf("name: %s\n", e.Name))
 	buf.WriteString(fmt.Sprintf("focus: %s\n", e.Focus))
-	buf.WriteString(fmt.Sprintf("category: %s\n", e.Category))
-	buf.WriteString(fmt.Sprintf("priority: %s\n", e.Priority))
+	if e.Category != "" {
+		buf.WriteString(fmt.Sprintf("category: %s\n", e.Category))
+	}
+	if e.Priority != "" {
+		buf.WriteString(fmt.Sprintf("priority: %s\n", e.Priority))
+	}
 
 	if len(e.Triggers) > 0 {
 		buf.WriteString("triggers:\n")
@@ -335,28 +337,6 @@ func formatExpertForEdit(e *expert.Expert) string {
 	buf.WriteString("---\n")
 
 	return buf.String()
-}
-
-// findBuiltinExpert finds an expert in the built-in suggestion bank.
-func findBuiltinExpert(id string) (*expert.Expert, error) {
-	// Search in suggestionBank
-	for _, experts := range suggestionBank {
-		for _, e := range experts {
-			if e.ID == id {
-				return &expert.Expert{
-					ID:         e.ID,
-					Name:       e.Name,
-					Focus:      e.Focus,
-					Philosophy: e.Philosophy,
-					Principles: e.Principles,
-					RedFlags:   e.RedFlags,
-					Triggers:   e.Triggers,
-					Priority:   "normal",
-				}, nil
-			}
-		}
-	}
-	return nil, fmt.Errorf("not found")
 }
 
 // truncate shortens a string to maxLen, adding "..." if needed.
