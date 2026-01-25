@@ -1,5 +1,19 @@
 # Contributing to council-cli
 
+## Quick Start
+
+```bash
+git clone https://github.com/luuuc/council-cli.git
+cd council-cli
+make ci    # Build + test + lint (run before every PR)
+```
+
+## PR Checklist
+
+- [ ] `make ci` passes
+- [ ] Tests added for new functionality
+- [ ] Changes are focused and atomic
+
 ## Development Setup
 
 ### Prerequisites

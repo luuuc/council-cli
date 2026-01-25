@@ -7,28 +7,23 @@ import (
 	"testing"
 )
 
-func TestScan(t *testing.T) {
-	// Create a temp directory with test files
+func TestScan_DetectsRailsProjectFromGemfile(t *testing.T) {
 	dir := t.TempDir()
 
-	// Create some Ruby files
 	_ = os.WriteFile(filepath.Join(dir, "app.rb"), []byte("class App\nend"), 0644)
 	_ = os.WriteFile(filepath.Join(dir, "test.rb"), []byte("class Test\nend"), 0644)
 
-	// Create a Gemfile
 	gemfile := `source 'https://rubygems.org'
 gem "rails", "~> 8.0"
 gem "minitest"
 `
 	_ = os.WriteFile(filepath.Join(dir, "Gemfile"), []byte(gemfile), 0644)
 
-	// Run detection
 	d, err := Scan(dir)
 	if err != nil {
 		t.Fatalf("Scan failed: %v", err)
 	}
 
-	// Check languages
 	if len(d.Languages) == 0 {
 		t.Error("Expected at least one language")
 	}
@@ -44,7 +39,6 @@ gem "minitest"
 		t.Error("Expected Ruby to be detected")
 	}
 
-	// Check frameworks
 	foundRails := false
 	for _, fw := range d.Frameworks {
 		if fw.Name == "Rails" {
@@ -59,7 +53,6 @@ gem "minitest"
 		t.Error("Expected Rails to be detected")
 	}
 
-	// Check testing
 	foundMinitest := false
 	for _, test := range d.Testing {
 		if test == "Minitest" {
@@ -72,7 +65,7 @@ gem "minitest"
 	}
 }
 
-func TestScanEmpty(t *testing.T) {
+func TestScan_ReturnsEmptyForEmptyDirectory(t *testing.T) {
 	dir := t.TempDir()
 
 	d, err := Scan(dir)
@@ -85,7 +78,7 @@ func TestScanEmpty(t *testing.T) {
 	}
 }
 
-func TestSummary(t *testing.T) {
+func TestSummary_CombinesLanguagesFrameworksTesting(t *testing.T) {
 	d := &Detection{
 		Languages: []Language{
 			{Name: "Ruby", Percentage: 90},

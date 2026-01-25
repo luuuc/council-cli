@@ -140,7 +140,6 @@ func resolveAdapters(cfg *config.Config) ([]adapter.Adapter, error) {
 	}
 }
 
-// syncToAdapter syncs experts to a specific adapter
 func syncToAdapter(a adapter.Adapter, experts []*expert.Expert, opts Options) error {
 	paths := a.Paths()
 	templates := a.Templates()
@@ -205,7 +204,6 @@ func syncToAdapter(a adapter.Adapter, experts []*expert.Expert, opts Options) er
 	return nil
 }
 
-// generateCouncilCommand creates the /council command for an adapter
 func generateCouncilCommand(a adapter.Adapter, experts []*expert.Expert) string {
 	var buf bytes.Buffer
 	if err := councilCommandTemplate.Execute(&buf, experts); err != nil {
@@ -218,7 +216,6 @@ func generateCouncilCommand(a adapter.Adapter, experts []*expert.Expert) string 
 	return a.FormatCommand("council", "Convene the council to review code", body)
 }
 
-// commandDescription returns a description for a command name
 func commandDescription(name string) string {
 	descriptions := map[string]string{
 		"council-add":    "Add expert to council with AI-generated content",
@@ -230,7 +227,6 @@ func commandDescription(name string) string {
 	return name
 }
 
-// checkDeprecatedPaths warns about deprecated paths and offers cleanup
 func checkDeprecatedPaths(a adapter.Adapter, opts Options) {
 	paths := a.Paths()
 	for _, deprecated := range paths.Deprecated {
@@ -308,7 +304,6 @@ func removeFile(path string, dryRun bool) error {
 	return nil
 }
 
-// cleanStaleAgents removes agent files that no longer have corresponding experts
 func cleanStaleAgents(agentsDir string, experts []*expert.Expert, commandFiles map[string]string, dryRun bool) error {
 	entries, err := os.ReadDir(agentsDir)
 	if err != nil {
