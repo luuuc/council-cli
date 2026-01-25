@@ -174,7 +174,7 @@ Modes:
 			}
 			fmt.Printf("Added %s (%s)\n", persona.Name, persona.ID)
 			fmt.Printf("File: %s\n", persona.Path())
-			runAutoSync()
+			runAutoSync(addNoSync, nil)
 			return nil
 		}
 
@@ -195,7 +195,7 @@ Modes:
 				}
 				fmt.Printf("Added %s (%s)\n", suggestion.Name, suggestion.ID)
 				fmt.Printf("File: %s\n", suggestion.Path())
-				runAutoSync()
+				runAutoSync(addNoSync, nil)
 				return nil
 			}
 		}
@@ -289,7 +289,7 @@ func runAddCreationFlow(name string) error {
 	fmt.Println()
 	fmt.Printf("Created %s (%s)\n", e.Name, e.ID)
 	fmt.Printf("File: %s\n", e.Path())
-	runAutoSync()
+	runAutoSync(addNoSync, nil)
 
 	return nil
 }
@@ -299,16 +299,21 @@ func trimNewline(s string) string {
 	return strings.TrimRight(s, "\r\n")
 }
 
-// runAutoSync runs sync after adding an expert (unless --no-sync was specified)
-func runAutoSync() {
-	if addNoSync {
+// runAutoSync runs sync after adding an expert.
+// Pass skipSync=true to skip (for batch operations).
+// Pass cfg=nil to auto-load config, or pass existing config to avoid redundant load.
+func runAutoSync(skipSync bool, cfg *config.Config) {
+	if skipSync {
 		return
 	}
 
-	cfg, err := config.Load()
-	if err != nil {
-		fmt.Printf("Warning: could not load config for sync: %v\n", err)
-		return
+	var err error
+	if cfg == nil {
+		cfg, err = config.Load()
+		if err != nil {
+			fmt.Printf("Warning: could not load config for sync: %v\n", err)
+			return
+		}
 	}
 
 	fmt.Println()
@@ -389,6 +394,6 @@ func runAddFork(fromID string) error {
 		}
 	}
 
-	runAutoSync()
+	runAutoSync(addNoSync, nil)
 	return nil
 }

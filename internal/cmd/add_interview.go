@@ -106,7 +106,7 @@ func runAddInterview() error {
 			fmt.Println()
 			fmt.Printf("Created %s\n", exp.Name)
 			fmt.Printf("File: %s\n", exp.Path())
-			runAutoSync()
+			runAutoSync(addNoSync, nil)
 			return nil
 
 		case "e":

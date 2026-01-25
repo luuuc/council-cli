@@ -109,7 +109,7 @@ func runInstall(input string) error {
 
 	fmt.Printf("Installed: %s\n", e.Name)
 	fmt.Printf("  Focus: %s\n", e.Focus)
-	runAutoSync()
+	runAutoSync(false, nil)
 
 	return nil
 }
