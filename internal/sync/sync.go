@@ -50,7 +50,7 @@ func SyncAll(cfg *config.Config, opts Options) error {
 	}
 
 	if len(allExperts) == 0 {
-		return fmt.Errorf("no experts to sync - add some with 'council add' or 'council setup --apply'")
+		return fmt.Errorf("no experts to sync - add some with 'council add' first")
 	}
 
 	// Determine which adapter(s) to sync to
@@ -221,7 +221,6 @@ func generateCouncilCommand(a adapter.Adapter, experts []*expert.Expert) string 
 func commandDescription(name string) string {
 	descriptions := map[string]string{
 		"council-add":    "Add expert to council with AI-generated content",
-		"council-detect": "Detect stack and suggest experts",
 		"council-remove": "Remove expert from council",
 	}
 	if desc, ok := descriptions[name]; ok {
@@ -377,7 +376,7 @@ func SyncTarget(targetName string, cfg *config.Config, opts Options) error {
 	}
 
 	if len(allExperts) == 0 {
-		return fmt.Errorf("no experts to sync - add some with 'council add' or 'council setup --apply'")
+		return fmt.Errorf("no experts to sync - add some with 'council add' first")
 	}
 
 	fmt.Printf("Syncing to %s...\n", a.DisplayName())

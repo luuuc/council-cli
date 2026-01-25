@@ -15,9 +15,6 @@ var claudeInstallTemplate string
 //go:embed templates/claude/council-add.md
 var claudeCouncilAddTemplate string
 
-//go:embed templates/claude/council-detect.md
-var claudeCouncilDetectTemplate string
-
 //go:embed templates/claude/council-remove.md
 var claudeCouncilRemoveTemplate string
 
@@ -53,7 +50,6 @@ func (c *Claude) Templates() Templates {
 		Install: claudeInstallTemplate,
 		Commands: map[string]string{
 			"council-add":    claudeCouncilAddTemplate,
-			"council-detect": claudeCouncilDetectTemplate,
 			"council-remove": claudeCouncilRemoveTemplate,
 		},
 	}

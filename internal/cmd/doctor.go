@@ -150,7 +150,7 @@ func collectDoctorResults() *DoctorResult {
 			result.Checks = append(result.Checks, CheckResult{
 				Name:    "experts",
 				Status:  "error",
-				Message: "Run 'council setup --apply' or 'council add <name>'",
+				Message: "Run 'council add <name>' to add experts",
 			})
 			result.Healthy = false
 		}

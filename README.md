@@ -1,98 +1,105 @@
-# council-cli
+# The Council Creator
 
-AI-tailored expert council setup for coding assistants.
+**Better feedback. Broader perspective. Voices that push back.**
+
+AI tools are eager to please. They validate your ideas, agree with your approach, and move fast. That's useful—but you lose something. Your own judgment fades within the AI's rapid flow. No one asks the hard questions.
+
+A council fixes this. You create a group of expert voices—real people, fictional characters, your team members, anyone—who review your work from their unique perspectives. Rob Pike asks if it's clear. Kent Beck asks where the tests are. Jason Fried asks if you really need that feature.
+
+The AI stops being one agreeable voice and becomes many distinct, challenging voices.
 
 ## Get Started
 
-**In Claude Code or OpenCode, just say:**
+**Tell your AI assistant:**
 
 > Grab https://raw.githubusercontent.com/luuuc/council-cli/main/AGENT-INSTALL.md and get me set up
 
-That's it. Your AI handles the rest.
+That's it. Works with Claude Code, OpenCode, or any AI that can fetch URLs.
 
-## What is a Council?
+After setup, use `/council <topic>` to convene your experts.
 
-The council pattern establishes **expert personas** that represent excellence in specific domains. Instead of generic AI review, you get specific expertise in the domains that matter for your project.
+## Create Your Council
+
+Your council is yours. Add whoever helps you do better work:
+
+- **Curated experts**: Kent Beck, Sandi Metz, Dieter Rams, DHH, and 100+ others
+- **Your team**: Add your CTO, your tech lead, your mentor
+- **Fictional characters**: Donald Duck for your cartoon project? Valid.
+- **Custom voices**: Create personas with specific philosophies and red flags
+
+```bash
+council add "Kent Beck"              # From curated library
+council add "My Tech Lead"           # Create custom persona
+/council-add a security expert       # AI-assisted discovery
+```
+
+## How It Works
 
 ```
-Your Project           council setup              AI Config Files
-┌────────────┐         ┌──────────┐              ┌────────────┐
-│ Rails 8    │         │          │              │ .claude/   │
-│ Hotwire    │────────▶│ suggests │─────────────▶│ .opencode/ │
-│ Minitest   │         │ experts  │              │ AGENTS.md  │
-└────────────┘         └──────────┘              └────────────┘
+Your Council                         Your AI Tool
+┌─────────────────┐                  ┌─────────────────┐
+│ Rob Pike        │                  │ /council        │
+│ Kent Beck       │───── sync ──────▶│ /council-add    │
+│ Your CTO        │                  │ /council-remove │
+│ Custom Expert   │                  │                 │
+└─────────────────┘                  └─────────────────┘
 ```
 
-After setup, use `/council <topic>` to convene your experts for code review.
+Councils live in your project (`.council/experts/`), sync to your AI tool's native format, and become slash commands you invoke anytime.
 
 ## Manual Installation
 
-For contributors or power users who prefer manual setup:
-
 ```bash
-# Direct download (macOS/Linux)
+# Direct download
 curl -fsSL https://raw.githubusercontent.com/luuuc/council-cli/main/install.sh | sh
 
-# Go
+# Or via Go
 go install github.com/luuuc/council-cli/cmd/council@latest
-
-# From source (see CONTRIBUTING.md)
-git clone https://github.com/luuuc/council-cli.git && cd council-cli && make install
 ```
 
-Then initialize and set up your council:
+Then:
 
 ```bash
-council init           # Auto-detects your AI tool
-council setup -i       # Interactive mode
-council sync
+council start    # Zero-config setup (creates council, detects stack, adds experts)
 ```
 
-The `init` command detects whether you're using Claude Code, OpenCode, or another tool and configures automatically.
+Or step by step:
+
+```bash
+council init     # Creates .council/ directory
+council add "Kent Beck"   # Add experts one by one
+council sync     # Syncs to your AI tool
+```
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `council init` | Initialize `.council/` directory |
-| `council setup -i` | Interactive expert selection |
-| `council setup --apply` | AI-assisted expert suggestions |
-| `council detect` | Detect project stack |
-| `council list` | List your experts |
-| `council add "Name"` | Add a curated expert |
+| Command | What it does |
+|---------|--------------|
+| `council start` | Zero-config setup (init + detect + add experts + sync) |
+| `council add "Name"` | Add expert from library or create custom |
+| `council list` | See your council members |
 | `council remove <id>` | Remove an expert |
-| `council sync` | Sync to AI tool configs |
+| `council sync` | Sync to your AI tool |
+| `council personas` | Browse the curated library |
 | `council export` | Export as portable markdown |
-| `council doctor` | Validate configuration |
 
-## Configuration
+## Supported AI Tools
 
-```yaml
-# .council/config.yaml
-version: 1
-tool: claude           # Primary tool (auto-detected)
+| Tool | Integration |
+|------|-------------|
+| Claude Code | Slash commands + agents |
+| OpenCode | Agents |
+| Others | `council export` for portable markdown |
 
-ai:
-  command: "claude"    # CLI for setup --apply
-  timeout: 120
+## Philosophy
 
-targets:               # Optional: override to sync to multiple tools
-  - claude
-  - opencode
-```
-
-The `tool` field determines which adapter is used for formatting. Each tool gets optimized UX:
-- **Claude Code**: Uses AskUserQuestion for interactive choices
-- **OpenCode**: Uses text-based option selection
-- **Generic**: Creates AGENTS.md in project root
-
-## Other AI Tools
-
-For other AI tools, use `council export | pbcopy` and paste into your tool's custom instructions.
+- **Your council, your voices.** We provide a curated library; you decide who sits on your council.
+- **Outcome over mechanism.** The tool should disappear. You just say `/council` and get feedback.
+- **Openness over prescription.** Code review, writing feedback, business decisions—councils work for any domain.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup.
 
 ## License
 

@@ -40,7 +40,7 @@ Examples:
 		}
 
 		if len(experts) == 0 {
-			return fmt.Errorf("no experts to export - add some with 'council add' or 'council setup --apply'")
+			return fmt.Errorf("no experts to export - add some with 'council add' first")
 		}
 
 		fmt.Print(export.FormatMarkdown(experts))

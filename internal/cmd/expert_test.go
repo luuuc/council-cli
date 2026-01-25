@@ -97,13 +97,19 @@ func TestAddCmd_DuplicateExpert(t *testing.T) {
 
 func TestAddCmd_NotFound(t *testing.T) {
 	testInTempDir(t, func(t *testing.T, dir string) {
+		// With new behavior, unknown personas trigger creation flow
+		// In interactive mode without input, it will fail on "focus is required"
+		// This tests that the creation flow is triggered
 		err := addCmd.RunE(addCmd, []string{"Unknown Person XYZ"})
 		if err == nil {
-			t.Fatal("expected error for unknown persona, got nil")
+			t.Fatal("expected error for unknown persona without focus input, got nil")
 		}
 
-		if !strings.Contains(err.Error(), "not found") {
-			t.Errorf("error message should contain 'not found', got: %v", err)
+		errMsg := err.Error()
+		// Either we get the creation flow asking for focus (interactive)
+		// or we get "not found" (non-interactive - stdin is piped/closed)
+		if !strings.Contains(errMsg, "focus is required") && !strings.Contains(errMsg, "not found") {
+			t.Errorf("error message should contain 'focus is required' or 'not found', got: %v", err)
 		}
 	})
 }

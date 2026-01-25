@@ -14,9 +14,6 @@ var opencodeInstallTemplate string
 //go:embed templates/opencode/council-add.md
 var opencodeCouncilAddTemplate string
 
-//go:embed templates/opencode/council-detect.md
-var opencodeCouncilDetectTemplate string
-
 //go:embed templates/opencode/council-remove.md
 var opencodeCouncilRemoveTemplate string
 
@@ -52,7 +49,6 @@ func (o *OpenCode) Templates() Templates {
 		Install: opencodeInstallTemplate,
 		Commands: map[string]string{
 			"council-add":    opencodeCouncilAddTemplate,
-			"council-detect": opencodeCouncilDetectTemplate,
 			"council-remove": opencodeCouncilRemoveTemplate,
 		},
 	}

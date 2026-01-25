@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -56,8 +57,7 @@ var listCmd = &cobra.Command{
 			fmt.Println("No experts in the council yet.")
 			fmt.Println()
 			fmt.Println("Add experts with:")
-			fmt.Println("  council setup --apply   (AI-assisted)")
-			fmt.Println("  council add \"Name\"      (curated personas)")
+			fmt.Println("  council add \"Name\"    Add from curated library or create custom")
 			return nil
 		}
 
@@ -116,17 +116,20 @@ var showCmd = &cobra.Command{
 
 var addCmd = &cobra.Command{
 	Use:   "add <name>",
-	Short: "Add a curated expert to the council",
-	Long: `Adds a curated expert from the built-in persona library to your council.
+	Short: "Add expert to council (from library or create custom)",
+	Long: `Adds an expert to your council.
 
-The expert will include pre-written philosophy, principles, and red flags
-from the suggestions.yaml database.
+If the name matches a curated expert from the library, adds it directly.
+If no match is found, guides you through creating a custom expert.
 
-For custom experts not in the library, use /council-add with your AI assistant.`,
+Examples:
+  council add "Kent Beck"     # Found in library - adds directly
+  council add "My CTO"        # Not found - creates custom persona
+  council add "rob pike"      # Case-insensitive matching`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if !config.Exists() {
-			return fmt.Errorf("council not initialized: run 'council init' first")
+			return fmt.Errorf("council not initialized: run 'council start' first")
 		}
 
 		name := args[0]
@@ -167,18 +170,17 @@ For custom experts not in the library, use /council-add with your AI assistant.`
 				fmt.Println("Run 'council sync' to update AI tool configurations.")
 				return nil
 			}
-
-			// Non-interactive or user declined: show suggestion in error
-			return fmt.Errorf("persona %q not found\n\n"+
-				"Did you mean: %s?\n  council add %q\n\n"+
-				"Or browse available personas:\n  council personas",
-				name, suggestion.Name, suggestion.Name)
 		}
 
-		// No close match - helpful error
-		return fmt.Errorf("persona %q not found in curated library\n\n"+
-			"To create a custom expert, ask your AI:\n  /council-add %s\n\n"+
-			"Or browse available personas:\n  council personas", name, name)
+		// No match found - trigger creation flow
+		if !isInteractive() {
+			return fmt.Errorf("persona %q not found in curated library\n\n"+
+				"To create a custom expert interactively, run without piping:\n  council add %q\n\n"+
+				"Or browse available personas:\n  council personas", name, name)
+		}
+
+		fmt.Printf("'%s' not found in curated library. Let's create a custom persona.\n\n", name)
+		return runAddCreationFlow(name)
 	},
 }
 
@@ -215,4 +217,60 @@ var removeCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+// runAddCreationFlow guides the user through creating a custom expert
+// for the project council (.council/experts/).
+func runAddCreationFlow(name string) error {
+	reader := bufio.NewReader(os.Stdin)
+
+	// Generate ID from name
+	id := expert.ToID(name)
+
+	// Check if expert already exists
+	if expert.Exists(id) {
+		return fmt.Errorf("expert '%s' already exists", id)
+	}
+
+	// Focus (required)
+	fmt.Print("Focus (one-line description of their expertise): ")
+	focus, _ := reader.ReadString('\n')
+	focus = trimNewline(focus)
+	if focus == "" {
+		return fmt.Errorf("focus is required")
+	}
+
+	// Philosophy (optional)
+	fmt.Print("Philosophy (optional, press Enter to skip): ")
+	philosophy, _ := reader.ReadString('\n')
+	philosophy = trimNewline(philosophy)
+
+	// Create expert
+	e := &expert.Expert{
+		ID:         id,
+		Name:       name,
+		Focus:      focus,
+		Philosophy: philosophy,
+	}
+
+	// Save to project council
+	if err := e.Save(); err != nil {
+		return err
+	}
+
+	fmt.Println()
+	fmt.Printf("Created %s (%s)\n", e.Name, e.ID)
+	fmt.Printf("File: %s\n", e.Path())
+	fmt.Println()
+	fmt.Println("Run 'council sync' to update AI tool configurations.")
+
+	return nil
+}
+
+// trimNewline removes trailing newline characters from a string
+func trimNewline(s string) string {
+	for len(s) > 0 && (s[len(s)-1] == '\n' || s[len(s)-1] == '\r') {
+		s = s[:len(s)-1]
+	}
+	return s
 }

@@ -243,7 +243,7 @@ func TestClaude_Templates(t *testing.T) {
 	}
 
 	// Verify expected commands exist
-	expected := []string{"council-add", "council-detect", "council-remove"}
+	expected := []string{"council-add", "council-remove"}
 	for _, name := range expected {
 		if _, ok := templates.Commands[name]; !ok {
 			t.Errorf("Templates().Commands missing %q", name)
@@ -375,7 +375,7 @@ func TestOpenCode_Templates(t *testing.T) {
 	}
 
 	// Verify expected commands exist
-	expected := []string{"council-add", "council-detect", "council-remove"}
+	expected := []string{"council-add", "council-remove"}
 	for _, name := range expected {
 		if _, ok := templates.Commands[name]; !ok {
 			t.Errorf("Templates().Commands missing %q", name)

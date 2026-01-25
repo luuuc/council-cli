@@ -20,21 +20,16 @@ var (
 
 var rootCmd = &cobra.Command{
 	Use:   "council",
-	Short: "AI-tailored expert council setup for coding assistants",
+	Short: "Expert councils for AI coding assistants",
 	Long: `council-cli helps you create an expert council for AI coding assistants.
 
 The council pattern establishes quality standards through expert personas
-that represent excellence in specific domains. The AI suggests experts
-based on your project's tech stack.
-
-Each AI tool gets tailored UX:
-  Claude Code - Uses AskUserQuestion for interactive choices
-  OpenCode    - Uses text-based option selection
-  Generic     - Creates AGENTS.md in project root
+that represent excellence in specific domains - Rob Pike for Go clarity,
+Kent Beck for testing, Dieter Rams for design simplicity.
 
 Quick start:
-  council init           Initialize (auto-detects your AI tool)
-  council setup --apply  Analyze project and create council with AI assistance
+  council start          Zero-config setup (creates council, adds experts, syncs)
+  council add "Name"     Add expert from library or create custom
   council sync           Sync council to AI tool configs`,
 }
 
@@ -168,8 +163,8 @@ func initCouncil(clean bool, toolFlag string) error {
 	fmt.Printf("Initialized .council/ directory for %s\n", displayName)
 	fmt.Println("")
 	fmt.Println("Next steps:")
-	fmt.Println("  council setup --apply   Analyze project and create council")
-	fmt.Println("  council sync            Sync to AI tool configs")
+	fmt.Println("  council add \"Name\"     Add experts from library or create custom")
+	fmt.Println("  council sync           Sync to AI tool configs")
 
 	return nil
 }
