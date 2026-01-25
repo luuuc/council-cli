@@ -283,3 +283,75 @@ func TestListExperts(t *testing.T) {
 		}
 	})
 }
+
+// Note: Interactive flag tests (--interview, --from) are skipped because
+// isInteractive() behavior varies by test environment. The flags are tested
+// implicitly through the NoArgWithoutFlags test which verifies the error
+// messages include these options.
+
+func TestAddCmd_NoArgWithoutFlags(t *testing.T) {
+	testInTempDir(t, func(t *testing.T, dir string) {
+		// No argument and no flags should produce helpful error
+		err := addCmd.RunE(addCmd, []string{})
+		if err == nil {
+			t.Fatal("expected error for add without args, got nil")
+		}
+
+		errMsg := err.Error()
+		if !strings.Contains(errMsg, "requires a persona name argument") {
+			t.Errorf("error should mention 'requires a persona name argument', got: %v", err)
+		}
+		// Should suggest alternatives
+		if !strings.Contains(errMsg, "--interview") || !strings.Contains(errMsg, "--from") {
+			t.Errorf("error should suggest --interview and --from alternatives, got: %v", err)
+		}
+	})
+}
+
+func TestTrimNewline(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "unix newline",
+			input:    "hello\n",
+			expected: "hello",
+		},
+		{
+			name:     "windows newline",
+			input:    "hello\r\n",
+			expected: "hello",
+		},
+		{
+			name:     "no newline",
+			input:    "hello",
+			expected: "hello",
+		},
+		{
+			name:     "multiple trailing newlines",
+			input:    "hello\n\n\n",
+			expected: "hello",
+		},
+		{
+			name:     "empty string",
+			input:    "",
+			expected: "",
+		},
+		{
+			name:     "only newlines",
+			input:    "\n\r\n",
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := trimNewline(tt.input)
+			if result != tt.expected {
+				t.Errorf("trimNewline(%q) = %q, expected %q", tt.input, result, tt.expected)
+			}
+		})
+	}
+}

@@ -33,16 +33,20 @@ func runAddInterview() error {
 	var lines []string
 	emptyCount := 0
 	for {
-		line, _ := reader.ReadString('\n')
-		line = line[:len(line)-1] // Remove trailing newline
+		line, err := reader.ReadString('\n')
+		line = strings.TrimSuffix(line, "\n")
+		line = strings.TrimSuffix(line, "\r") // Handle Windows line endings
 		if line == "" {
 			emptyCount++
-			if emptyCount >= 1 {
+			if emptyCount >= 1 || err != nil {
 				break
 			}
 		} else {
 			emptyCount = 0
 			lines = append(lines, line)
+		}
+		if err != nil {
+			break // EOF or other error
 		}
 	}
 
@@ -70,10 +74,13 @@ func runAddInterview() error {
 		fmt.Println()
 		fmt.Print("Accept, Edit, or Regenerate? [a/e/r]: ")
 		input, _ := reader.ReadString('\n')
-		input = string([]byte(input[:1]))
+		input = strings.ToLower(strings.TrimSpace(input))
+		if len(input) > 1 {
+			input = input[:1]
+		}
 
 		switch input {
-		case "a", "A", "\n":
+		case "a", "":
 			// Accept - prompt for ID and save
 			fmt.Println()
 			suggestedID := expert.ToID(exp.Name)
@@ -100,7 +107,7 @@ func runAddInterview() error {
 			fmt.Println("Run 'council sync' to update AI tool configurations.")
 			return nil
 
-		case "e", "E":
+		case "e":
 			// Edit in $EDITOR
 			tmpfile, err := os.CreateTemp("", "council-interview-*.md")
 			if err != nil {
@@ -136,7 +143,7 @@ func runAddInterview() error {
 			exp = edited
 			displayExpertPreview(exp)
 
-		case "r", "R":
+		case "r":
 			// Regenerate
 			fmt.Println()
 			fmt.Println("Regenerating...")
@@ -350,7 +357,7 @@ func truncate(s string, maxLen int) string {
 // wrapText wraps text to a given width.
 func wrapText(s string, width int) []string {
 	var lines []string
-	words := splitWords(s)
+	words := strings.Fields(s) // Use standard library
 	var current string
 
 	for _, word := range words {
@@ -369,24 +376,4 @@ func wrapText(s string, width int) []string {
 	}
 
 	return lines
-}
-
-// splitWords splits a string into words.
-func splitWords(s string) []string {
-	var words []string
-	word := ""
-	for _, r := range s {
-		if r == ' ' || r == '\n' || r == '\t' {
-			if word != "" {
-				words = append(words, word)
-				word = ""
-			}
-		} else {
-			word += string(r)
-		}
-	}
-	if word != "" {
-		words = append(words, word)
-	}
-	return words
 }
