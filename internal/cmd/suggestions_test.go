@@ -181,3 +181,61 @@ func TestLookupPersona(t *testing.T) {
 		})
 	}
 }
+
+func TestFilterPersonasByCategory(t *testing.T) {
+	personas := []PersonaJSON{
+		{ID: "rob-pike", Name: "Rob Pike", Category: "go", Focus: "Go simplicity"},
+		{ID: "dave-cheney", Name: "Dave Cheney", Category: "go", Focus: "Go performance"},
+		{ID: "kent-beck", Name: "Kent Beck", Category: "testing", Focus: "TDD"},
+		{ID: "dhh", Name: "DHH", Category: "rails", Focus: "Rails conventions"},
+	}
+
+	tests := []struct {
+		category string
+		wantLen  int
+	}{
+		{"go", 2},
+		{"GO", 2},       // case-insensitive
+		{"testing", 1},
+		{"rails", 1},
+		{"unknown", 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.category, func(t *testing.T) {
+			filtered := filterPersonasByCategory(personas, tt.category)
+			if len(filtered) != tt.wantLen {
+				t.Errorf("filterPersonasByCategory(%q) returned %d personas, want %d", tt.category, len(filtered), tt.wantLen)
+			}
+		})
+	}
+}
+
+func TestFilterPersonasBySearch(t *testing.T) {
+	personas := []PersonaJSON{
+		{ID: "rob-pike", Name: "Rob Pike", Category: "go", Focus: "Go simplicity"},
+		{ID: "kent-beck", Name: "Kent Beck", Category: "testing", Focus: "Test-driven development"},
+		{ID: "security-expert", Name: "Security Expert", Category: "security", Focus: "Application security"},
+	}
+
+	tests := []struct {
+		search  string
+		wantLen int
+	}{
+		{"Pike", 1},
+		{"pike", 1},           // case-insensitive
+		{"security", 1},       // matches name and focus (same persona)
+		{"test", 1},           // matches focus
+		{"xyz", 0},            // no match
+		{"Go", 1},             // matches focus
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.search, func(t *testing.T) {
+			filtered := filterPersonasBySearch(personas, tt.search)
+			if len(filtered) != tt.wantLen {
+				t.Errorf("filterPersonasBySearch(%q) returned %d personas, want %d", tt.search, len(filtered), tt.wantLen)
+			}
+		})
+	}
+}

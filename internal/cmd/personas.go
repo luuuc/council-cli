@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/luuuc/council-cli/internal/creator"
@@ -27,7 +28,11 @@ func init() {
 	}
 }
 
-var personasJSON bool
+var (
+	personasJSON     bool
+	personasCategory string
+	personasSearch   string
+)
 
 func init() {
 	rootCmd.AddCommand(personasCmd)
@@ -37,6 +42,8 @@ func init() {
 	personasCmd.AddCommand(personasUninstallCmd)
 
 	personasCmd.Flags().BoolVar(&personasJSON, "json", false, "Output as JSON")
+	personasCmd.Flags().StringVar(&personasCategory, "category", "", "Filter by category (e.g., go, ruby, testing)")
+	personasCmd.Flags().StringVar(&personasSearch, "search", "", "Search by name or focus")
 }
 
 // PersonaJSON is a flattened persona with category
@@ -59,7 +66,17 @@ type PersonaJSON struct {
 var personasCmd = &cobra.Command{
 	Use:   "personas",
 	Short: "List all available expert personas",
-	Long:  `Shows all built-in expert personas that can be added to a council.`,
+	Long: `Shows all built-in expert personas that can be added to a council.
+
+Filtering:
+  --category <name>   Filter by category (go, ruby, python, javascript, testing, etc.)
+  --search <term>     Search by name or focus (case-insensitive)
+
+Examples:
+  council personas                        # List all
+  council personas --category go          # Go experts
+  council personas --category testing     # Testing experts
+  council personas --search "security"    # Search for security-related`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var personas []PersonaJSON
 
@@ -76,6 +93,16 @@ var personasCmd = &cobra.Command{
 					Triggers:   e.Triggers,
 				})
 			}
+		}
+
+		// Apply category filter
+		if personasCategory != "" {
+			personas = filterPersonasByCategory(personas, personasCategory)
+		}
+
+		// Apply search filter
+		if personasSearch != "" {
+			personas = filterPersonasBySearch(personas, personasSearch)
 		}
 
 		// Sort by category, then name for deterministic output
@@ -96,6 +123,11 @@ var personasCmd = &cobra.Command{
 		}
 
 		// Human-readable output
+		if len(personas) == 0 {
+			fmt.Println("No personas found matching your criteria.")
+			return nil
+		}
+
 		fmt.Printf("Available personas (%d):\n\n", len(personas))
 		for _, p := range personas {
 			fmt.Printf("  %s (%s) - %s\n", p.Name, p.Category, p.Focus)
@@ -103,6 +135,31 @@ var personasCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+// filterPersonasByCategory filters personas by category (case-insensitive).
+func filterPersonasByCategory(personas []PersonaJSON, category string) []PersonaJSON {
+	category = strings.ToLower(category)
+	var filtered []PersonaJSON
+	for _, p := range personas {
+		if strings.ToLower(p.Category) == category {
+			filtered = append(filtered, p)
+		}
+	}
+	return filtered
+}
+
+// filterPersonasBySearch filters personas by name or focus (case-insensitive).
+func filterPersonasBySearch(personas []PersonaJSON, search string) []PersonaJSON {
+	search = strings.ToLower(search)
+	var filtered []PersonaJSON
+	for _, p := range personas {
+		if strings.Contains(strings.ToLower(p.Name), search) ||
+			strings.Contains(strings.ToLower(p.Focus), search) {
+			filtered = append(filtered, p)
+		}
+	}
+	return filtered
 }
 
 var personasInstallCmd = &cobra.Command{
