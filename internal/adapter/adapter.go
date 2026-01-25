@@ -1,3 +1,6 @@
+// Package adapter provides tool-specific integrations for AI coding assistants.
+// Each supported tool (Claude Code, OpenCode) implements the Adapter interface
+// to handle its particular file formats and directory structures.
 package adapter
 
 import (
@@ -104,14 +107,10 @@ func ResetRegistry() {
 	registry = make(map[string]Adapter)
 }
 
-// DirExists checks if a directory exists (used by adapters for detection).
-// This is a convenience function that wraps fs.DirExists for adapter implementations.
 func DirExists(path string) bool {
 	return fs.DirExists(path)
 }
 
-// FileExists checks if a file exists (used by adapters for detection).
-// This is a convenience function that wraps fs.FileExists for adapter implementations.
 func FileExists(path string) bool {
 	return fs.FileExists(path)
 }

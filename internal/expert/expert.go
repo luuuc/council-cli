@@ -1,3 +1,4 @@
+// Package expert manages expert persona files stored as markdown with YAML frontmatter.
 package expert
 
 import (
@@ -95,7 +96,6 @@ func MarshalExpertsJSON(experts []*Expert) ([]byte, error) {
 	return json.MarshalIndent(experts, "", "  ")
 }
 
-// Path returns the file path for this expert
 func (e *Expert) Path() string {
 	return config.Path(config.ExpertsDir, e.ID+".md")
 }

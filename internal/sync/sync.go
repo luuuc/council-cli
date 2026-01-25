@@ -1,3 +1,4 @@
+// Package sync writes expert configurations to AI tool directories.
 package sync
 
 import (

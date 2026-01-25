@@ -1,3 +1,4 @@
+// Package install manages external persona repositories (clone, update, uninstall).
 package install
 
 import (

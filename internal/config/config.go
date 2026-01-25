@@ -1,3 +1,4 @@
+// Package config manages council configuration stored in .council/config.yaml.
 package config
 
 import (

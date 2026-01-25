@@ -1,3 +1,4 @@
+// Package cmd implements the council CLI commands using cobra.
 package cmd
 
 import (

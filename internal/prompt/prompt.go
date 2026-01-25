@@ -1,3 +1,4 @@
+// Package prompt generates AI prompts for council setup based on detected stacks.
 package prompt
 
 import (

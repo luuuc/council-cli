@@ -1,3 +1,5 @@
+// Package detect identifies project technology stacks by analyzing
+// source files and configuration files (go.mod, package.json, Gemfile, etc).
 package detect
 
 import (
@@ -12,7 +14,6 @@ import (
 	"github.com/luuuc/council-cli/internal/fs"
 )
 
-// sourceExts defines which file extensions are considered source files
 var sourceExts = map[string]bool{
 	".go": true, ".rs": true, ".rb": true, ".py": true, ".js": true,
 	".ts": true, ".tsx": true, ".jsx": true, ".vue": true, ".svelte": true,
@@ -24,7 +25,6 @@ var sourceExts = map[string]bool{
 	".css": true, ".scss": true, ".sass": true, ".less": true,
 }
 
-// extToLang maps file extensions to language names
 var extToLang = map[string]string{
 	".go":     "Go",
 	".rs":     "Rust",
@@ -75,7 +75,6 @@ type Framework struct {
 	Version string `json:"version,omitempty" yaml:"version,omitempty"`
 }
 
-// JSON returns the detection as JSON
 func (d *Detection) JSON() ([]byte, error) {
 	return json.MarshalIndent(d, "", "  ")
 }

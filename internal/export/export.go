@@ -1,3 +1,4 @@
+// Package export formats expert councils for use outside the council-cli ecosystem.
 package export
 
 import (
