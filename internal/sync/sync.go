@@ -10,7 +10,7 @@ import (
 
 	"github.com/luuuc/council-cli/internal/adapter"
 	"github.com/luuuc/council-cli/internal/config"
-	"github.com/luuuc/council-cli/internal/creator"
+	"github.com/luuuc/council-cli/internal/install"
 	"github.com/luuuc/council-cli/internal/expert"
 )
 
@@ -259,7 +259,7 @@ func loadAllExperts() ([]*expert.Expert, error) {
 
 	// Load installed experts (from cloned repositories)
 	// Errors here are non-fatal (user may not have installed councils)
-	installedExperts, err := creator.ListInstalledExperts()
+	installedExperts, err := install.ListInstalledExperts()
 	if err != nil {
 		if !os.IsNotExist(err) {
 			fmt.Printf("Warning: could not load installed experts: %v\n", err)

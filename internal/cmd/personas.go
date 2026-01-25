@@ -10,7 +10,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/luuuc/council-cli/internal/creator"
+	"github.com/luuuc/council-cli/internal/install"
 	"github.com/luuuc/council-cli/internal/expert"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -190,13 +190,13 @@ Examples:
 
 		fmt.Printf("Installing from %s...\n\n", url)
 
-		name, err := creator.Install(url)
+		name, err := install.Install(url)
 		if err != nil {
 			return err
 		}
 
 		// List experts in installed repo
-		experts, _ := creator.ListInstalledExperts()
+		experts, _ := install.ListInstalledExperts()
 		var repoExperts []*expert.Expert
 		for _, e := range experts {
 			if e.Source == "installed:"+name {
@@ -227,7 +227,7 @@ var personasInstalledCmd = &cobra.Command{
 	Short: "List installed persona repositories",
 	Long:  `Shows all persona repositories installed from remote sources.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		installed, err := creator.ListInstalled()
+		installed, err := install.ListInstalled()
 		if err != nil {
 			return err
 		}
@@ -241,7 +241,7 @@ var personasInstalledCmd = &cobra.Command{
 		}
 
 		// Get experts for each installed repo
-		experts, _ := creator.ListInstalledExperts()
+		experts, _ := install.ListInstalledExperts()
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 		fmt.Fprintln(w, "REPOSITORY\tEXPERTS")
@@ -274,7 +274,7 @@ If no name is specified, updates all installed repositories.`,
 			name := args[0]
 			fmt.Printf("Updating %s...\n", name)
 
-			if err := creator.Update(name); err != nil {
+			if err := install.Update(name); err != nil {
 				return err
 			}
 
@@ -286,7 +286,7 @@ If no name is specified, updates all installed repositories.`,
 		fmt.Println("Updating all installed repositories...")
 		fmt.Println()
 
-		updated, err := creator.UpdateAll()
+		updated, err := install.UpdateAll()
 		if err != nil {
 			return err
 		}
@@ -319,7 +319,7 @@ var personasUninstallCmd = &cobra.Command{
 			return nil
 		}
 
-		if err := creator.Uninstall(name); err != nil {
+		if err := install.Uninstall(name); err != nil {
 			return err
 		}
 

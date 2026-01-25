@@ -109,8 +109,7 @@ func runInstall(input string) error {
 
 	fmt.Printf("Installed: %s\n", e.Name)
 	fmt.Printf("  Focus: %s\n", e.Focus)
-	fmt.Println()
-	fmt.Println("Run 'council sync' to update your AI tool.")
+	runAutoSync()
 
 	return nil
 }

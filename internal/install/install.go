@@ -1,4 +1,4 @@
-package creator
+package install
 
 import (
 	"fmt"

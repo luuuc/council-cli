@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	_ "embed"
 	"fmt"
 	"os"
 	"os/exec"
@@ -13,6 +14,9 @@ import (
 	"github.com/luuuc/council-cli/internal/config"
 	"github.com/luuuc/council-cli/internal/expert"
 )
+
+//go:embed prompts/interview.txt
+var interviewPrompt string
 
 // runAddInterview uses AI to generate an expert from a description
 // and saves it to the project council (.council/experts/).
@@ -102,8 +106,7 @@ func runAddInterview() error {
 			fmt.Println()
 			fmt.Printf("Created %s\n", exp.Name)
 			fmt.Printf("File: %s\n", exp.Path())
-			fmt.Println()
-			fmt.Println("Run 'council sync' to update AI tool configurations.")
+			runAutoSync()
 			return nil
 
 		case "e":
@@ -179,38 +182,8 @@ func generateExpertFromDescription(description string) (*expert.Expert, error) {
 		return nil, fmt.Errorf("AI command '%s' not found\n\nInstall it or configure a different command", aiCmd)
 	}
 
-	// Generate prompt
-	prompt := fmt.Sprintf(`Based on this description of someone the user values for feedback:
-
-"""
-%s
-"""
-
-Generate an expert file in YAML frontmatter format. The expert should capture this person's essence for code review and technical guidance.
-
-Return ONLY valid YAML in this exact format (no markdown code blocks, no explanation):
-
----
-id: suggested-id
-name: A Memorable Name
-focus: One-line description of expertise (max 60 chars)
-category: custom
-priority: normal
-triggers:
-  - keyword1
-  - keyword2
-  - keyword3
-philosophy: |
-  2-3 sentences capturing their worldview and approach.
-principles:
-  - First core belief or practice
-  - Second core belief or practice
-  - Third core belief or practice
-red_flags:
-  - Pattern they would call out
-  - Another pattern they'd warn about
-  - Third warning sign
----`, description)
+	// Generate prompt from embedded template
+	prompt := fmt.Sprintf(interviewPrompt, description)
 
 	// Execute AI command
 	timeout := cfg.AI.Timeout

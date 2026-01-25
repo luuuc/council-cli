@@ -1,4 +1,5 @@
-package creator
+// Package install handles installation and management of external persona repositories.
+package install
 
 import (
 	"fmt"
