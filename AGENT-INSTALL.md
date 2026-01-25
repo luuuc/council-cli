@@ -10,7 +10,7 @@ You are an AI assistant helping a user install council-cli. Follow these steps.
 
 Briefly explain what you're about to do, then proceed (no confirmation needed - they asked for setup):
 
-> I'll set up council-cli: install/update the CLI, detect your stack, help you pick experts, and sync to your AI tool. Here we go!
+> I'll set up council-cli: install the CLI, create your council with experts matched to your project, and sync to your AI tool. Here we go!
 
 ## Step 1: Install or Update the CLI
 
@@ -42,17 +42,13 @@ Tell the user which experts exist, then use **AskUserQuestion**:
 |-------|-------------|
 | "Add more" | Keep current experts and add new ones |
 | "Start fresh" | Remove everything and set up from scratch |
-| "Cancel" | Keep everything as is |
+| "All set" | Keep everything as is |
 
-- If **Add more**: Skip to "Add Experts" (Step 5)
-- If **Start fresh**: Run `council init --clean`, then continue with setup
-- If **Cancel**: Stop here
+- If **Add more**: Skip to "Customize" (Step 4)
+- If **Start fresh**: Run `council init --clean`, then run `council start`
+- If **All set**: Skip to "Done"
 
-### If .council/ exists but no experts:
-
-Continue to "Detect Stack" (Step 4).
-
-### If .council/ directory exists but council list returns non-zero exit code:
+### If .council/ exists but council list fails:
 
 A `.council/` directory exists from a previous or incompatible installation. Use **AskUserQuestion**:
 
@@ -61,155 +57,95 @@ A `.council/` directory exists from a previous or incompatible installation. Use
 | "Start fresh" | Remove and reinitialize |
 | "Cancel" | Stop here |
 
-- If **Start fresh**: Run `council init --clean`, then continue
+- If **Start fresh**: Run `council init --clean`, then continue to Step 3
 - If **Cancel**: Stop here
 
 ### If no .council/ directory:
 
-Continue to "Initialize" (Step 3).
+Continue to Step 3.
 
-## Step 3: Initialize
+## Step 3: Set Up Your Council
 
-```bash
-council init
-```
-
-This creates the `.council/` directory structure and auto-detects your AI tool (Claude Code, OpenCode, or generic).
-
-If multiple tools are detected, it will prompt you to choose. You can also specify explicitly:
-```bash
-council init --tool=claude
-council init --tool=opencode
-council init --tool=generic
-```
-
-**Configure yourself as the AI command:**
-
-After init, edit `.council/config.yaml` and set your CLI as the AI command:
-
-```yaml
-version: 1
-ai:
-  command: claude  # Set this to your own CLI: claude, opencode, etc.
-  timeout: 120
-```
-
-This ensures `council setup --apply` uses you for AI operations.
-
-**Run initial sync to enable slash commands:**
+Run the zero-config setup:
 
 ```bash
-council sync
+council start
 ```
 
-This makes `/council`, `/council-add`, and `/council-detect` available immediately, so you can use them during this setup session without needing to restart.
+This single command:
+1. Creates the `.council/` directory
+2. Detects your AI tool (Claude Code, OpenCode, or generic)
+3. Detects your project stack (languages, frameworks, testing tools)
+4. Adds 5 experts matched to your stack
+5. Syncs everything to your AI tool
 
-## Step 4: Detect Stack
+Output looks like:
+```
+✓ Detected: Claude Code
+✓ Detected: Go, CLI tool
+✓ Added 5 experts: Rob Pike, Kent Beck, Jason Fried, Dieter Rams, Sandi Metz
 
-Run detection to understand the project:
-
-```bash
-council detect --json
+Your council is ready. Try: /council <topic>
 ```
 
-This outputs the detected languages, frameworks, testing tools, and patterns.
+**That's it.** Your council is ready to use.
 
-### If Detection Is Sparse
+## Step 4: Customize (Optional)
 
-If `council detect --json` returns no frameworks and no patterns (only languages or empty), the project context is unclear. Ask the user what they're building using **AskUserQuestion**:
+Ask if the user wants to customize their council using **AskUserQuestion**:
 
 | Label | Description |
 |-------|-------------|
-| "Code quality" | Code review, refactoring, testing, architecture |
-| "Product/UX" | User-facing features, design decisions, frontend work |
-| "Ops/Process" | DevOps, CI/CD, team workflow, infrastructure |
-| "Business" | Strategy, growth, monetization, leadership |
+| "Looks good" | Keep the auto-selected experts |
+| "Customize" | Add or remove experts |
 
-Use this to weight expert suggestions:
+If **Looks good**: Skip to "Done".
 
-- **Code quality**: Prioritize practice experts (Kent Beck, Sandi Metz, Martin Fowler)
-- **Product/UX**: Include design experts (Dieter Rams, Steve Schoger, Jason Fried)
-- **Ops/Process**: Include ops experts (Gene Kim, Charity Majors, Kelsey Hightower)
-- **Business**: Include business experts (Arvid Kahl, Rob Walling, Sahil Lavingia)
+If **Customize**: Help them modify the council.
 
-Continue to Step 5 with this context in mind.
+### Adding Experts
 
-## Step 5: Add Experts
-
-First, check available curated personas that match the detected stack:
-
+Browse available personas:
 ```bash
 council personas --json
 ```
 
-This returns experts organized by category (languages, frameworks, practices, etc.) with pre-written philosophies, principles, and red flags. **Prefer suggesting from this list** as these personas are fully fleshed out.
-
-Based on the detection results and available personas, suggest **5 experts** (maximum 7) to the user. Mix technical and non-technical perspectives:
-
-**Always suggest (based on detected stack):**
-- **Framework expert** (1): DHH for Rails, Chris McCord for Phoenix, etc.
-- **Language expert** (1): Rob Pike for Go, Matz for Ruby, José Valim for Elixir, etc.
-- **Practice expert** (2): Kent Beck for TDD, Sandi Metz for OO design, etc.
-- **General** (1, cross-cutting principles): Cal Newport, Dieter Rams, Gene Kim, etc.
-
-**Suggest based on project context** (ask user if unclear):
-- **Product** (if building user-facing features): Marty Cagan, Jason Fried, Teresa Torres
-- **Process** (if team/workflow questions): Ryan Singer, Allen Holub, Gene Kim
-- **Business** (if startup/monetization): Arvid Kahl, Rob Walling, Sahil Lavingia
-- **Design/UX** (if UI work): Dieter Rams, Steve Schoger, Maggie Appleton
-- **Growth** (if scaling): Andrew Chen, Brian Balfour, Hiten Shah
-- **Leadership** (if managing people): Camille Fournier, Will Larson, Lara Hogan
-- **Security** (if auth/data): Troy Hunt, Scott Helme, Tanya Janca
-- **Data** (if analytics/ML): DJ Patil, Hilary Mason, Monica Rogati
-
-Check `council personas --json` for the full list organized by category.
-
-Present your suggestions, then use **AskUserQuestion** (this is the key engagement moment!):
-
-| Label | Description |
-|-------|-------------|
-| "Add all" | Add all suggested experts to your council |
-| "Let me choose" | Pick specific experts from the list |
-| "Skip for now" | Continue without adding experts |
-
-If **Let me choose**: Present each expert as a selectable option (use `multiSelect: true`), with the expert's focus as the description.
-
-After selection, ask if they want more suggestions:
-
-| Label | Description |
-|-------|-------------|
-| "Looks good" | Proceed to sync |
-| "Suggest more" | Show additional expert recommendations |
-
-For each expert the user approves, run:
-
-**For curated experts** (from `council personas --json`):
+Add from the curated library:
 ```bash
-council add "{Name}"
-```
-
-Example:
-```bash
-council add "Rob Pike"
 council add "Kent Beck"
+council add "Sandi Metz"
 ```
 
-**For custom experts** (not in curated library):
-Use `/council-add` to search and discover experts:
+For experts not in the library, `council add` triggers a creation flow:
+```bash
+council add "My CTO"
+# Prompts for focus and philosophy
 ```
-/council-add a testing expert
+
+Or use the `/council-add` skill to search and discover:
+```
+/council-add a security expert
 /council-add someone for API design
 ```
 
-The skill searches curated personas first, presents 4 options, and generates profiles for non-curated selections.
+### Removing Experts
 
-## Step 6: Sync to Your AI Tool
+List current experts:
+```bash
+council list
+```
 
+Remove by ID:
+```bash
+council remove kent-beck
+```
+
+### Syncing Changes
+
+After adding or removing experts, sync to update your AI tool:
 ```bash
 council sync
 ```
-
-This updates the slash commands with the newly added experts. The council member list in `/council` will now include all the experts you added.
 
 ## Done
 
@@ -224,5 +160,4 @@ If **Try it now**: Ask what they'd like the council to review (a file, function,
 
 Remind them of available commands:
 - `/council <topic>` - Get expert code reviews
-- `/council-add a testing expert` - Search and add experts by description
-- `/council-detect` - Re-analyze and get new suggestions
+- `/council-add <description>` - Search and add experts by description

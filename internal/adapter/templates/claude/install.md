@@ -4,27 +4,24 @@ Your AI tool will read the appropriate instructions for setting up the council.
 
 ## Quick Start
 
-1. Check if council is already initialized:
+1. Check if council is already set up:
 ```bash
-ls -la .council/
+council list
 ```
 
-2. If not initialized, run:
+2. If not set up, run:
 ```bash
-council init
+council start
 ```
 
-3. Analyze your project and suggest experts:
-```bash
-council detect --json
-```
+This single command creates your council, detects your project stack, adds matched experts, and syncs to your AI tool.
 
-4. Add experts to your council - use one of:
-   - `/council-add` - interactive expert search
-   - `council add "Expert Name"` - add specific curated expert
-   - `council setup --apply` - AI-assisted setup
+## Customization
 
-5. Sync to your AI tool:
-```bash
-council sync
-```
+After setup, you can modify your council:
+
+- `council add "Expert Name"` - add a curated expert
+- `council add "Custom Name"` - create a custom expert (if not in library)
+- `/council-add` - interactive expert search
+- `council remove <id>` - remove an expert
+- `council sync` - sync changes to your AI tool
