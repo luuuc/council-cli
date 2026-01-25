@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/luuuc/council-cli/internal/config"
@@ -17,7 +18,7 @@ func TestStartCmd_FailsIfCouncilExists(t *testing.T) {
 			t.Fatal("expected error when .council/ already exists, got nil")
 		}
 
-		if !contains(err.Error(), "already exists") {
+		if !strings.Contains(err.Error(), "already exists") {
 			t.Errorf("error should mention 'already exists', got: %v", err)
 		}
 	})
@@ -282,18 +283,4 @@ func setupTempDirNoInit(t *testing.T) (string, func()) {
 		_ = os.Chdir(original)
 		os.RemoveAll(tmpDir)
 	}
-}
-
-// contains checks if s contains substr
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsHelper(s, substr))
-}
-
-func containsHelper(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }
