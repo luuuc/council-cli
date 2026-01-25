@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/luuuc/council-cli/internal/adapter"
 	"github.com/luuuc/council-cli/internal/config"
@@ -10,6 +11,11 @@ import (
 	"github.com/luuuc/council-cli/internal/expert"
 	"github.com/luuuc/council-cli/internal/sync"
 	"github.com/spf13/cobra"
+)
+
+const (
+	maxStackExperts = 3 // Maximum stack-specific experts to add
+	maxTotalExperts = 5 // Maximum total experts in auto-selection
 )
 
 func init() {
@@ -156,9 +162,9 @@ func selectExperts(d *detect.Detection) []*expert.Expert {
 	// Map categories from detection to suggestion bank categories
 	categories := mapDetectionToCategories(d)
 
-	// Add stack-specific experts (up to 3)
+	// Add stack-specific experts
 	for _, cat := range categories {
-		if len(selected) >= 3 {
+		if len(selected) >= maxStackExperts {
 			break
 		}
 		if experts, ok := suggestionBank[cat]; ok && len(experts) > 0 {
@@ -173,7 +179,7 @@ func selectExperts(d *detect.Detection) []*expert.Expert {
 	// Always try to add generalists to round out the council
 	generalists := []string{"kent-beck", "jason-fried", "dieter-rams"}
 	for _, id := range generalists {
-		if len(selected) >= 5 {
+		if len(selected) >= maxTotalExperts {
 			break
 		}
 		if seen[id] {
@@ -194,7 +200,7 @@ func selectGeneralists() []*expert.Expert {
 	ids := []string{"kent-beck", "dieter-rams", "jason-fried", "sandi-metz", "cal-newport"}
 
 	for _, id := range ids {
-		if len(selected) >= 5 {
+		if len(selected) >= maxTotalExperts {
 			break
 		}
 		if e := findExpertByID(id); e != nil {
@@ -284,16 +290,5 @@ func expertFromSuggestion(e *expert.Expert) *expert.Expert {
 
 // joinNames joins names with commas
 func joinNames(names []string) string {
-	if len(names) == 0 {
-		return ""
-	}
-	if len(names) == 1 {
-		return names[0]
-	}
-
-	result := names[0]
-	for i := 1; i < len(names); i++ {
-		result += ", " + names[i]
-	}
-	return result
+	return strings.Join(names, ", ")
 }

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/luuuc/council-cli/internal/config"
@@ -153,7 +154,7 @@ Examples:
 		if suggestion, distance := SuggestSimilar(name); suggestion != nil {
 			// Auto-accept with --yes flag, or prompt for confirmation in interactive mode
 			shouldAdd := addYes
-			if !shouldAdd && !addYes && isInteractive() && distance <= 2 {
+			if !shouldAdd && isInteractive() && distance <= 2 {
 				shouldAdd = Confirm(fmt.Sprintf("Did you mean %q?", suggestion.Name))
 			}
 
@@ -269,8 +270,5 @@ func runAddCreationFlow(name string) error {
 
 // trimNewline removes trailing newline characters from a string
 func trimNewline(s string) string {
-	for len(s) > 0 && (s[len(s)-1] == '\n' || s[len(s)-1] == '\r') {
-		s = s[:len(s)-1]
-	}
-	return s
+	return strings.TrimRight(s, "\r\n")
 }

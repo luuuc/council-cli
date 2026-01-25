@@ -37,10 +37,7 @@ for an AI assistant to suggest appropriate expert personas.
 
 Modes:
   (default)       Output prompt for you to copy to any AI
-  --apply         Send prompt to configured AI CLI and create experts (deprecated)
-
-NOTE: 'council setup --apply' is deprecated. Use 'council start' instead
-for zero-config setup.`,
+  --apply         Send prompt to configured AI CLI and create experts`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dir, err := os.Getwd()
 		if err != nil {
@@ -63,11 +60,6 @@ for zero-config setup.`,
 		}
 
 		if setupApply {
-			// Print deprecation warning
-			fmt.Fprintln(os.Stderr, "Warning: 'council setup --apply' is deprecated.")
-			fmt.Fprintln(os.Stderr, "         Use 'council start' for zero-config setup.")
-			fmt.Fprintln(os.Stderr, "         This command will be removed in a future version.")
-			fmt.Fprintln(os.Stderr, "")
 			return runSetupApply(promptText)
 		}
 
