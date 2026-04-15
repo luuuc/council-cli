@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/luuuc/council-cli/internal/adapter"
@@ -67,6 +68,13 @@ func runStart() error {
 	// Create config with detected tool
 	cfg := config.Default()
 	cfg.Tool = tool
+
+	// Detect review backend using config's detection logic
+	backend, provider, model := cfg.DetectBackend()
+	cfg.AI.Backend = backend
+	cfg.AI.Provider = provider
+	cfg.AI.Model = model
+	printBackendDetection(backend, provider)
 	if err := cfg.Save(); err != nil {
 		return err
 	}
@@ -151,6 +159,40 @@ func detectTool() (string, error) {
 	default:
 		// Multiple tools - use first one (deterministic order)
 		return detected[0].Name(), nil
+	}
+}
+
+// printBackendDetection prints transparent output about the detected review backend.
+func printBackendDetection(backend, provider string) {
+	// Build detection status
+	var parts []string
+
+	// Report what was found in the environment
+	for _, cmd := range config.KnownAICLIs {
+		if _, err := exec.LookPath(cmd); err == nil {
+			parts = append(parts, fmt.Sprintf("%s CLI ✓", cmd))
+			break
+		}
+	}
+	if os.Getenv("ANTHROPIC_API_KEY") != "" {
+		parts = append(parts, "ANTHROPIC_API_KEY ✓")
+	}
+	if os.Getenv("OPENAI_API_KEY") != "" {
+		parts = append(parts, "OPENAI_API_KEY ✓")
+	}
+
+	if len(parts) > 0 {
+		fmt.Printf("✓ Detected: %s\n", strings.Join(parts, ", "))
+	}
+
+	// Report the decision
+	switch backend {
+	case "cli":
+		fmt.Println("  Using: cli backend (preferred — zero-config)")
+	case "api":
+		fmt.Printf("  Using: api backend (provider: %s)\n", provider)
+	default:
+		fmt.Println("  No AI CLI or API key detected — configure ai.backend in .council/config.yaml (options: anthropic, openai, ollama)")
 	}
 }
 

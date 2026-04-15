@@ -60,12 +60,6 @@ func runReview(cmd *cobra.Command) error {
 		return err
 	}
 
-	// Detect AI command
-	aiCmd, err := cfg.DetectAICommand()
-	if err != nil {
-		return fmt.Errorf("cannot run review: %w", err)
-	}
-
 	// Resolve experts
 	inputs, packName, err := resolveReviewExperts()
 	if err != nil {
@@ -82,8 +76,11 @@ func runReview(cmd *cobra.Command) error {
 		return err
 	}
 
-	// Build backend and runner
-	backend := review.NewCLIBackend(aiCmd, cfg.AI.Args)
+	// Build backend
+	backend, err := buildBackend(cfg)
+	if err != nil {
+		return fmt.Errorf("cannot run review: %w", err)
+	}
 
 	concurrency := cfg.AI.Concurrency
 	if reviewConcurrency > 0 {
@@ -203,4 +200,25 @@ func readSubmission() (review.Submission, error) {
 	}
 
 	return review.Submission{Content: content}, nil
+}
+
+// buildBackend creates the appropriate review backend based on config and environment.
+func buildBackend(cfg *config.Config) (review.Backend, error) {
+	backend, provider, model := cfg.DetectBackend()
+
+	switch backend {
+	case "api":
+		if provider == "" {
+			return nil, fmt.Errorf("api backend requires a provider (anthropic, openai, ollama)")
+		}
+		return review.NewAPIBackend(provider, model)
+	case "cli":
+		aiCmd, err := cfg.DetectAICommand()
+		if err != nil {
+			return nil, err
+		}
+		return review.NewCLIBackend(aiCmd, cfg.AI.Args), nil
+	default:
+		return nil, fmt.Errorf("no backend available\n\nInstall an AI CLI (claude, opencode) or set an API key (ANTHROPIC_API_KEY, OPENAI_API_KEY)")
+	}
 }
