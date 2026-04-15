@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-REPO="luuuc/council-cli"
+REPO="luuuc/council"
 BINARY_NAME="council"
 
 # Determine install directory (prefer user-writable locations)
@@ -70,9 +70,9 @@ fi
 # Build download URL (GoReleaser format)
 VERSION_NUM="${VERSION#v}"  # Strip leading 'v'
 if [ "$OS" = "windows" ]; then
-  ARCHIVE="council-cli_${VERSION_NUM}_${OS}_${ARCH}.zip"
+  ARCHIVE="council_${VERSION_NUM}_${OS}_${ARCH}.zip"
 else
-  ARCHIVE="council-cli_${VERSION_NUM}_${OS}_${ARCH}.tar.gz"
+  ARCHIVE="council_${VERSION_NUM}_${OS}_${ARCH}.tar.gz"
 fi
 
 URL="https://github.com/$REPO/releases/download/$VERSION/$ARCHIVE"

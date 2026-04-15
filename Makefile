@@ -2,7 +2,7 @@
 
 VERSION ?= dev
 COMMIT := $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
-LDFLAGS := -ldflags="-s -w -X 'github.com/luuuc/council-cli/internal/cmd.version=$(VERSION)' -X 'github.com/luuuc/council-cli/internal/cmd.commit=$(COMMIT)'"
+LDFLAGS := -ldflags="-s -w -X 'github.com/luuuc/council/internal/cmd.version=$(VERSION)' -X 'github.com/luuuc/council/internal/cmd.commit=$(COMMIT)'"
 
 build:
 	go build $(LDFLAGS) -o bin/council ./cmd/council
