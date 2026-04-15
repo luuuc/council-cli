@@ -195,15 +195,15 @@ func formatYAMLError(content string, err error) error {
 			}
 
 			var context strings.Builder
-			context.WriteString(fmt.Sprintf("YAML error at line %d:\n\n", lineNum))
+			fmt.Fprintf(&context, "YAML error at line %d:\n\n", lineNum)
 			for i := start; i < end; i++ {
 				marker := "  "
 				if i == lineNum-1 {
 					marker = "> "
 				}
-				context.WriteString(fmt.Sprintf("  %s%d: %s\n", marker, i+1, lines[i]))
+				fmt.Fprintf(&context, "  %s%d: %s\n", marker, i+1, lines[i])
 			}
-			context.WriteString(fmt.Sprintf("\nError: %s", errStr))
+			fmt.Fprintf(&context, "\nError: %s", errStr)
 
 			// Add common fix suggestions
 			if strings.Contains(errStr, "did not find expected") {

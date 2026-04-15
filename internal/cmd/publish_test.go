@@ -112,7 +112,7 @@ func TestRunPublish(t *testing.T) {
 
 	t.Run("publish custom only", func(t *testing.T) {
 		// Clean up output dir
-		os.RemoveAll("council-personas")
+		_ = os.RemoveAll("council-personas")
 
 		err := runPublish(false)
 		if err != nil {
@@ -137,7 +137,7 @@ func TestRunPublish(t *testing.T) {
 
 	t.Run("publish all", func(t *testing.T) {
 		// Clean up output dir
-		os.RemoveAll("council-personas")
+		_ = os.RemoveAll("council-personas")
 
 		// Add a curated expert
 		curatedExpert := LookupPersona("Kent Beck")

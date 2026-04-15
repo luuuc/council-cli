@@ -23,13 +23,13 @@ func setupTempDir(t *testing.T) (string, func()) {
 	}
 
 	if err := os.Chdir(tmpDir); err != nil {
-		os.RemoveAll(tmpDir)
+		_ = os.RemoveAll(tmpDir)
 		t.Fatal(err)
 	}
 
 	return tmpDir, func() {
 		_ = os.Chdir(original)
-		os.RemoveAll(tmpDir)
+		_ = os.RemoveAll(tmpDir)
 	}
 }
 

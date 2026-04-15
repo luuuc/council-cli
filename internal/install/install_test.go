@@ -119,12 +119,12 @@ func TestListInstalled_ReturnsDirectories(t *testing.T) {
 	if err := os.MkdirAll(testRepo1, 0755); err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(testRepo1)
+	defer func() { _ = os.RemoveAll(testRepo1) }()
 
 	if err := os.MkdirAll(testRepo2, 0755); err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(testRepo2)
+	defer func() { _ = os.RemoveAll(testRepo2) }()
 
 	installed, err := ListInstalled()
 	if err != nil {

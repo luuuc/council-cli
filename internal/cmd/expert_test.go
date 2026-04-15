@@ -25,7 +25,7 @@ func testInTempDir(t *testing.T, fn func(t *testing.T, dir string)) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	// Change to temp directory
 	if err := os.Chdir(tmpDir); err != nil {
@@ -201,7 +201,7 @@ func TestAddCmd_NoCouncilInit(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 	defer func() { _ = os.Chdir(origDir) }()
 
 	if err := os.Chdir(tmpDir); err != nil {

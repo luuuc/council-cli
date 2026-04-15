@@ -165,7 +165,7 @@ func generatePublishReadme(experts []*expert.Expert) string {
 	sb.WriteString("|------|-------|\n")
 
 	for _, e := range experts {
-		sb.WriteString(fmt.Sprintf("| [%s](%s.md) | %s |\n", e.Name, e.ID, e.Focus))
+		fmt.Fprintf(&sb, "| [%s](%s.md) | %s |\n", e.Name, e.ID, e.Focus)
 	}
 
 	return sb.String()

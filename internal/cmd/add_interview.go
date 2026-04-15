@@ -288,28 +288,28 @@ func formatExpertForEdit(e *expert.Expert) string {
 	if len(e.Triggers) > 0 {
 		buf.WriteString("triggers:\n")
 		for _, t := range e.Triggers {
-			buf.WriteString(fmt.Sprintf("  - %s\n", t))
+			fmt.Fprintf(&buf, "  - %s\n", t)
 		}
 	}
 
 	if e.Philosophy != "" {
 		buf.WriteString("philosophy: |\n")
 		for _, line := range wrapText(e.Philosophy, 70) {
-			buf.WriteString(fmt.Sprintf("  %s\n", line))
+			fmt.Fprintf(&buf, "  %s\n", line)
 		}
 	}
 
 	if len(e.Principles) > 0 {
 		buf.WriteString("principles:\n")
 		for _, pr := range e.Principles {
-			buf.WriteString(fmt.Sprintf("  - %s\n", pr))
+			fmt.Fprintf(&buf, "  - %s\n", pr)
 		}
 	}
 
 	if len(e.RedFlags) > 0 {
 		buf.WriteString("red_flags:\n")
 		for _, rf := range e.RedFlags {
-			buf.WriteString(fmt.Sprintf("  - %s\n", rf))
+			fmt.Fprintf(&buf, "  - %s\n", rf)
 		}
 	}
 
