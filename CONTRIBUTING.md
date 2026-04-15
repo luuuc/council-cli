@@ -1,10 +1,10 @@
-# Contributing to council-cli
+# Contributing to council
 
 ## Quick Start
 
 ```bash
-git clone https://github.com/luuuc/council-cli.git
-cd council-cli
+git clone https://github.com/luuuc/council.git
+cd council
 make ci    # Build + test + lint (run before every PR)
 ```
 
@@ -24,8 +24,8 @@ make ci    # Build + test + lint (run before every PR)
 ### Clone and Build
 
 ```bash
-git clone https://github.com/luuuc/council-cli.git
-cd council-cli
+git clone https://github.com/luuuc/council.git
+cd council
 make build
 ```
 
@@ -44,7 +44,7 @@ This copies the binary to `/usr/local/bin/council`.
 ### Alternative: Go Install
 
 ```bash
-go install github.com/luuuc/council-cli/cmd/council@latest
+go install github.com/luuuc/council/cmd/council@latest
 ```
 
 ## Running Tests
@@ -81,7 +81,7 @@ This runs build, tests, and lint.
 ## Code Structure
 
 ```
-council-cli/
+council/
 ├── bin/                  # Build output (gitignored)
 ├── cmd/council/          # CLI entry point
 ├── internal/
@@ -174,4 +174,4 @@ Categories: `go`, `ruby`, `python`, `javascript`, `elixir`, `rust`, `testing`, `
 
 ## Questions?
 
-Open an issue at https://github.com/luuuc/council-cli/issues
+Open an issue at https://github.com/luuuc/council/issues

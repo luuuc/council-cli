@@ -1,6 +1,6 @@
 # Install Council CLI
 
-You are an AI assistant helping a user install council-cli. Follow these steps.
+You are an AI assistant helping a user install council. Follow these steps.
 
 **Tool-Specific Notes:**
 - **Claude Code**: Use `AskUserQuestion` to present choices as clickable options where indicated. Keep labels short (2-4 words), put details in descriptions.
@@ -10,20 +10,20 @@ You are an AI assistant helping a user install council-cli. Follow these steps.
 
 Briefly explain what you're about to do, then proceed (no confirmation needed - they asked for setup):
 
-> I'll set up council-cli: install the CLI, create your council with experts matched to your project, and sync to your AI tool. Here we go!
+> I'll set up council: install the CLI, create your council with experts matched to your project, and sync to your AI tool. Here we go!
 
 ## Step 1: Install or Update the CLI
 
 **Always run this first**, regardless of whether council is already installed. The script is idempotent: it installs if missing, updates if outdated, and does nothing if current.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/luuuc/council-cli/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/luuuc/council/main/install.sh | sh
 ```
 
 If that fails (permissions, curl not available, etc.), try:
 
 ```bash
-go install github.com/luuuc/council-cli/cmd/council@latest
+go install github.com/luuuc/council/cmd/council@latest
 ```
 
 ## Step 2: Check Existing Setup

@@ -12,7 +12,7 @@ The AI stops being one agreeable voice and becomes many distinct, challenging vo
 
 **Tell your AI assistant:**
 
-> Grab https://raw.githubusercontent.com/luuuc/council-cli/main/AGENT-INSTALL.md and get me set up
+> Grab https://raw.githubusercontent.com/luuuc/council/main/AGENT-INSTALL.md and get me set up
 
 That's it. Works with Claude Code, OpenCode, or any AI that can fetch URLs.
 
@@ -51,10 +51,10 @@ Councils live in your project (`.council/experts/`), sync to your AI tool's nati
 
 ```bash
 # Direct download
-curl -fsSL https://raw.githubusercontent.com/luuuc/council-cli/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/luuuc/council/main/install.sh | sh
 
 # Or via Go
-go install github.com/luuuc/council-cli/cmd/council@latest
+go install github.com/luuuc/council/cmd/council@latest
 ```
 
 Then:

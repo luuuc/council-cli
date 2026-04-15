@@ -8,7 +8,7 @@ Claude Desktop supports the Model Context Protocol (MCP), allowing local tools t
 
 ### Setup
 
-1. Ensure council-cli is installed and in your PATH:
+1. Ensure council is installed and in your PATH:
 
 ```bash
 which council  # Should output the path to council
