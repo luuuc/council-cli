@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/luuuc/council-cli/internal/config"
+	"github.com/luuuc/council/internal/config"
 )
 
 // testInTempDir runs a test function in a temporary directory,

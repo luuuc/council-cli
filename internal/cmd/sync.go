@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/luuuc/council-cli/internal/config"
-	"github.com/luuuc/council-cli/internal/sync"
+	"github.com/luuuc/council/internal/config"
+	"github.com/luuuc/council/internal/sync"
 	"github.com/spf13/cobra"
 )
 

@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/luuuc/council-cli/internal/cmd"
+	"github.com/luuuc/council/internal/cmd"
 )
 
 func main() {

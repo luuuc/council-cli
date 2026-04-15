@@ -1,6 +1,6 @@
 package pack
 
-import "github.com/luuuc/council-cli/internal/expert"
+import "github.com/luuuc/council/internal/expert"
 
 // ResolvedMember pairs an expert with their blocking status in a pack.
 type ResolvedMember struct {

@@ -3,7 +3,7 @@ package review
 import (
 	"strings"
 
-	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council/internal/expert"
 )
 
 // Domain represents a review domain in the decision hierarchy.

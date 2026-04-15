@@ -8,9 +8,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/luuuc/council-cli/internal/adapter"
-	"github.com/luuuc/council-cli/internal/config"
-	"github.com/luuuc/council-cli/internal/sync"
+	"github.com/luuuc/council/internal/adapter"
+	"github.com/luuuc/council/internal/config"
+	"github.com/luuuc/council/internal/sync"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +22,7 @@ var (
 var rootCmd = &cobra.Command{
 	Use:   "council",
 	Short: "Expert councils for AI coding assistants",
-	Long: `council-cli helps you create an expert council for AI coding assistants.
+	Long: `council helps you create an expert council for AI coding assistants.
 
 The council pattern establishes quality standards through expert personas
 that represent excellence in specific domains - Rob Pike for Go clarity,

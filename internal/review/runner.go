@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council/internal/expert"
 )
 
 // Runner orchestrates parallel expert reviews.

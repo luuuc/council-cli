@@ -6,8 +6,8 @@ package adapter
 import (
 	"sort"
 
-	"github.com/luuuc/council-cli/internal/expert"
-	"github.com/luuuc/council-cli/internal/fs"
+	"github.com/luuuc/council/internal/expert"
+	"github.com/luuuc/council/internal/fs"
 )
 
 // Adapter defines the interface for tool-specific behavior.

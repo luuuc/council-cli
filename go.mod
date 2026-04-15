@@ -1,4 +1,4 @@
-module github.com/luuuc/council-cli
+module github.com/luuuc/council
 
 go 1.23.0
 

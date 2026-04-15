@@ -3,7 +3,7 @@ package detect_test
 import (
 	"fmt"
 
-	"github.com/luuuc/council-cli/internal/detect"
+	"github.com/luuuc/council/internal/detect"
 )
 
 func ExampleScan() {

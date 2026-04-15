@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/luuuc/council-cli/internal/detect"
+	"github.com/luuuc/council/internal/detect"
 )
 
 const setupPromptTemplate = `# Council Setup Request

@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/luuuc/council-cli/internal/config"
-	"github.com/luuuc/council-cli/internal/review"
+	"github.com/luuuc/council/internal/config"
+	"github.com/luuuc/council/internal/review"
 )
 
 // JSON-RPC 2.0 types

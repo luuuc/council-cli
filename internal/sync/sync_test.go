@@ -5,11 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/luuuc/council-cli/internal/adapter"
-	"github.com/luuuc/council-cli/internal/config"
-	"github.com/luuuc/council-cli/internal/expert"
-	"github.com/luuuc/council-cli/internal/fs"
-	"github.com/luuuc/council-cli/internal/pack"
+	"github.com/luuuc/council/internal/adapter"
+	"github.com/luuuc/council/internal/config"
+	"github.com/luuuc/council/internal/expert"
+	"github.com/luuuc/council/internal/fs"
+	"github.com/luuuc/council/internal/pack"
 )
 
 func TestGenerateCouncilCommand(t *testing.T) {

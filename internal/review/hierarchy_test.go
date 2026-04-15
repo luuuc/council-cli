@@ -3,7 +3,7 @@ package review
 import (
 	"testing"
 
-	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council/internal/expert"
 )
 
 func TestExpertDomain(t *testing.T) {

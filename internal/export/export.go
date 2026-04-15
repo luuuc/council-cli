@@ -1,10 +1,10 @@
-// Package export formats expert councils for use outside the council-cli ecosystem.
+// Package export formats expert councils for use outside the council ecosystem.
 package export
 
 import (
 	"strings"
 
-	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council/internal/expert"
 )
 
 // FormatMarkdown generates portable markdown for use in any AI context

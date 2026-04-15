@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"text/template"
 
-	"github.com/luuuc/council-cli/internal/expert"
-	"github.com/luuuc/council-cli/internal/pack"
-	"github.com/luuuc/council-cli/internal/review"
+	"github.com/luuuc/council/internal/expert"
+	"github.com/luuuc/council/internal/pack"
+	"github.com/luuuc/council/internal/review"
 )
 
 // handleReview implements the council_review MCP tool.

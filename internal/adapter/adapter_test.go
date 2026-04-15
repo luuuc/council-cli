@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council/internal/expert"
 )
 
 // Test helper to create a temp directory and change to it

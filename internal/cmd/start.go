@@ -6,11 +6,11 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/luuuc/council-cli/internal/adapter"
-	"github.com/luuuc/council-cli/internal/config"
-	"github.com/luuuc/council-cli/internal/detect"
-	"github.com/luuuc/council-cli/internal/expert"
-	"github.com/luuuc/council-cli/internal/sync"
+	"github.com/luuuc/council/internal/adapter"
+	"github.com/luuuc/council/internal/config"
+	"github.com/luuuc/council/internal/detect"
+	"github.com/luuuc/council/internal/expert"
+	"github.com/luuuc/council/internal/sync"
 	"github.com/spf13/cobra"
 )
 

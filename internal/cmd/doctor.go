@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/luuuc/council-cli/internal/adapter"
-	"github.com/luuuc/council-cli/internal/config"
-	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council/internal/adapter"
+	"github.com/luuuc/council/internal/config"
+	"github.com/luuuc/council/internal/expert"
 	"github.com/spf13/cobra"
 )
 

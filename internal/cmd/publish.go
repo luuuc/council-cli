@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/luuuc/council-cli/internal/config"
-	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council/internal/config"
+	"github.com/luuuc/council/internal/expert"
 	"github.com/spf13/cobra"
 )
 
@@ -148,7 +148,7 @@ func generatePublishReadme(experts []*expert.Expert) string {
 	var sb strings.Builder
 
 	sb.WriteString("# Council Personas\n\n")
-	sb.WriteString("Expert personas for [council-cli](https://github.com/luuuc/council-cli).\n\n")
+	sb.WriteString("Expert personas for [council](https://github.com/luuuc/council).\n\n")
 
 	sb.WriteString("## Install\n\n")
 	sb.WriteString("```bash\n")

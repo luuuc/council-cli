@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council/internal/expert"
 )
 
 // Install clones a git repository to the installed directory.

@@ -11,7 +11,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/luuuc/council-cli/internal/fs"
+	"github.com/luuuc/council/internal/fs"
 )
 
 var sourceExts = map[string]bool{

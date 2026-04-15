@@ -3,7 +3,7 @@ package expert_test
 import (
 	"fmt"
 
-	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council/internal/expert"
 )
 
 func ExampleParse() {

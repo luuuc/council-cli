@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/luuuc/council-cli/internal/config"
-	"github.com/luuuc/council-cli/internal/detect"
+	"github.com/luuuc/council/internal/config"
+	"github.com/luuuc/council/internal/detect"
 )
 
 func TestStartCmd_FailsIfCouncilExists(t *testing.T) {

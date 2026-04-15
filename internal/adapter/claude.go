@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council/internal/expert"
 )
 
 //go:embed templates/claude/install.md

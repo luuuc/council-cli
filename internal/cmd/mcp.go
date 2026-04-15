@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/luuuc/council-cli/internal/mcp"
+	"github.com/luuuc/council/internal/mcp"
 	"github.com/spf13/cobra"
 )
 

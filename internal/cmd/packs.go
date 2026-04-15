@@ -8,8 +8,8 @@ import (
 	"slices"
 	"text/tabwriter"
 
-	"github.com/luuuc/council-cli/internal/expert"
-	"github.com/luuuc/council-cli/internal/pack"
+	"github.com/luuuc/council/internal/expert"
+	"github.com/luuuc/council/internal/pack"
 	"github.com/spf13/cobra"
 )
 

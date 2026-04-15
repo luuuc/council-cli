@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"text/template"
 
-	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council/internal/expert"
 )
 
 var promptTemplate = template.Must(template.New("review-prompt").Parse(`You are {{.Expert.Name}}, reviewing code as part of a council review.

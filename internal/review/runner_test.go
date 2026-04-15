@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council/internal/expert"
 )
 
 // MockBackend returns canned verdicts for testing.

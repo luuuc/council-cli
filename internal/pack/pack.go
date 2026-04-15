@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/luuuc/council-cli/internal/config"
+	"github.com/luuuc/council/internal/config"
 	"gopkg.in/yaml.v3"
 )
 

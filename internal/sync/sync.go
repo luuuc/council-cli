@@ -9,11 +9,11 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/luuuc/council-cli/internal/adapter"
-	"github.com/luuuc/council-cli/internal/config"
-	"github.com/luuuc/council-cli/internal/expert"
-	"github.com/luuuc/council-cli/internal/install"
-	"github.com/luuuc/council-cli/internal/pack"
+	"github.com/luuuc/council/internal/adapter"
+	"github.com/luuuc/council/internal/config"
+	"github.com/luuuc/council/internal/expert"
+	"github.com/luuuc/council/internal/install"
+	"github.com/luuuc/council/internal/pack"
 )
 
 // Pre-compiled template for council command generation

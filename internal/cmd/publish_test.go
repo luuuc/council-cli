@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/luuuc/council-cli/internal/config"
-	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council/internal/config"
+	"github.com/luuuc/council/internal/expert"
 )
 
 func TestFilterCustomExperts(t *testing.T) {

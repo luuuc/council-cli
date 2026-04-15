@@ -3,7 +3,7 @@ package adapter_test
 import (
 	"fmt"
 
-	"github.com/luuuc/council-cli/internal/adapter"
+	"github.com/luuuc/council/internal/adapter"
 )
 
 func ExampleGet() {

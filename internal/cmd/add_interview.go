@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/luuuc/council-cli/internal/config"
-	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council/internal/config"
+	"github.com/luuuc/council/internal/expert"
 )
 
 //go:embed prompts/interview.txt

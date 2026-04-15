@@ -11,8 +11,8 @@ import (
 	"sync"
 	"text/tabwriter"
 
-	"github.com/luuuc/council-cli/internal/expert"
-	"github.com/luuuc/council-cli/internal/install"
+	"github.com/luuuc/council/internal/expert"
+	"github.com/luuuc/council/internal/install"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 )

@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/luuuc/council-cli/internal/config"
-	"github.com/luuuc/council-cli/internal/export"
-	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council/internal/config"
+	"github.com/luuuc/council/internal/export"
+	"github.com/luuuc/council/internal/expert"
 	"github.com/spf13/cobra"
 )
 

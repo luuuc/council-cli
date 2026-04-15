@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/luuuc/council-cli/internal/config"
+	"github.com/luuuc/council/internal/config"
 )
 
 func TestExpandGitHubShorthand(t *testing.T) {
