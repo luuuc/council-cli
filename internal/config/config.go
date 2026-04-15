@@ -26,12 +26,33 @@ type Config struct {
 	Targets []string `yaml:"targets,omitempty"` // Optional: override sync targets
 }
 
-// AIConfig holds AI CLI configuration
+// AIConfig holds AI configuration for reviews.
 type AIConfig struct {
-	Command     string   `yaml:"command"`
+	Command     string   `yaml:"command,omitempty"`
 	Args        []string `yaml:"args,omitempty"`
+	Backend     string   `yaml:"backend,omitempty"`     // "cli" or "api"
+	Provider    string   `yaml:"provider,omitempty"`     // "anthropic", "openai", "ollama"
+	Model       string   `yaml:"model,omitempty"`        // e.g. "claude-sonnet-4-6", "gpt-4o"
 	Timeout     int      `yaml:"timeout"`
 	Concurrency int      `yaml:"concurrency,omitempty"`
+}
+
+// ValidBackends is the set of recognized backend values.
+var ValidBackends = []string{"cli", "api"}
+
+// ValidProviders is the set of recognized API provider values.
+var ValidProviders = []string{"anthropic", "openai", "ollama"}
+
+// ProviderEnvKeys maps providers to their expected environment variable.
+var ProviderEnvKeys = map[string]string{
+	"anthropic": "ANTHROPIC_API_KEY",
+	"openai":    "OPENAI_API_KEY",
+}
+
+// DefaultModels maps providers to their default model.
+var DefaultModels = map[string]string{
+	"anthropic": "claude-sonnet-4-6",
+	"openai":    "gpt-4o",
 }
 
 // Default returns a default configuration
@@ -48,10 +69,16 @@ func Default() *Config {
 // KnownAICLIs is the list of AI CLIs to detect, in order of preference
 var KnownAICLIs = []string{"claude", "opencode", "aichat", "llm"}
 
-// DetectAICommand returns the configured AI command, or detects one if not set
+// DetectAICommand returns the configured AI command, or detects one if not set.
+// Returns empty string with nil error when backend is "api" and no CLI is needed.
 func (c *Config) DetectAICommand() (string, error) {
 	if c.AI.Command != "" {
 		return c.AI.Command, nil
+	}
+
+	// If explicitly configured for API backend, no CLI needed
+	if c.AI.Backend == "api" {
+		return "", nil
 	}
 
 	// Try known CLIs in order of preference
@@ -61,7 +88,50 @@ func (c *Config) DetectAICommand() (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("no AI command configured and none detected\n\nInstall claude, opencode, aichat, or llm, or set ai.command in .council/config.yaml")
+	// If no CLI found, check for API keys before giving up
+	if c.AI.Backend == "" {
+		for _, provider := range []string{"anthropic", "openai"} {
+			if os.Getenv(ProviderEnvKeys[provider]) != "" {
+				return "", nil // API key available, no CLI needed
+			}
+		}
+	}
+
+	return "", fmt.Errorf("no AI command configured and none detected\n\nInstall claude, opencode, aichat, or llm, set an API key (ANTHROPIC_API_KEY or OPENAI_API_KEY), or set ai.command in .council/config.yaml")
+}
+
+// DetectBackend determines the backend and provider to use.
+// Returns (backend, provider, model) based on config and environment.
+func (c *Config) DetectBackend() (string, string, string) {
+	// Explicit config takes precedence
+	if c.AI.Backend != "" {
+		model := c.AI.Model
+		if c.AI.Backend == "api" && c.AI.Provider != "" && model == "" {
+			model = DefaultModels[c.AI.Provider]
+		}
+		return c.AI.Backend, c.AI.Provider, model
+	}
+
+	// Auto-detect: prefer CLI, then API key
+	for _, cmd := range KnownAICLIs {
+		if _, err := exec.LookPath(cmd); err == nil {
+			return "cli", "", ""
+		}
+	}
+
+	// No CLI found — check for API keys
+	for _, p := range []string{"anthropic", "openai"} {
+		if os.Getenv(ProviderEnvKeys[p]) != "" {
+			model := DefaultModels[p]
+			if c.AI.Model != "" {
+				model = c.AI.Model
+			}
+			return "api", p, model
+		}
+	}
+
+	// Nothing detected
+	return "", "", ""
 }
 
 // Path returns the full path to a council file or directory

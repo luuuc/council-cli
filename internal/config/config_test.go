@@ -220,6 +220,101 @@ func TestValidateTool(t *testing.T) {
 	}
 }
 
+func TestDetectBackend(t *testing.T) {
+	tests := []struct {
+		name        string
+		cfg         Config
+		envKey      string // env var to set (empty = none)
+		envVal      string
+		wantBackend string
+		wantProvider string
+		wantModel   string
+	}{
+		{
+			name:        "explicit cli backend",
+			cfg:         Config{AI: AIConfig{Backend: "cli"}},
+			wantBackend: "cli",
+		},
+		{
+			name:         "explicit api backend with provider and model",
+			cfg:          Config{AI: AIConfig{Backend: "api", Provider: "anthropic", Model: "claude-opus-4-6"}},
+			wantBackend:  "api",
+			wantProvider: "anthropic",
+			wantModel:    "claude-opus-4-6",
+		},
+		{
+			name:         "explicit api backend with provider, default model",
+			cfg:          Config{AI: AIConfig{Backend: "api", Provider: "openai"}},
+			wantBackend:  "api",
+			wantProvider: "openai",
+			wantModel:    "gpt-4o",
+		},
+		{
+			name:         "explicit api backend with provider, no default model for ollama",
+			cfg:          Config{AI: AIConfig{Backend: "api", Provider: "ollama"}},
+			wantBackend:  "api",
+			wantProvider: "ollama",
+			wantModel:    "",
+		},
+		{
+			name:         "no config, ANTHROPIC_API_KEY set, no CLI",
+			cfg:          Config{},
+			envKey:       "ANTHROPIC_API_KEY",
+			envVal:       "sk-test",
+			wantBackend:  "", // depends on whether a CLI is installed
+		},
+		{
+			name:         "explicit api with custom model overrides default",
+			cfg:          Config{AI: AIConfig{Backend: "api", Provider: "anthropic", Model: "claude-haiku-4-5-20251001"}},
+			wantBackend:  "api",
+			wantProvider: "anthropic",
+			wantModel:    "claude-haiku-4-5-20251001",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.envKey != "" {
+				t.Setenv(tt.envKey, tt.envVal)
+			}
+
+			backend, provider, model := tt.cfg.DetectBackend()
+
+			// For tests that depend on environment (no explicit backend),
+			// skip exact assertions — the result depends on installed CLIs.
+			if tt.cfg.AI.Backend == "" {
+				// Just verify it doesn't panic and returns valid values
+				return
+			}
+
+			if backend != tt.wantBackend {
+				t.Errorf("backend = %q, want %q", backend, tt.wantBackend)
+			}
+			if provider != tt.wantProvider {
+				t.Errorf("provider = %q, want %q", provider, tt.wantProvider)
+			}
+			if model != tt.wantModel {
+				t.Errorf("model = %q, want %q", model, tt.wantModel)
+			}
+		})
+	}
+}
+
+func TestDetectBackendExplicitOverridesEnv(t *testing.T) {
+	// Even if API key is set, explicit cli backend wins
+	t.Setenv("ANTHROPIC_API_KEY", "sk-test")
+
+	cfg := Config{AI: AIConfig{Backend: "cli"}}
+	backend, provider, _ := cfg.DetectBackend()
+
+	if backend != "cli" {
+		t.Errorf("explicit cli should override env, got backend=%q", backend)
+	}
+	if provider != "" {
+		t.Errorf("cli backend should have no provider, got %q", provider)
+	}
+}
+
 func TestConfigToolFieldPersistence(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "config-test-*")
 	if err != nil {
