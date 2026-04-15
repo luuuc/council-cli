@@ -243,7 +243,7 @@ var personasInstalledCmd = &cobra.Command{
 		experts, _ := install.ListInstalledExperts()
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "REPOSITORY\tEXPERTS")
+		_, _ = fmt.Fprintln(w, "REPOSITORY\tEXPERTS")
 
 		for _, name := range installed {
 			count := 0

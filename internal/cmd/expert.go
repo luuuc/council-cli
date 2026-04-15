@@ -70,11 +70,11 @@ var listCmd = &cobra.Command{
 		}
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "ID\tNAME\tFOCUS")
+		_, _ = fmt.Fprintln(w, "ID\tNAME\tFOCUS")
 		for _, e := range result.Experts {
-			fmt.Fprintf(w, "%s\t%s\t%s\n", e.ID, e.Name, e.Focus)
+			_, _ = fmt.Fprintf(w, "%s\t%s\t%s\n", e.ID, e.Name, e.Focus)
 		}
-		w.Flush()
+		_ = w.Flush()
 
 		return nil
 	},

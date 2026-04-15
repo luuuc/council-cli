@@ -115,14 +115,14 @@ func runAddInterview() error {
 			if err != nil {
 				return fmt.Errorf("failed to create temp file: %w", err)
 			}
-			defer os.Remove(tmpfile.Name())
+			defer func() { _ = os.Remove(tmpfile.Name()) }()
 
 			// Write current expert to temp file
 			content := formatExpertForEdit(exp)
 			if _, err := tmpfile.WriteString(content); err != nil {
 				return fmt.Errorf("failed to write temp file: %w", err)
 			}
-			tmpfile.Close()
+			_ = tmpfile.Close()
 
 			// Open editor
 			if err := openInEditor(tmpfile.Name()); err != nil {

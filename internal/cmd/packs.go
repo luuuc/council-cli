@@ -67,15 +67,15 @@ Examples:
 
 		fmt.Printf("Available packs (%d):\n\n", len(packs))
 		w := tabwriter.NewWriter(cmd.OutOrStdout(), 0, 0, 2, ' ', 0)
-		fmt.Fprintf(w, "  NAME\tMEMBERS\tSOURCE\tDESCRIPTION\n")
+		_, _ = fmt.Fprintf(w, "  NAME\tMEMBERS\tSOURCE\tDESCRIPTION\n")
 		for _, p := range packs {
 			source := "custom"
 			if p.Source == "builtin" {
 				source = "builtin"
 			}
-			fmt.Fprintf(w, "  %s\t%d\t%s\t%s\n", p.Name, len(p.Members), source, p.Description)
+			_, _ = fmt.Fprintf(w, "  %s\t%d\t%s\t%s\n", p.Name, len(p.Members), source, p.Description)
 		}
-		w.Flush()
+		_ = w.Flush()
 
 		return nil
 	},
