@@ -49,8 +49,9 @@ type ExpertVerdict struct {
 
 // Submission is the material being reviewed.
 type Submission struct {
-	Content string // The diff, file content, or text to review
-	Context string // Optional context (e.g., PR title)
+	Content   string // The diff, file content, or text to review
+	Context   string // Optional context (e.g., PR title)
+	RawPrompt string // When set, backends use this as the prompt directly (bypasses BuildPrompt and ParseVerdict)
 }
 
 // SynthesizedResult is the aggregated output from all expert reviews.

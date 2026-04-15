@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/luuuc/council-cli/internal/expert"
 )
@@ -66,9 +67,12 @@ func (b *APIBackend) SetBaseURL(url string) {
 
 // Review executes a single expert review via the provider's API.
 func (b *APIBackend) Review(ctx context.Context, e *expert.Expert, sub Submission) (ExpertVerdict, error) {
-	persona := BuildPrompt(e, sub)
+	prompt := sub.RawPrompt
+	if prompt == "" {
+		prompt = BuildPrompt(e, sub)
+	}
 
-	body, err := json.Marshal(b.config.BuildBody(b.Model, persona))
+	body, err := json.Marshal(b.config.BuildBody(b.Model, prompt))
 	if err != nil {
 		return ExpertVerdict{}, fmt.Errorf("marshal request for %s: %w", e.ID, err)
 	}
@@ -104,6 +108,16 @@ func (b *APIBackend) Review(ctx context.Context, e *expert.Expert, sub Submissio
 	text, err := b.config.ExtractText(respBody)
 	if err != nil {
 		return ExpertVerdict{}, fmt.Errorf("parse response for %s: %w", e.ID, err)
+	}
+
+	// RawPrompt mode: return the raw text directly instead of parsing verdict JSON.
+	if sub.RawPrompt != "" {
+		return ExpertVerdict{
+			Expert:     e.ID,
+			Verdict:    VerdictComment,
+			Confidence: 1.0,
+			Notes:      []string{strings.TrimSpace(text)},
+		}, nil
 	}
 
 	verdict := ParseVerdict(e.ID, []byte(text))

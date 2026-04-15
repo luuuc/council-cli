@@ -52,7 +52,10 @@ func NewCLIBackend(command string, args []string) *CLIBackend {
 
 // Review executes a single expert review via subprocess.
 func (b *CLIBackend) Review(ctx context.Context, e *expert.Expert, sub Submission) (ExpertVerdict, error) {
-	prompt := BuildPrompt(e, sub)
+	prompt := sub.RawPrompt
+	if prompt == "" {
+		prompt = BuildPrompt(e, sub)
+	}
 
 	// Build command args
 	baseArgs := make([]string, len(b.Args))
@@ -78,6 +81,16 @@ func (b *CLIBackend) Review(ctx context.Context, e *expert.Expert, sub Submissio
 			detail = ": " + truncateBytes(output, 200)
 		}
 		return ExpertVerdict{}, fmt.Errorf("subprocess failed for %s%s: %w", e.ID, detail, err)
+	}
+
+	// RawPrompt mode: return the raw text directly instead of parsing verdict JSON.
+	if sub.RawPrompt != "" {
+		return ExpertVerdict{
+			Expert:     e.ID,
+			Verdict:    VerdictComment,
+			Confidence: 1.0,
+			Notes:      []string{strings.TrimSpace(string(output))},
+		}, nil
 	}
 
 	verdict := ParseVerdict(e.ID, output)
