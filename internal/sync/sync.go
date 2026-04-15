@@ -11,12 +11,19 @@ import (
 
 	"github.com/luuuc/council-cli/internal/adapter"
 	"github.com/luuuc/council-cli/internal/config"
-	"github.com/luuuc/council-cli/internal/install"
 	"github.com/luuuc/council-cli/internal/expert"
+	"github.com/luuuc/council-cli/internal/install"
+	"github.com/luuuc/council-cli/internal/pack"
 )
 
 // Pre-compiled template for council command generation
 var councilCommandTemplate = template.Must(template.New("council").Parse(adapter.CouncilCommandTemplate()))
+
+// councilTemplateData is the data passed to the council command template.
+type councilTemplateData struct {
+	Experts []*expert.Expert
+	Packs   []*pack.Pack
+}
 
 // Options configures sync behavior
 type Options struct {
@@ -54,6 +61,12 @@ func SyncAll(cfg *config.Config, opts Options) error {
 		return fmt.Errorf("no experts to sync - add some with 'council add' first")
 	}
 
+	// Load all packs
+	allPacks, err := pack.ListAll()
+	if err != nil {
+		fmt.Printf("Warning: could not load packs: %v\n", err)
+	}
+
 	// Determine which adapter(s) to sync to
 	adapters, err := resolveAdapters(cfg)
 	if err != nil {
@@ -63,7 +76,7 @@ func SyncAll(cfg *config.Config, opts Options) error {
 	// Sync to each adapter
 	for _, a := range adapters {
 		fmt.Printf("Syncing to %s...\n", a.DisplayName())
-		if err := syncToAdapter(a, allExperts, opts); err != nil {
+		if err := syncToAdapter(a, allExperts, allPacks, opts); err != nil {
 			return fmt.Errorf("failed to sync to %s: %w", a.Name(), err)
 		}
 
@@ -140,7 +153,7 @@ func resolveAdapters(cfg *config.Config) ([]adapter.Adapter, error) {
 	}
 }
 
-func syncToAdapter(a adapter.Adapter, experts []*expert.Expert, opts Options) error {
+func syncToAdapter(a adapter.Adapter, experts []*expert.Expert, packs []*pack.Pack, opts Options) error {
 	paths := a.Paths()
 	templates := a.Templates()
 
@@ -173,8 +186,8 @@ func syncToAdapter(a adapter.Adapter, experts []*expert.Expert, opts Options) er
 		}
 	}
 
-	// Create /council command (dynamic content based on experts)
-	councilContent := generateCouncilCommand(a, experts)
+	// Create /council command (dynamic content based on experts and packs)
+	councilContent := generateCouncilCommand(a, experts, packs)
 	if councilContent != "" {
 		path := filepath.Join(paths.Commands, "council.md")
 		if err := writeFile(path, councilContent, opts.DryRun); err != nil {
@@ -204,9 +217,10 @@ func syncToAdapter(a adapter.Adapter, experts []*expert.Expert, opts Options) er
 	return nil
 }
 
-func generateCouncilCommand(a adapter.Adapter, experts []*expert.Expert) string {
+func generateCouncilCommand(a adapter.Adapter, experts []*expert.Expert, packs []*pack.Pack) string {
+	data := councilTemplateData{Experts: experts, Packs: packs}
 	var buf bytes.Buffer
-	if err := councilCommandTemplate.Execute(&buf, experts); err != nil {
+	if err := councilCommandTemplate.Execute(&buf, data); err != nil {
 		// Fallback to simple format if template fails
 		return "# Code Review Council\n\nConvene the council to review: $ARGUMENTS\n"
 	}
@@ -364,8 +378,13 @@ func SyncTarget(targetName string, cfg *config.Config, opts Options) error {
 		return fmt.Errorf("no experts to sync - add some with 'council add' first")
 	}
 
+	allPacks, err := pack.ListAll()
+	if err != nil {
+		fmt.Printf("Warning: could not load packs: %v\n", err)
+	}
+
 	fmt.Printf("Syncing to %s...\n", a.DisplayName())
-	if err := syncToAdapter(a, allExperts, opts); err != nil {
+	if err := syncToAdapter(a, allExperts, allPacks, opts); err != nil {
 		return fmt.Errorf("failed to sync to %s: %w", targetName, err)
 	}
 
