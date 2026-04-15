@@ -73,7 +73,7 @@ func TestExists(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	origDir, _ := os.Getwd()
 	if err := os.Chdir(tmpDir); err != nil {
@@ -96,7 +96,7 @@ func TestExists(t *testing.T) {
 	}
 
 	// Create a file with same name (edge case)
-	os.RemoveAll(CouncilDir)
+	_ = os.RemoveAll(CouncilDir)
 	if err := os.WriteFile(CouncilDir, []byte("not a dir"), 0644); err != nil {
 		t.Fatalf("Failed to write file: %v", err)
 	}
@@ -111,7 +111,7 @@ func TestLoadAndSave(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	origDir, _ := os.Getwd()
 	if err := os.Chdir(tmpDir); err != nil {
@@ -157,7 +157,7 @@ func TestLoadInvalidYAML(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	origDir, _ := os.Getwd()
 	if err := os.Chdir(tmpDir); err != nil {
@@ -320,7 +320,7 @@ func TestConfigToolFieldPersistence(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() { _ = os.RemoveAll(tmpDir) }()
 
 	origDir, _ := os.Getwd()
 	if err := os.Chdir(tmpDir); err != nil {

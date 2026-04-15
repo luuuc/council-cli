@@ -275,14 +275,14 @@ func formatExpertForEdit(e *expert.Expert) string {
 	var buf bytes.Buffer
 
 	buf.WriteString("---\n")
-	buf.WriteString(fmt.Sprintf("id: %s\n", e.ID))
-	buf.WriteString(fmt.Sprintf("name: %s\n", e.Name))
-	buf.WriteString(fmt.Sprintf("focus: %s\n", e.Focus))
+	fmt.Fprintf(&buf, "id: %s\n", e.ID)
+	fmt.Fprintf(&buf, "name: %s\n", e.Name)
+	fmt.Fprintf(&buf, "focus: %s\n", e.Focus)
 	if e.Category != "" {
-		buf.WriteString(fmt.Sprintf("category: %s\n", e.Category))
+		fmt.Fprintf(&buf, "category: %s\n", e.Category)
 	}
 	if e.Priority != "" {
-		buf.WriteString(fmt.Sprintf("priority: %s\n", e.Priority))
+		fmt.Fprintf(&buf, "priority: %s\n", e.Priority)
 	}
 
 	if len(e.Triggers) > 0 {

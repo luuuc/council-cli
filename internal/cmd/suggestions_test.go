@@ -56,7 +56,7 @@ func TestSuggestionsSchema(t *testing.T) {
 			// Note: IDs can differ from ToID(name) for aliases (tenderlove),
 			// disambiguation (jose-valim vs jose-valim-phoenix), or accented names
 			for _, c := range e.ID {
-				if !((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-') {
+				if (c < 'a' || c > 'z') && (c < '0' || c > '9') && c != '-' {
 					t.Errorf(prefix("id %q contains invalid character %q"), e.ID, string(c))
 					break
 				}
