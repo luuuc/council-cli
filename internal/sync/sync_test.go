@@ -9,6 +9,7 @@ import (
 	"github.com/luuuc/council-cli/internal/config"
 	"github.com/luuuc/council-cli/internal/expert"
 	"github.com/luuuc/council-cli/internal/fs"
+	"github.com/luuuc/council-cli/internal/pack"
 )
 
 func TestGenerateCouncilCommand(t *testing.T) {
@@ -26,7 +27,7 @@ func TestGenerateCouncilCommand(t *testing.T) {
 	}
 
 	claude, _ := adapter.Get("claude")
-	result := generateCouncilCommand(claude, experts)
+	result := generateCouncilCommand(claude, experts, nil)
 
 	// Check for key elements
 	if !strings.Contains(result, "Code Review Council") {
@@ -51,7 +52,7 @@ func TestGenerateCouncilCommand_EmptyExperts(t *testing.T) {
 	experts := []*expert.Expert{}
 
 	claude, _ := adapter.Get("claude")
-	result := generateCouncilCommand(claude, experts)
+	result := generateCouncilCommand(claude, experts, nil)
 
 	// Should still have the header and instructions
 	if !strings.Contains(result, "Code Review Council") {
@@ -73,7 +74,7 @@ func TestGenerateCouncilCommand_SpecialCharacters(t *testing.T) {
 	}
 
 	claude, _ := adapter.Get("claude")
-	result := generateCouncilCommand(claude, experts)
+	result := generateCouncilCommand(claude, experts, nil)
 
 	// Should not panic and should contain the special characters
 	if !strings.Contains(result, "<html>") {
@@ -135,7 +136,7 @@ func TestSyncToAdapterClaude(t *testing.T) {
 	experts := []*expert.Expert{testExpert}
 
 	// Test dry run
-	err = syncToAdapter(claude, experts, Options{DryRun: true})
+	err = syncToAdapter(claude, experts, nil, Options{DryRun: true})
 	if err != nil {
 		t.Errorf("syncToAdapter() dry run error = %v", err)
 	}
@@ -146,7 +147,7 @@ func TestSyncToAdapterClaude(t *testing.T) {
 	}
 
 	// Test actual sync
-	err = syncToAdapter(claude, experts, Options{DryRun: false})
+	err = syncToAdapter(claude, experts, nil, Options{DryRun: false})
 	if err != nil {
 		t.Errorf("syncToAdapter() error = %v", err)
 	}
@@ -192,7 +193,7 @@ func TestSyncToAdapterGeneric(t *testing.T) {
 		},
 	}
 
-	err = syncToAdapter(generic, experts, Options{DryRun: false})
+	err = syncToAdapter(generic, experts, nil, Options{DryRun: false})
 	if err != nil {
 		t.Errorf("syncToAdapter() error = %v", err)
 	}
@@ -349,7 +350,7 @@ func TestSyncToAdapterOpenCode(t *testing.T) {
 	}
 
 	// Test dry run
-	err = syncToAdapter(opencode, experts, Options{DryRun: true})
+	err = syncToAdapter(opencode, experts, nil, Options{DryRun: true})
 	if err != nil {
 		t.Errorf("syncToAdapter() dry run error = %v", err)
 	}
@@ -360,7 +361,7 @@ func TestSyncToAdapterOpenCode(t *testing.T) {
 	}
 
 	// Test actual sync
-	err = syncToAdapter(opencode, experts, Options{DryRun: false})
+	err = syncToAdapter(opencode, experts, nil, Options{DryRun: false})
 	if err != nil {
 		t.Errorf("syncToAdapter() error = %v", err)
 	}
@@ -544,7 +545,7 @@ func TestGenerateCouncilCommand_TemplateContent(t *testing.T) {
 	}
 
 	claude, _ := adapter.Get("claude")
-	result := generateCouncilCommand(claude, experts)
+	result := generateCouncilCommand(claude, experts, nil)
 
 	// Verify template was executed (contains expert data)
 	if !strings.Contains(result, "Test Expert") {
@@ -555,5 +556,53 @@ func TestGenerateCouncilCommand_TemplateContent(t *testing.T) {
 	}
 	if !strings.Contains(result, "Council Members") {
 		t.Error("generateCouncilCommand() should contain Council Members section")
+	}
+}
+
+func TestGenerateCouncilCommand_WithPacks(t *testing.T) {
+	experts := []*expert.Expert{
+		{ID: "test", Name: "Test Expert", Focus: "Testing"},
+	}
+	packs := []*pack.Pack{
+		{Name: "go", Description: "Go review council", Members: []pack.Member{
+			{ID: "rob-pike"},
+			{ID: "dave-cheney"},
+		}},
+		{Name: "rails", Description: "Rails review council", Members: []pack.Member{
+			{ID: "dhh", Blocking: true},
+		}},
+	}
+
+	claude, _ := adapter.Get("claude")
+	result := generateCouncilCommand(claude, experts, packs)
+
+	if !strings.Contains(result, "Available Packs") {
+		t.Error("generateCouncilCommand() with packs should contain Available Packs section")
+	}
+	if !strings.Contains(result, "--pack") {
+		t.Error("generateCouncilCommand() with packs should mention --pack flag")
+	}
+	if !strings.Contains(result, "**go**") {
+		t.Error("generateCouncilCommand() should list go pack")
+	}
+	if !strings.Contains(result, "**rails**") {
+		t.Error("generateCouncilCommand() should list rails pack")
+	}
+	if !strings.Contains(result, "2 members") {
+		t.Error("generateCouncilCommand() should show member count for go pack")
+	}
+}
+
+func TestGenerateCouncilCommand_NoPacks(t *testing.T) {
+	experts := []*expert.Expert{
+		{ID: "test", Name: "Test Expert", Focus: "Testing"},
+	}
+
+	claude, _ := adapter.Get("claude")
+	result := generateCouncilCommand(claude, experts, nil)
+
+	// With nil packs, should not contain packs section
+	if strings.Contains(result, "Available Packs") {
+		t.Error("generateCouncilCommand() with nil packs should not contain Available Packs section")
 	}
 }

@@ -73,7 +73,8 @@ func (c *Claude) FormatCommand(name, description, body string) string {
 	return body
 }
 
-// CouncilCommandTemplate is exported for use by sync when generating the dynamic /council command
+// CouncilCommandTemplate is exported for use by sync when generating the dynamic /council command.
+// The template receives a CouncilTemplateData struct.
 func CouncilCommandTemplate() string {
 	return `# Code Review Council
 
@@ -81,10 +82,20 @@ Convene the council to review: $ARGUMENTS
 
 ## Council Members
 
-{{range .}}
+{{range .Experts}}
 ### {{.Name}}
 **Focus**: {{.Focus}}
 {{end}}
+{{- if .Packs}}
+
+## Available Packs
+
+Use ` + "`--pack <name>`" + ` in your arguments to convene a specific pack instead of the full council.
+
+{{range .Packs}}- **{{.Name}}**{{if .Description}} — {{.Description}}{{end}} ({{len .Members}} members)
+{{end}}
+When a --pack argument is provided, only review with the experts in that pack (plus any experts with priority: always). Ignore the full council members list above.
+{{- end}}
 
 ## Instructions
 
