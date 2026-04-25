@@ -41,18 +41,20 @@ type AIConfig struct {
 var ValidBackends = []string{"cli", "api"}
 
 // ValidProviders is the set of recognized API provider values.
-var ValidProviders = []string{"anthropic", "openai", "ollama"}
+var ValidProviders = []string{"anthropic", "openai", "ollama", "github"}
 
 // ProviderEnvKeys maps providers to their expected environment variable.
 var ProviderEnvKeys = map[string]string{
 	"anthropic": "ANTHROPIC_API_KEY",
 	"openai":    "OPENAI_API_KEY",
+	"github":    "GITHUB_TOKEN",
 }
 
 // DefaultModels maps providers to their default model.
 var DefaultModels = map[string]string{
 	"anthropic": "claude-sonnet-4-6",
 	"openai":    "gpt-4o",
+	"github":    "openai/gpt-4.1-mini",
 }
 
 // Default returns a default configuration
@@ -90,7 +92,7 @@ func (c *Config) DetectAICommand() (string, error) {
 
 	// If no CLI found, check for API keys before giving up
 	if c.AI.Backend == "" {
-		for _, provider := range []string{"anthropic", "openai"} {
+		for _, provider := range []string{"anthropic", "openai", "github"} {
 			if os.Getenv(ProviderEnvKeys[provider]) != "" {
 				return "", nil // API key available, no CLI needed
 			}
@@ -119,8 +121,8 @@ func (c *Config) DetectBackend() (string, string, string) {
 		}
 	}
 
-	// No CLI found — check for API keys
-	for _, p := range []string{"anthropic", "openai"} {
+	// No CLI found — check for API keys (github last: free tier fallback)
+	for _, p := range []string{"anthropic", "openai", "github"} {
 		if os.Getenv(ProviderEnvKeys[p]) != "" {
 			model := DefaultModels[p]
 			if c.AI.Model != "" {

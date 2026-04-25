@@ -15,7 +15,7 @@ import (
 
 // APIBackend makes direct HTTP calls to LLM provider APIs.
 type APIBackend struct {
-	Provider string // "anthropic", "openai", "ollama"
+	Provider string // "anthropic", "openai", "ollama", "github"
 	Model    string
 	client   *http.Client
 	config   providerConfig
@@ -210,6 +210,34 @@ func anthropicProvider() providerConfig {
 	}
 }
 
+// --- OpenAI-compatible shared layer (used by openai and github providers) ---
+
+func openaiCompatBuildBody(model, persona string) any {
+	return map[string]any{
+		"model": model,
+		"messages": []map[string]string{
+			{"role": "user", "content": persona},
+		},
+	}
+}
+
+func openaiCompatExtractText(respBody []byte) (string, error) {
+	var resp struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+	if err := json.Unmarshal(respBody, &resp); err != nil {
+		return "", fmt.Errorf("unmarshal openai-compatible response: %w", err)
+	}
+	if len(resp.Choices) == 0 {
+		return "", fmt.Errorf("no choices in openai-compatible response")
+	}
+	return resp.Choices[0].Message.Content, nil
+}
+
 // --- OpenAI provider ---
 
 func openaiProvider() providerConfig {
@@ -220,30 +248,23 @@ func openaiProvider() providerConfig {
 				"Authorization": "Bearer " + os.Getenv("OPENAI_API_KEY"),
 			}
 		},
-		BuildBody: func(model, persona string) any {
-			return map[string]any{
-				"model": model,
-				"messages": []map[string]string{
-					{"role": "user", "content": persona},
-				},
+		BuildBody:   openaiCompatBuildBody,
+		ExtractText: openaiCompatExtractText,
+	}
+}
+
+// --- GitHub Models provider ---
+
+func githubProvider() providerConfig {
+	return providerConfig{
+		URL: "https://models.github.ai/inference/chat/completions",
+		Headers: func() map[string]string {
+			return map[string]string{
+				"Authorization": "Bearer " + os.Getenv("GITHUB_TOKEN"),
 			}
 		},
-		ExtractText: func(respBody []byte) (string, error) {
-			var resp struct {
-				Choices []struct {
-					Message struct {
-						Content string `json:"content"`
-					} `json:"message"`
-				} `json:"choices"`
-			}
-			if err := json.Unmarshal(respBody, &resp); err != nil {
-				return "", fmt.Errorf("unmarshal openai response: %w", err)
-			}
-			if len(resp.Choices) == 0 {
-				return "", fmt.Errorf("no choices in openai response")
-			}
-			return resp.Choices[0].Message.Content, nil
-		},
+		BuildBody:   openaiCompatBuildBody,
+		ExtractText: openaiCompatExtractText,
 	}
 }
 
@@ -285,7 +306,9 @@ func providerFor(name string) (providerConfig, error) {
 		return openaiProvider(), nil
 	case "ollama":
 		return ollamaProvider(), nil
+	case "github":
+		return githubProvider(), nil
 	default:
-		return providerConfig{}, fmt.Errorf("unknown provider: %s (supported: anthropic, openai, ollama)", name)
+		return providerConfig{}, fmt.Errorf("unknown provider: %s (supported: anthropic, openai, ollama, github)", name)
 	}
 }

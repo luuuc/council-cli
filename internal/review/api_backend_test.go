@@ -121,6 +121,121 @@ func TestAPIBackendOpenAI(t *testing.T) {
 	}
 }
 
+func TestAPIBackendGitHub(t *testing.T) {
+	verdictJSON := `{"expert":"test-expert","verdict":"pass","confidence":0.8,"notes":["Clean"],"blocking":false}`
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got := r.Header.Get("Authorization"); got != "Bearer gh-test-token" {
+			t.Errorf("expected Bearer gh-test-token, got %q", got)
+		}
+
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("failed to decode request body: %v", err)
+		}
+		if body["model"] != "openai/gpt-4.1-mini" {
+			t.Errorf("expected model openai/gpt-4.1-mini, got %v", body["model"])
+		}
+
+		resp := map[string]any{
+			"choices": []map[string]any{
+				{"message": map[string]string{"content": verdictJSON}},
+			},
+		}
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	t.Setenv("GITHUB_TOKEN", "gh-test-token")
+
+	backend, err := newAPIBackendWithClient("github", "openai/gpt-4.1-mini", server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	backend.SetBaseURL(server.URL)
+
+	verdict, err := backend.Review(context.Background(), testExpert(), testSubmission())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if verdict.Verdict != VerdictPass {
+		t.Errorf("expected pass, got %s", verdict.Verdict)
+	}
+}
+
+func TestAPIBackendGitHubCollective(t *testing.T) {
+	collectiveJSON := `{"verdict":"comment","blocking":false,"perspectives":[{"expert":"expert-a","verdict":"comment","confidence":0.8,"notes":["Add test"],"blocking":false}],"agreements":["Decent structure"],"tension":"","summary":"Needs tests."}`
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := map[string]any{
+			"choices": []map[string]any{
+				{"message": map[string]string{"content": collectiveJSON}},
+			},
+		}
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	t.Setenv("GITHUB_TOKEN", "gh-test-token")
+
+	backend, err := newAPIBackendWithClient("github", "openai/gpt-4.1-mini", server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	backend.SetBaseURL(server.URL)
+
+	experts := []*expert.Expert{
+		{ID: "expert-a", Name: "Expert A", Focus: "Testing", Body: "Test expert."},
+	}
+
+	result, err := backend.ReviewCollective(context.Background(), experts, testSubmission())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Verdict != VerdictComment {
+		t.Errorf("expected comment, got %s", result.Verdict)
+	}
+}
+
+func TestAPIBackendGitHubModelOverride(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("failed to decode request body: %v", err)
+		}
+		if body["model"] != "openai/gpt-4.1" {
+			t.Errorf("expected model override openai/gpt-4.1, got %v", body["model"])
+		}
+
+		verdictJSON := `{"expert":"test-expert","verdict":"pass","confidence":0.9,"notes":[],"blocking":false}`
+		resp := map[string]any{
+			"choices": []map[string]any{
+				{"message": map[string]string{"content": verdictJSON}},
+			},
+		}
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	t.Setenv("GITHUB_TOKEN", "gh-test-token")
+
+	backend, err := newAPIBackendWithClient("github", "openai/gpt-4.1", server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	backend.SetBaseURL(server.URL)
+
+	verdict, err := backend.Review(context.Background(), testExpert(), testSubmission())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if verdict.Verdict != VerdictPass {
+		t.Errorf("expected pass, got %s", verdict.Verdict)
+	}
+}
+
 func TestAPIBackendOllama(t *testing.T) {
 	verdictJSON := `{"expert":"test-expert","verdict":"block","confidence":0.85,"notes":["Missing validation"],"blocking":true}`
 

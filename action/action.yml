@@ -1,0 +1,215 @@
+name: 'Council Review'
+description: 'Multi-perspective code review by an expert council'
+author: 'luuuc'
+
+branding:
+  icon: 'users'
+  color: 'purple'
+
+inputs:
+  pack:
+    description: 'Expert pack to use for review (e.g. rails, go, code)'
+    required: false
+    default: ''
+  model:
+    description: 'Override LLM model (e.g. openai/gpt-4.1, claude-sonnet-4-6)'
+    required: false
+    default: ''
+  anthropic-api-key:
+    description: 'Anthropic API key for Claude (BYOK for best results)'
+    required: false
+    default: ''
+  openai-api-key:
+    description: 'OpenAI API key (BYOK alternative)'
+    required: false
+    default: ''
+  version:
+    description: 'Council binary version (default: latest)'
+    required: false
+    default: 'latest'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Resolve council version
+      id: resolve-version
+      shell: bash
+      env:
+        COUNCIL_VERSION: ${{ inputs.version }}
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+        if [ "$COUNCIL_VERSION" = "latest" ]; then
+          COUNCIL_VERSION=$(gh api repos/luuuc/council/releases/latest --jq '.tag_name')
+        fi
+        echo "version=$COUNCIL_VERSION" >> "$GITHUB_OUTPUT"
+
+    - name: Cache council binary
+      id: cache-council
+      uses: actions/cache@v4
+      with:
+        path: ~/.local/bin/council
+        key: council-linux-amd64-${{ steps.resolve-version.outputs.version }}
+
+    - name: Download council binary
+      if: steps.cache-council.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        COUNCIL_VERSION: ${{ steps.resolve-version.outputs.version }}
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+
+        DOWNLOAD_URL=$(gh api "repos/luuuc/council/releases/tags/${COUNCIL_VERSION}" --jq '.assets[] | select(.name | test("linux-amd64")) | .browser_download_url')
+
+        if [ -z "$DOWNLOAD_URL" ]; then
+          echo "::error::Could not find council binary for linux-amd64 at version ${COUNCIL_VERSION}"
+          exit 1
+        fi
+
+        mkdir -p "$HOME/.local/bin"
+        curl -sL "$DOWNLOAD_URL" -o "$HOME/.local/bin/council"
+        chmod +x "$HOME/.local/bin/council"
+
+    - name: Add council to PATH
+      shell: bash
+      run: echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+    - name: Fetch PR diff
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+
+        gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}" \
+          -H "Accept: application/vnd.github.diff" \
+          > /tmp/council-pr.diff
+
+        if [ ! -s /tmp/council-pr.diff ]; then
+          echo "::warning::Empty diff, skipping review"
+          echo "COUNCIL_SKIP=true" >> "$GITHUB_ENV"
+        fi
+
+    - name: Select provider
+      shell: bash
+      env:
+        INPUT_ANTHROPIC_KEY: ${{ inputs.anthropic-api-key }}
+        INPUT_OPENAI_KEY: ${{ inputs.openai-api-key }}
+        INPUT_MODEL: ${{ inputs.model }}
+      run: |
+        set -euo pipefail
+
+        if [ -n "$INPUT_ANTHROPIC_KEY" ]; then
+          echo "::add-mask::$INPUT_ANTHROPIC_KEY"
+          echo "COUNCIL_PROVIDER=anthropic" >> "$GITHUB_ENV"
+          MODEL="${INPUT_MODEL:-claude-sonnet-4-6}"
+        elif [ -n "$INPUT_OPENAI_KEY" ]; then
+          echo "::add-mask::$INPUT_OPENAI_KEY"
+          echo "COUNCIL_PROVIDER=openai" >> "$GITHUB_ENV"
+          MODEL="${INPUT_MODEL:-gpt-4.1}"
+        else
+          echo "COUNCIL_PROVIDER=github" >> "$GITHUB_ENV"
+          MODEL="${INPUT_MODEL:-openai/gpt-4.1-mini}"
+        fi
+
+        echo "COUNCIL_MODEL=$MODEL" >> "$GITHUB_ENV"
+
+    - name: Run council review
+      if: env.COUNCIL_SKIP != 'true'
+      timeout-minutes: 10
+      shell: bash
+      env:
+        INPUT_PACK: ${{ inputs.pack }}
+        ANTHROPIC_API_KEY: ${{ inputs.anthropic-api-key }}
+        OPENAI_API_KEY: ${{ inputs.openai-api-key }}
+        GITHUB_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+
+        ARGS="review --backend api --provider $COUNCIL_PROVIDER --output github-pr"
+
+        if [ -n "$COUNCIL_MODEL" ]; then
+          ARGS="$ARGS --model $COUNCIL_MODEL"
+        fi
+
+        if [ -n "$INPUT_PACK" ]; then
+          ARGS="$ARGS --pack $INPUT_PACK"
+        fi
+
+        council $ARGS --file /tmp/council-pr.diff > /tmp/council-output.json 2>/tmp/council-stderr.log || {
+          echo "::warning::Council review failed, posting error comment"
+          STDERR=$(head -20 /tmp/council-stderr.log)
+          jq -n \
+            --arg stderr "$STDERR" \
+            '{
+              review: {
+                event: "COMMENT",
+                body: ("## Council Review\n\n⚠️ Review incomplete — council encountered an error.\n\n```\n" + $stderr + "\n```"),
+                comments: []
+              },
+              check_run: {
+                name: "Council Review",
+                status: "completed",
+                conclusion: "neutral",
+                output: {
+                  title: "Review incomplete",
+                  summary: "Council encountered an error during review."
+                }
+              }
+            }' > /tmp/council-output.json
+        }
+
+    - name: Post PR review
+      if: env.COUNCIL_SKIP != 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+
+        EVENT=$(jq -r '.review.event' /tmp/council-output.json)
+        BODY=$(jq -r '.review.body' /tmp/council-output.json)
+        COMMENTS=$(jq -c '.review.comments // []' /tmp/council-output.json)
+
+        # Build the review payload
+        jq -n \
+          --arg event "$EVENT" \
+          --arg body "$BODY" \
+          --argjson comments "$COMMENTS" \
+          '{event: $event, body: $body, comments: $comments}' \
+          > /tmp/council-review-payload.json
+
+        gh api "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/reviews" \
+          --method POST \
+          --input /tmp/council-review-payload.json \
+          || echo "::warning::Failed to post PR review"
+
+    - name: Post check run
+      if: env.COUNCIL_SKIP != 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        set -euo pipefail
+
+        CONCLUSION=$(jq -r '.check_run.conclusion' /tmp/council-output.json)
+        TITLE=$(jq -r '.check_run.output.title' /tmp/council-output.json)
+        SUMMARY=$(jq -r '.check_run.output.summary' /tmp/council-output.json)
+        ANNOTATIONS=$(jq -c '.check_run.output.annotations // []' /tmp/council-output.json)
+
+        jq -n \
+          --arg name "Council Review" \
+          --arg head_sha "${{ github.event.pull_request.head.sha }}" \
+          --arg status "completed" \
+          --arg conclusion "$CONCLUSION" \
+          --arg title "$TITLE" \
+          --arg summary "$SUMMARY" \
+          --argjson annotations "$ANNOTATIONS" \
+          '{name: $name, head_sha: $head_sha, status: $status, conclusion: $conclusion, output: {title: $title, summary: $summary, annotations: $annotations}}' \
+          > /tmp/council-check-payload.json
+
+        gh api "repos/${{ github.repository }}/check-runs" \
+          --method POST \
+          --input /tmp/council-check-payload.json \
+          || echo "::warning::Failed to post check run"

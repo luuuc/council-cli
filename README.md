@@ -131,10 +131,52 @@ Exposes three tools over stdin/stdout JSON-RPC:
 - `council_list` — list pack members (no LLM calls)
 - `council_explain` — expand on a review note with expert reasoning
 
+## GitHub Action
+
+Get Council reviews on every pull request — zero config, zero cost:
+
+```yaml
+# .github/workflows/council-review.yml
+name: Council Review
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+permissions:
+  models: read
+  pull-requests: write
+  contents: read
+  checks: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: luuuc/council/action@v1
+        with:
+          pack: code
+```
+
+**How it works:** The Action fetches the PR diff, runs Council with the specified pack, and posts a PR Review with inline comments + a Check Run status badge.
+
+**LLM selection (automatic):**
+
+| Secret set | Provider | Model | Cost |
+|---|---|---|---|
+| `ANTHROPIC_API_KEY` | Anthropic | `claude-sonnet-4-6` | BYOK |
+| `OPENAI_API_KEY` | OpenAI | `gpt-4.1` | BYOK |
+| Neither | GitHub Models | `gpt-4.1-mini` | Free (150 req/day) |
+
+**Free tier limits:** ~15 PR reviews/day (10 files each). Files over 8K tokens are skipped. Max 25 files per review. Per-file review means cross-file issues are invisible — use BYOK for larger context.
+
+See [`action/examples/`](action/examples/) for more workflow examples.
+
 ## Supported AI Tools
 
 | Tool | Integration |
 |------|-------------|
+| GitHub Actions | PR reviews on every pull request |
 | Claude Code | Slash commands + agents + MCP |
 | Cursor | MCP |
 | Claude Desktop | MCP |

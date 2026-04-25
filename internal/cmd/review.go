@@ -13,10 +13,14 @@ import (
 )
 
 var (
-	reviewPack   string
-	reviewExpert string
-	reviewFile   string
-	reviewJSON   bool
+	reviewPack     string
+	reviewExpert   string
+	reviewFile     string
+	reviewJSON     bool
+	reviewOutput   string
+	reviewBackend  string
+	reviewProvider string
+	reviewModel    string
 )
 
 func init() {
@@ -26,6 +30,10 @@ func init() {
 	reviewCmd.Flags().StringVar(&reviewExpert, "expert", "", "Review with a single expert")
 	reviewCmd.Flags().StringVar(&reviewFile, "file", "", "File to review (reads diff from stdin if omitted)")
 	reviewCmd.Flags().BoolVar(&reviewJSON, "json", false, "Output as JSON")
+	reviewCmd.Flags().StringVar(&reviewOutput, "output", "", "Output format: github-pr (implies --json)")
+	reviewCmd.Flags().StringVar(&reviewBackend, "backend", "", "Backend: cli or api")
+	reviewCmd.Flags().StringVar(&reviewProvider, "provider", "", "API provider: anthropic, openai, ollama, github")
+	reviewCmd.Flags().StringVar(&reviewModel, "model", "", "LLM model override")
 }
 
 var reviewCmd = &cobra.Command{
@@ -39,11 +47,16 @@ Falls back to per-expert review for small-context models.
 
 Input can be a diff from stdin or a file via --file.
 
+Note: per-file review (--provider github) reviews each file in isolation.
+Cross-file issues (e.g. function defined in A, misused in B) are invisible.
+Use BYOK (--provider anthropic/openai) for cross-file analysis.
+
 Examples:
   git diff main | council review --pack rails
   council review --pack code --file src/controller.rb
   council review --expert ada-redgrave --file lib/utils.rb
-  git diff main | council review --pack rails --json`,
+  git diff main | council review --pack rails --json
+  git diff main | council review --backend api --provider github --output github-pr`,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runReview(cmd)
@@ -98,7 +111,18 @@ func runReview(cmd *cobra.Command) error {
 	result := runner.Run(cmd.Context(), inputs, sub)
 
 	// Output
-	if reviewJSON {
+	if reviewOutput == "github-pr" {
+		var dp *review.DiffPosition
+		if sub.Content != "" {
+			dp = review.NewDiffPosition(sub.Content)
+		}
+		output := review.FormatGitHubReview(result, packName, len(inputs), dp)
+		data, err := review.FormatGitHubJSON(output)
+		if err != nil {
+			return fmt.Errorf("failed to marshal github review: %w", err)
+		}
+		fmt.Println(string(data))
+	} else if reviewJSON {
 		data, err := review.FormatJSON(result)
 		if err != nil {
 			return fmt.Errorf("failed to marshal result: %w", err)
@@ -195,13 +219,26 @@ func readSubmission() (review.Submission, error) {
 }
 
 // buildBackend creates the appropriate review backend based on config and environment.
+// CLI flags (--backend, --provider, --model) override config values.
 func buildBackend(cfg *config.Config) (review.Backend, error) {
-	backend, provider, model := cfg.DetectBackend()
+	// Copy config to avoid mutating the caller's struct
+	overridden := *cfg
+	if reviewBackend != "" {
+		overridden.AI.Backend = reviewBackend
+	}
+	if reviewProvider != "" {
+		overridden.AI.Provider = reviewProvider
+	}
+	if reviewModel != "" {
+		overridden.AI.Model = reviewModel
+	}
+
+	backend, provider, model := overridden.DetectBackend()
 
 	switch backend {
 	case "api":
 		if provider == "" {
-			return nil, fmt.Errorf("api backend requires a provider (anthropic, openai, ollama)")
+			return nil, fmt.Errorf("api backend requires a provider (anthropic, openai, ollama, github)")
 		}
 		return review.NewAPIBackend(provider, model)
 	case "cli":
@@ -211,6 +248,6 @@ func buildBackend(cfg *config.Config) (review.Backend, error) {
 		}
 		return review.NewCLIBackend(aiCmd, cfg.AI.Args), nil
 	default:
-		return nil, fmt.Errorf("no backend available\n\nInstall an AI CLI (claude, opencode) or set an API key (ANTHROPIC_API_KEY, OPENAI_API_KEY)")
+		return nil, fmt.Errorf("no backend available\n\nInstall an AI CLI (claude, opencode) or set an API key (ANTHROPIC_API_KEY, OPENAI_API_KEY, GITHUB_TOKEN)")
 	}
 }

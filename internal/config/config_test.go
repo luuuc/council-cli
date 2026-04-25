@@ -257,6 +257,13 @@ func TestDetectBackend(t *testing.T) {
 			wantModel:    "",
 		},
 		{
+			name:         "explicit api backend with github provider, default model",
+			cfg:          Config{AI: AIConfig{Backend: "api", Provider: "github"}},
+			wantBackend:  "api",
+			wantProvider: "github",
+			wantModel:    "openai/gpt-4.1-mini",
+		},
+		{
 			name:         "no config, ANTHROPIC_API_KEY set, no CLI",
 			cfg:          Config{},
 			envKey:       "ANTHROPIC_API_KEY",

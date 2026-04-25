@@ -1,0 +1,26 @@
+# .github/workflows/council-review.yml
+# Zero-config: uses GitHub Models (free, no API key needed)
+# BYOK: set ANTHROPIC_API_KEY or OPENAI_API_KEY secret for better results
+name: Council Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+permissions:
+  models: read
+  pull-requests: write
+  contents: read
+  checks: write
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: luuuc/council/action@v1
+        with:
+          pack: code
+          # Optional: BYOK for better results
+          # anthropic-api-key: ${{ secrets.ANTHROPIC_API_KEY }}
