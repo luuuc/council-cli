@@ -252,7 +252,7 @@ func selectFromSuggestionBank(d *detect.Detection) []*expert.Expert {
 		if experts, ok := loadSuggestionBank()[cat]; ok && len(experts) > 0 {
 			e := &experts[0]
 			if !seen[e.ID] {
-				selected = append(selected, expertFromSuggestion(e))
+				selected = append(selected, expert.LookupSuggestion(e.ID))
 				seen[e.ID] = true
 			}
 		}
@@ -267,7 +267,7 @@ func selectFromSuggestionBank(d *detect.Detection) []*expert.Expert {
 			for i := 1; i < len(experts) && len(selected) < maxStackExperts; i++ {
 				e := &experts[i]
 				if !seen[e.ID] {
-					selected = append(selected, expertFromSuggestion(e))
+					selected = append(selected, expert.LookupSuggestion(e.ID))
 					seen[e.ID] = true
 				}
 			}
@@ -281,7 +281,7 @@ func selectFromSuggestionBank(d *detect.Detection) []*expert.Expert {
 				break
 			}
 			if generals[i].Core && !seen[generals[i].ID] {
-				selected = append(selected, expertFromSuggestion(&generals[i]))
+				selected = append(selected, expert.LookupSuggestion(generals[i].ID))
 				seen[generals[i].ID] = true
 			}
 		}
@@ -372,19 +372,7 @@ func mapDetectionToCategories(d *detect.Detection) []string {
 // Callers pass composite IDs directly — legacy alias resolution
 // happens at the public API boundary (expert.Load, expert.LookupPersona).
 func findExpertByID(id string) *expert.Expert {
-	for _, experts := range loadSuggestionBank() {
-		for i := range experts {
-			if experts[i].ID == id {
-				return expertFromSuggestion(&experts[i])
-			}
-		}
-	}
-	return nil
-}
-
-func expertFromSuggestion(e *expert.Expert) *expert.Expert {
-	copy := *e
-	return &copy
+	return expert.LookupSuggestion(id)
 }
 
 // joinNames joins names with commas

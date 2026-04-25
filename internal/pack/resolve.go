@@ -24,11 +24,13 @@ func Resolve(p *Pack, available []*expert.Expert) ([]ResolvedMember, []string) {
 	var warnings []string
 
 	// Match pack members to available experts.
-	// Legacy alias resolution happens at the public API boundary
-	// (expert.Load, expert.LookupPersona), not here.
+	// Falls back to the embedded suggestion bank when not found on disk.
 	for _, m := range p.Members {
 		e, ok := byID[m.ID]
 		if !ok {
+			e = expert.LookupSuggestion(m.ID)
+		}
+		if e == nil {
 			warnings = append(warnings, "expert '"+m.ID+"' not found")
 			continue
 		}

@@ -92,6 +92,48 @@ func TestResolve(t *testing.T) {
 	}
 }
 
+func TestResolveFallsBackToSuggestionBank(t *testing.T) {
+	p := &Pack{
+		Name:    "go",
+		Members: []Member{{ID: "sable-okoro"}},
+	}
+
+	// No experts on disk — should fall back to embedded suggestions
+	resolved, warnings := Resolve(p, nil)
+	if len(warnings) != 0 {
+		t.Errorf("unexpected warnings: %v", warnings)
+	}
+	if len(resolved) != 1 {
+		t.Fatalf("resolved count = %d, want 1", len(resolved))
+	}
+	if resolved[0].Expert.ID != "sable-okoro" {
+		t.Errorf("resolved[0].ID = %q, want sable-okoro", resolved[0].Expert.ID)
+	}
+	if resolved[0].Expert.Body == "" {
+		t.Error("expected expert body to be generated")
+	}
+}
+
+func TestResolveDiskExpertTakesPrecedence(t *testing.T) {
+	diskExpert := &expert.Expert{ID: "sable-okoro", Name: "Custom Override", Priority: "normal"}
+
+	p := &Pack{
+		Name:    "test",
+		Members: []Member{{ID: "sable-okoro"}},
+	}
+
+	resolved, warnings := Resolve(p, []*expert.Expert{diskExpert})
+	if len(warnings) != 0 {
+		t.Errorf("unexpected warnings: %v", warnings)
+	}
+	if len(resolved) != 1 {
+		t.Fatalf("resolved count = %d, want 1", len(resolved))
+	}
+	if resolved[0].Expert.Name != "Custom Override" {
+		t.Errorf("expected disk expert to take precedence, got name %q", resolved[0].Expert.Name)
+	}
+}
+
 func TestResolveNoPriorityAlways(t *testing.T) {
 	experts := []*expert.Expert{
 		{ID: "alice", Priority: "normal"},

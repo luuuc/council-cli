@@ -2,38 +2,20 @@ package cmd
 
 import (
 	"cmp"
-	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
 	"slices"
 	"strings"
-	"sync"
 	"text/tabwriter"
 
 	"github.com/luuuc/council/internal/expert"
 	"github.com/luuuc/council/internal/install"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
-//go:embed suggestions.yaml
-var suggestionsYAML []byte
-
-// suggestionBank holds all expert suggestions loaded from YAML (lazy loaded)
-var (
-	suggestionBank     map[string][]expert.Expert
-	suggestionBankOnce sync.Once
-)
-
-// loadSuggestionBank lazily loads the suggestion bank on first access.
 func loadSuggestionBank() map[string][]expert.Expert {
-	suggestionBankOnce.Do(func() {
-		if err := yaml.Unmarshal(suggestionsYAML, &suggestionBank); err != nil {
-			panic(fmt.Sprintf("failed to parse suggestions.yaml: %v", err))
-		}
-	})
-	return suggestionBank
+	return expert.LoadSuggestionBank()
 }
 
 var (
