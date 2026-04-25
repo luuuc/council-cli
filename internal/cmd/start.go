@@ -380,17 +380,9 @@ func findExpertByID(id string) *expert.Expert {
 	return nil
 }
 
-// expertFromSuggestion converts a suggestion bank expert to an expert.Expert
 func expertFromSuggestion(e *expert.Expert) *expert.Expert {
-	return &expert.Expert{
-		ID:         e.ID,
-		Name:       e.Name,
-		Focus:      e.Focus,
-		Philosophy: e.Philosophy,
-		Principles: e.Principles,
-		RedFlags:   e.RedFlags,
-		Triggers:   e.Triggers,
-	}
+	copy := *e
+	return &copy
 }
 
 // joinNames joins names with commas

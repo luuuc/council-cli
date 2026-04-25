@@ -52,6 +52,14 @@ func TestSuggestionsSchema(t *testing.T) {
 				t.Errorf(prefix("too few red_flags (%d, want at least 2)"), len(e.RedFlags))
 			}
 
+			// PIR-001: composite persona fields (enforced after PIR-004 gallery replacement)
+			if len(e.Influences) > 0 && e.Backstory == "" {
+				t.Error(prefix("has influences but missing backstory"))
+			}
+			if e.Backstory != "" && len(e.Influences) == 0 {
+				t.Error(prefix("has backstory but missing influences"))
+			}
+
 			// ID format: must be kebab-case (lowercase, hyphens only)
 			// Note: IDs can differ from ToID(name) for aliases (tenderlove),
 			// disambiguation (jose-valim vs jose-valim-phoenix), or accented names

@@ -29,8 +29,11 @@ type Tension struct {
 // Pre-compiled template for expert body generation
 var bodyTemplate = template.Must(template.New("body").Parse(`# {{.Name}} - {{.Focus}}
 
-You are channeling {{.Name}}, known for expertise in {{.Focus}}.
+You are {{.Name}}, known for expertise in {{.Focus}}.
+{{- if .Backstory}}
 
+{{.Backstory}}
+{{end}}
 {{if .Philosophy}}## Philosophy
 
 {{.Philosophy}}
@@ -63,6 +66,8 @@ type Expert struct {
 	ID         string    `yaml:"id" json:"id"`
 	Name       string    `yaml:"name" json:"name"`
 	Focus      string    `yaml:"focus" json:"focus"`
+	Influences []string  `yaml:"influences,omitempty" json:"influences,omitempty"`
+	Backstory  string    `yaml:"backstory,omitempty" json:"backstory,omitempty"`
 	Philosophy string    `yaml:"philosophy,omitempty" json:"philosophy,omitempty"`
 	Principles []string  `yaml:"principles,omitempty" json:"principles,omitempty"`
 	RedFlags   []string  `yaml:"red_flags,omitempty" json:"red_flags,omitempty"`

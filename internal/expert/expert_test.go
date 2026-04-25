@@ -63,6 +63,38 @@ Body content.`,
 			wantErr: false,
 		},
 		{
+			name: "expert with influences and backstory",
+			input: `---
+id: ada-redgrave
+name: Ada Redgrave
+focus: Test-driven development and incremental design
+influences:
+  - "Kent Beck — TDD, red-green-refactor"
+  - "Michael Feathers — Working with legacy code"
+backstory: |
+  Former embedded systems engineer who moved to web development.
+philosophy: Untested code is a liability.
+principles:
+  - Red-green-refactor
+red_flags:
+  - Code without tests
+---
+
+# Ada Redgrave`,
+			want: &Expert{
+				ID:         "ada-redgrave",
+				Name:       "Ada Redgrave",
+				Focus:      "Test-driven development and incremental design",
+				Influences: []string{"Kent Beck — TDD, red-green-refactor", "Michael Feathers — Working with legacy code"},
+				Backstory:  "Former embedded systems engineer who moved to web development.\n",
+				Philosophy: "Untested code is a liability.",
+				Principles: []string{"Red-green-refactor"},
+				RedFlags:   []string{"Code without tests"},
+				Body:       "# Ada Redgrave",
+			},
+			wantErr: false,
+		},
+		{
 			name: "expert with tensions",
 			input: `---
 id: kent-beck
@@ -150,6 +182,18 @@ Body.`,
 			if got.Philosophy != tt.want.Philosophy {
 				t.Errorf("Parse() Philosophy = %v, want %v", got.Philosophy, tt.want.Philosophy)
 			}
+			if got.Backstory != tt.want.Backstory {
+				t.Errorf("Parse() Backstory = %q, want %q", got.Backstory, tt.want.Backstory)
+			}
+			if len(got.Influences) != len(tt.want.Influences) {
+				t.Errorf("Parse() Influences len = %v, want %v", len(got.Influences), len(tt.want.Influences))
+			} else {
+				for i, inf := range got.Influences {
+					if inf != tt.want.Influences[i] {
+						t.Errorf("Parse() Influences[%d] = %q, want %q", i, inf, tt.want.Influences[i])
+					}
+				}
+			}
 			if got.Body != tt.want.Body {
 				t.Errorf("Parse() Body = %v, want %v", got.Body, tt.want.Body)
 			}
@@ -202,6 +246,20 @@ func TestSave(t *testing.T) {
 				Philosophy: "Optimize for programmer happiness.",
 				Principles: []string{"Convention over configuration", "DRY"},
 				RedFlags:   []string{"Too much abstraction"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "save expert with influences and backstory",
+			expert: &Expert{
+				ID:         "composite",
+				Name:       "Ada Redgrave",
+				Focus:      "Test-driven development",
+				Influences: []string{"Kent Beck — TDD", "Michael Feathers — Legacy code"},
+				Backstory:  "Former embedded systems engineer.",
+				Philosophy: "Untested code is a liability.",
+				Principles: []string{"Red-green-refactor"},
+				RedFlags:   []string{"Code without tests"},
 			},
 			wantErr: false,
 		},
@@ -494,7 +552,6 @@ func TestGenerateBody(t *testing.T) {
 
 	body := expert.generateBody()
 
-	// Check that key elements are present
 	if !strings.Contains(body, "Test Expert") {
 		t.Error("generateBody() missing expert name")
 	}
@@ -509,6 +566,30 @@ func TestGenerateBody(t *testing.T) {
 	}
 	if !strings.Contains(body, "No tests") {
 		t.Error("generateBody() missing red flag")
+	}
+	if strings.Contains(body, "channeling") {
+		t.Error("generateBody() should not contain 'channeling'")
+	}
+	if !strings.Contains(body, "You are Test Expert") {
+		t.Error("generateBody() should contain 'You are <Name>' identity line")
+	}
+}
+
+func TestGenerateBody_WithBackstory(t *testing.T) {
+	e := &Expert{
+		ID:        "ada-redgrave",
+		Name:      "Ada Redgrave",
+		Focus:     "Test-driven development",
+		Backstory: "Former embedded systems engineer who moved to web development.",
+	}
+
+	body := e.generateBody()
+
+	if !strings.Contains(body, "You are Ada Redgrave") {
+		t.Error("generateBody() should use 'You are' identity, not 'channeling'")
+	}
+	if !strings.Contains(body, "Former embedded systems engineer") {
+		t.Error("generateBody() missing backstory content")
 	}
 }
 
@@ -544,7 +625,6 @@ func TestGenerateBody_WithTensions(t *testing.T) {
 }
 
 func TestGenerateBody_MinimalExpert(t *testing.T) {
-	// Test with minimal fields - should not panic and should produce valid output
 	expert := &Expert{
 		ID:    "minimal",
 		Name:  "Minimal",
@@ -562,9 +642,11 @@ func TestGenerateBody_MinimalExpert(t *testing.T) {
 	if !strings.Contains(body, "Minimal focus") {
 		t.Error("generateBody() should contain focus")
 	}
-	// Should not contain optional sections when they're empty
 	if strings.Contains(body, "## Philosophy") {
 		t.Error("generateBody() should not contain Philosophy section when empty")
+	}
+	if strings.Contains(body, "channeling") {
+		t.Error("generateBody() should not contain 'channeling'")
 	}
 }
 

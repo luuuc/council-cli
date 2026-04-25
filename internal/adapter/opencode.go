@@ -67,8 +67,13 @@ func (o *OpenCode) FormatAgent(e *expert.Expert) string {
 	parts = append(parts, "")
 	parts = append(parts, fmt.Sprintf("# %s", e.Name))
 	parts = append(parts, "")
-	parts = append(parts, fmt.Sprintf("You are channeling %s, known for expertise in %s.", e.Name, e.Focus))
+	parts = append(parts, fmt.Sprintf("You are %s, known for expertise in %s.", e.Name, e.Focus))
 	parts = append(parts, "")
+
+	if e.Backstory != "" {
+		parts = append(parts, strings.TrimSpace(e.Backstory))
+		parts = append(parts, "")
+	}
 
 	if e.Philosophy != "" {
 		parts = append(parts, "## Philosophy")

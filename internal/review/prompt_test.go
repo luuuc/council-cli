@@ -11,7 +11,7 @@ func TestBuildPrompt(t *testing.T) {
 	e := &expert.Expert{
 		ID:   "kent-beck",
 		Name: "Kent Beck",
-		Body: "# Kent Beck - Test-driven development\n\nYou are channeling Kent Beck.",
+		Body: "# Kent Beck - Test-driven development\n\nYou are Kent Beck.",
 	}
 
 	sub := Submission{

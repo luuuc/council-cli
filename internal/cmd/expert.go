@@ -102,6 +102,21 @@ var showCmd = &cobra.Command{
 		fmt.Printf("Name:  %s\n", e.Name)
 		fmt.Printf("Focus: %s\n", e.Focus)
 
+		if len(e.Influences) > 0 {
+			fmt.Println("\nInfluences:")
+			for _, inf := range e.Influences {
+				fmt.Printf("  - %s\n", inf)
+			}
+		}
+
+		if e.Backstory != "" {
+			fmt.Printf("\nBackstory:\n  %s\n", strings.TrimSpace(e.Backstory))
+		}
+
+		if e.Philosophy != "" {
+			fmt.Printf("\nPhilosophy:\n  %s\n", strings.TrimSpace(e.Philosophy))
+		}
+
 		if len(e.Principles) > 0 {
 			fmt.Println("\nPrinciples:")
 			for _, p := range e.Principles {

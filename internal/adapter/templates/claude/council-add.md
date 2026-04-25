@@ -147,7 +147,7 @@ red_flags:
 
 # {Name} - {focus}
 
-You are channeling {Name}, known for expertise in {focus}.
+You are {Name}, known for expertise in {focus}.
 
 ## Philosophy
 

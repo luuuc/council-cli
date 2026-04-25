@@ -425,8 +425,8 @@ func TestOpenCodeFormatAgent(t *testing.T) {
 	if !strings.Contains(result, "# Kent Beck") {
 		t.Error("FormatAgent() should have expert name as heading")
 	}
-	if !strings.Contains(result, "channeling Kent Beck") {
-		t.Error("FormatAgent() should have channeling intro")
+	if !strings.Contains(result, "You are Kent Beck") {
+		t.Error("FormatAgent() should have 'You are' identity intro")
 	}
 	if !strings.Contains(result, "## Philosophy") {
 		t.Error("FormatAgent() should have Philosophy section")
