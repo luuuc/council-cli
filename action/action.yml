@@ -117,7 +117,6 @@ runs:
 
     - name: Run council review
       if: env.COUNCIL_SKIP != 'true'
-      timeout-minutes: 10
       shell: bash
       env:
         INPUT_PACK: ${{ inputs.pack }}
