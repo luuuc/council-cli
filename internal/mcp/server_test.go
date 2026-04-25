@@ -54,6 +54,27 @@ func (m *mockBackend) Review(ctx context.Context, e *expert.Expert, sub review.S
 	}, nil
 }
 
+func (m *mockBackend) ReviewCollective(ctx context.Context, experts []*expert.Expert, sub review.Submission) (*review.SynthesizedResult, error) {
+	m.calls.Add(1)
+	m.lastSubmission = sub
+
+	perspectives := make([]review.ExpertVerdict, len(experts))
+	for i, e := range experts {
+		if v, ok := m.results[e.ID]; ok {
+			perspectives[i] = v
+		} else {
+			perspectives[i] = review.ExpertVerdict{
+				Expert: e.ID, Verdict: review.VerdictPass, Confidence: 0.9,
+			}
+		}
+	}
+	return &review.SynthesizedResult{
+		Verdict:      review.VerdictPass,
+		Perspectives: perspectives,
+		Summary:      "All good.",
+	}, nil
+}
+
 // sendRequest marshals a JSON-RPC request and returns it as a line.
 func sendRequest(id int, method string, params any) string {
 	var p json.RawMessage

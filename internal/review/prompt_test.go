@@ -53,3 +53,52 @@ func TestBuildPromptNoContext(t *testing.T) {
 		t.Error("prompt should not contain Context section when context is empty")
 	}
 }
+
+func TestBuildCollectivePrompt(t *testing.T) {
+	experts := []*expert.Expert{
+		{ID: "kent-beck", Name: "Kent Beck", Focus: "Test-driven development", Body: "TDD expert."},
+		{ID: "dhh", Name: "DHH", Focus: "Convention over configuration", Body: "Rails creator."},
+		{ID: "owasp-sentinel", Name: "OWASP Sentinel", Focus: "Application security", Body: "Security expert."},
+	}
+
+	sub := Submission{
+		Content: "diff --git a/main.go\n+func Add(a, b int) int {\n+    return a + b\n+}",
+		Context: "PR: Add math utilities",
+	}
+
+	prompt := BuildCollectivePrompt(experts, sub)
+
+	checks := []string{
+		"council of expert reviewers",
+		"Kent Beck — Test-driven development",
+		"DHH — Convention over configuration",
+		"OWASP Sentinel — Application security",
+		"TDD expert.",
+		"Rails creator.",
+		"Security expert.",
+		"diff --git a/main.go",
+		"PR: Add math utilities",
+		`"perspectives"`,
+		`"agreements"`,
+		`"tension"`,
+		"react to each other",
+	}
+
+	for _, check := range checks {
+		if !strings.Contains(prompt, check) {
+			t.Errorf("collective prompt missing %q", check)
+		}
+	}
+}
+
+func TestBuildCollectivePromptNoContext(t *testing.T) {
+	experts := []*expert.Expert{
+		{ID: "kent-beck", Name: "Kent Beck", Focus: "TDD", Body: "Expert."},
+	}
+
+	prompt := BuildCollectivePrompt(experts, Submission{Content: "some code"})
+
+	if strings.Contains(prompt, "## Context") {
+		t.Error("collective prompt should not contain Context section when context is empty")
+	}
+}

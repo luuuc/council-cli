@@ -13,11 +13,10 @@ import (
 )
 
 var (
-	reviewPack        string
-	reviewExpert      string
-	reviewFile        string
-	reviewJSON        bool
-	reviewConcurrency int
+	reviewPack   string
+	reviewExpert string
+	reviewFile   string
+	reviewJSON   bool
 )
 
 func init() {
@@ -27,17 +26,16 @@ func init() {
 	reviewCmd.Flags().StringVar(&reviewExpert, "expert", "", "Review with a single expert")
 	reviewCmd.Flags().StringVar(&reviewFile, "file", "", "File to review (reads diff from stdin if omitted)")
 	reviewCmd.Flags().BoolVar(&reviewJSON, "json", false, "Output as JSON")
-	reviewCmd.Flags().IntVar(&reviewConcurrency, "concurrency", 0, "Max parallel reviews (default: from config or 4)")
 }
 
 var reviewCmd = &cobra.Command{
 	Use:   "review",
-	Short: "Run a blind council review",
-	Long: `Run a council review with blind expert isolation.
+	Short: "Run a collective council review",
+	Long: `Run a collective council review where all experts review together.
 
-Each expert reviews independently — no expert sees another's output.
-Results are synthesized into a structured verdict with agreements,
-tensions, and a recommendation.
+All experts see each other's perspectives and can react to them.
+The tension between perspectives produces richer, more nuanced reviews.
+Falls back to per-expert review for small-context models.
 
 Input can be a diff from stdin or a file via --file.
 
@@ -45,8 +43,7 @@ Examples:
   git diff main | council review --pack rails
   council review --pack code --file src/controller.rb
   council review --expert kent-beck --file lib/utils.rb
-  git diff main | council review --pack rails --json
-  git diff main | council review --pack rails --concurrency 2`,
+  git diff main | council review --pack rails --json`,
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runReview(cmd)
@@ -82,15 +79,10 @@ func runReview(cmd *cobra.Command) error {
 		return fmt.Errorf("cannot run review: %w", err)
 	}
 
-	concurrency := cfg.AI.Concurrency
-	if reviewConcurrency > 0 {
-		concurrency = reviewConcurrency
-	}
-
 	runner := &review.Runner{
 		Backend: backend,
 		Options: review.ReviewOptions{
-			Concurrency: concurrency,
+			Concurrency: cfg.AI.Concurrency,
 			Timeout:     cfg.AI.Timeout,
 		},
 	}

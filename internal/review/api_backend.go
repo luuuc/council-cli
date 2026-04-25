@@ -72,14 +72,74 @@ func (b *APIBackend) Review(ctx context.Context, e *expert.Expert, sub Submissio
 		prompt = BuildPrompt(e, sub)
 	}
 
-	body, err := json.Marshal(b.config.BuildBody(b.Model, prompt))
+	text, err := b.doRequest(ctx, prompt, e.ID, nil)
 	if err != nil {
-		return ExpertVerdict{}, fmt.Errorf("marshal request for %s: %w", e.ID, err)
+		return ExpertVerdict{}, err
+	}
+
+	if sub.RawPrompt != "" {
+		return ExpertVerdict{
+			Expert:     e.ID,
+			Verdict:    VerdictComment,
+			Confidence: 1.0,
+			Notes:      []string{strings.TrimSpace(text)},
+		}, nil
+	}
+
+	return ParseVerdict(e.ID, []byte(text)), nil
+}
+
+// ReviewCollective executes a collective review with all experts via the provider's API.
+func (b *APIBackend) ReviewCollective(ctx context.Context, experts []*expert.Expert, sub Submission) (*SynthesizedResult, error) {
+	prompt := BuildCollectivePrompt(experts, sub)
+
+	var opts *requestOpts
+	if b.Provider == "anthropic" {
+		opts = &requestOpts{maxTokens: 4096}
+	}
+
+	text, err := b.doRequest(ctx, prompt, "collective", opts)
+	if err != nil {
+		return nil, err
+	}
+
+	expertIDs := make([]string, len(experts))
+	for i, e := range experts {
+		expertIDs[i] = e.ID
+	}
+
+	return ParseCollectiveResult([]byte(text), expertIDs), nil
+}
+
+// requestOpts allows callers to override provider defaults for a specific request.
+type requestOpts struct {
+	maxTokens int
+}
+
+// doRequest sends a prompt to the provider API and returns the extracted text.
+func (b *APIBackend) doRequest(ctx context.Context, prompt, label string, opts *requestOpts) (string, error) {
+	buildBody := b.config.BuildBody
+	if opts != nil && opts.maxTokens > 0 && b.Provider == "anthropic" {
+		maxTok := opts.maxTokens
+		buildBody = func(model, persona string) any {
+			return map[string]any{
+				"model":      model,
+				"max_tokens": maxTok,
+				"messages": []map[string]string{
+					{"role": "user", "content": persona},
+				},
+			}
+		}
+	}
+
+	body, err := json.Marshal(buildBody(b.Model, prompt))
+	if err != nil {
+		return "", fmt.Errorf("marshal request for %s: %w", label, err)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, b.config.URL, bytes.NewReader(body))
 	if err != nil {
-		return ExpertVerdict{}, fmt.Errorf("create request for %s: %w", e.ID, err)
+		return "", fmt.Errorf("create request for %s: %w", label, err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -91,37 +151,26 @@ func (b *APIBackend) Review(ctx context.Context, e *expert.Expert, sub Submissio
 
 	resp, err := b.client.Do(req)
 	if err != nil {
-		return ExpertVerdict{}, fmt.Errorf("API call failed for %s: %w", e.ID, err)
+		return "", fmt.Errorf("API call failed for %s: %w", label, err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseSize))
 	if err != nil {
-		return ExpertVerdict{}, fmt.Errorf("read response for %s: %w", e.ID, err)
+		return "", fmt.Errorf("read response for %s: %w", label, err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		detail := truncateBytes(respBody, 200)
-		return ExpertVerdict{}, fmt.Errorf("API returned %d for %s: %s", resp.StatusCode, e.ID, detail)
+		return "", fmt.Errorf("API returned %d for %s: %s", resp.StatusCode, label, detail)
 	}
 
 	text, err := b.config.ExtractText(respBody)
 	if err != nil {
-		return ExpertVerdict{}, fmt.Errorf("parse response for %s: %w", e.ID, err)
+		return "", fmt.Errorf("parse response for %s: %w", label, err)
 	}
 
-	// RawPrompt mode: return the raw text directly instead of parsing verdict JSON.
-	if sub.RawPrompt != "" {
-		return ExpertVerdict{
-			Expert:     e.ID,
-			Verdict:    VerdictComment,
-			Confidence: 1.0,
-			Notes:      []string{strings.TrimSpace(text)},
-		}, nil
-	}
-
-	verdict := ParseVerdict(e.ID, []byte(text))
-	return verdict, nil
+	return text, nil
 }
 
 // --- Anthropic provider ---

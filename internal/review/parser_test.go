@@ -1,6 +1,7 @@
 package review
 
 import (
+	"encoding/json"
 	"testing"
 )
 
@@ -187,4 +188,202 @@ That's my take.`,
 			}
 		})
 	}
+}
+
+func TestParseCollectiveResult(t *testing.T) {
+	expected := []string{"kent-beck", "bruce-schneier"}
+
+	tests := []struct {
+		name             string
+		raw              string
+		expected         []string
+		wantVerdict      Verdict
+		wantPerspectives int
+		wantAgreements   int
+		wantTension      bool
+		wantFallback     bool
+	}{
+		{
+			name: "valid collective JSON",
+			raw: mustJSON(map[string]any{
+				"verdict":  "comment",
+				"blocking": false,
+				"perspectives": []map[string]any{
+					{"expert": "kent-beck", "verdict": "comment", "confidence": 0.8, "notes": []string{"Add test"}, "blocking": false},
+					{"expert": "bruce-schneier", "verdict": "pass", "confidence": 0.95, "notes": []string{}, "blocking": false},
+				},
+				"agreements": []string{"Code structure is clean"},
+				"tension":    "Kent wants tests, Bruce satisfied",
+				"summary":    "Ship with comments.",
+			}),
+			expected:         expected,
+			wantVerdict:      VerdictComment,
+			wantPerspectives: 2,
+			wantAgreements:   1,
+			wantTension:      true,
+		},
+		{
+			name: "JSON in code fences",
+			raw: "Here's my review:\n```json\n" + mustJSON(map[string]any{
+				"verdict":  "pass",
+				"blocking": false,
+				"perspectives": []map[string]any{
+					{"expert": "kent-beck", "verdict": "pass", "confidence": 0.9, "notes": []string{}, "blocking": false},
+					{"expert": "bruce-schneier", "verdict": "pass", "confidence": 0.95, "notes": []string{}, "blocking": false},
+				},
+				"agreements": []string{},
+				"tension":    "",
+				"summary":    "Ship it.",
+			}) + "\n```\nDone.",
+			expected:         expected,
+			wantVerdict:      VerdictPass,
+			wantPerspectives: 2,
+		},
+		{
+			name: "missing perspective filled in",
+			raw: mustJSON(map[string]any{
+				"verdict":  "comment",
+				"blocking": false,
+				"perspectives": []map[string]any{
+					{"expert": "kent-beck", "verdict": "comment", "confidence": 0.8, "notes": []string{"Add test"}, "blocking": false},
+				},
+				"agreements": []string{},
+				"tension":    "",
+				"summary":    "Review.",
+			}),
+			expected:         expected,
+			wantVerdict:      VerdictComment,
+			wantPerspectives: 2,
+		},
+		{
+			name: "unknown expert dropped",
+			raw: mustJSON(map[string]any{
+				"verdict":  "pass",
+				"blocking": false,
+				"perspectives": []map[string]any{
+					{"expert": "kent-beck", "verdict": "pass", "confidence": 0.9, "notes": []string{}, "blocking": false},
+					{"expert": "bruce-schneier", "verdict": "pass", "confidence": 0.95, "notes": []string{}, "blocking": false},
+					{"expert": "invented-expert", "verdict": "block", "confidence": 0.5, "notes": []string{"Invented"}, "blocking": false},
+				},
+				"agreements": []string{},
+				"tension":    "",
+				"summary":    "Ship it.",
+			}),
+			expected:         expected,
+			wantVerdict:      VerdictPass,
+			wantPerspectives: 2,
+		},
+		{
+			name: "invalid verdict normalized",
+			raw: mustJSON(map[string]any{
+				"verdict":  "maybe",
+				"blocking": false,
+				"perspectives": []map[string]any{
+					{"expert": "kent-beck", "verdict": "maybe", "confidence": 0.8, "notes": []string{"Unsure"}, "blocking": false},
+					{"expert": "bruce-schneier", "verdict": "pass", "confidence": 0.9, "notes": []string{}, "blocking": false},
+				},
+				"agreements": []string{},
+				"tension":    "",
+				"summary":    "Unclear.",
+			}),
+			expected:         expected,
+			wantVerdict:      VerdictComment,
+			wantPerspectives: 2,
+		},
+		{
+			name:             "empty response",
+			raw:              "",
+			expected:         expected,
+			wantVerdict:      VerdictComment,
+			wantPerspectives: 2,
+			wantFallback:     true,
+		},
+		{
+			name:             "completely unstructured",
+			raw:              "I think the code looks pretty good overall!",
+			expected:         expected,
+			wantVerdict:      VerdictComment,
+			wantPerspectives: 2,
+			wantFallback:     true,
+		},
+		{
+			name:             "truncated JSON",
+			raw:              `{"verdict":"pass","perspectives":[{"expert":"kent-beck"`,
+			expected:         expected,
+			wantVerdict:      VerdictComment,
+			wantPerspectives: 2,
+			wantFallback:     true,
+		},
+		{
+			name: "confidence clamped",
+			raw: mustJSON(map[string]any{
+				"verdict":  "pass",
+				"blocking": false,
+				"perspectives": []map[string]any{
+					{"expert": "kent-beck", "verdict": "pass", "confidence": 5.0, "notes": []string{}, "blocking": false},
+					{"expert": "bruce-schneier", "verdict": "pass", "confidence": -1.0, "notes": []string{}, "blocking": false},
+				},
+				"agreements": []string{},
+				"tension":    "",
+				"summary":    "Ship.",
+			}),
+			expected:         expected,
+			wantVerdict:      VerdictPass,
+			wantPerspectives: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ParseCollectiveResult([]byte(tt.raw), tt.expected)
+
+			if result.Verdict != tt.wantVerdict {
+				t.Errorf("Verdict = %q, want %q", result.Verdict, tt.wantVerdict)
+			}
+			if len(result.Perspectives) != tt.wantPerspectives {
+				t.Errorf("Perspectives = %d, want %d", len(result.Perspectives), tt.wantPerspectives)
+			}
+			if tt.wantAgreements > 0 && len(result.Agreements) != tt.wantAgreements {
+				t.Errorf("Agreements = %d, want %d", len(result.Agreements), tt.wantAgreements)
+			}
+			if tt.wantTension && result.Tension == "" {
+				t.Error("expected tension to be set")
+			}
+			if tt.wantFallback {
+				for _, p := range result.Perspectives {
+					if p.Error == "" {
+						t.Errorf("expected fallback Error for %s", p.Expert)
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestParseCollectiveResultNeverPanics(t *testing.T) {
+	inputs := []string{
+		"",
+		"   ",
+		"{}",
+		"[]",
+		`{"perspectives": "not an array"}`,
+		`{"perspectives": []}`,
+		"null",
+		`{"verdict": "pass"}`,
+	}
+
+	for _, input := range inputs {
+		result := ParseCollectiveResult([]byte(input), []string{"expert-a"})
+		if result == nil {
+			t.Errorf("ParseCollectiveResult returned nil for input %q", input)
+		}
+	}
+}
+
+func mustJSON(v any) string {
+	b, err := json.Marshal(v)
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
 }

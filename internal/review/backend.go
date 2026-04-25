@@ -9,9 +9,10 @@ import (
 	"github.com/luuuc/council/internal/expert"
 )
 
-// Backend defines the interface for executing a single expert review.
+// Backend defines the interface for executing expert reviews.
 type Backend interface {
 	Review(ctx context.Context, e *expert.Expert, sub Submission) (ExpertVerdict, error)
+	ReviewCollective(ctx context.Context, experts []*expert.Expert, sub Submission) (*SynthesizedResult, error)
 }
 
 // CLIBackend spawns subprocess calls to an AI CLI for reviews.
@@ -95,6 +96,39 @@ func (b *CLIBackend) Review(ctx context.Context, e *expert.Expert, sub Submissio
 
 	verdict := ParseVerdict(e.ID, output)
 	return verdict, nil
+}
+
+// ReviewCollective executes a collective review with all experts via subprocess.
+func (b *CLIBackend) ReviewCollective(ctx context.Context, experts []*expert.Expert, sub Submission) (*SynthesizedResult, error) {
+	prompt := BuildCollectivePrompt(experts, sub)
+
+	baseArgs := make([]string, len(b.Args))
+	copy(baseArgs, b.Args)
+
+	cmd := exec.CommandContext(ctx, b.Command, baseArgs...)
+
+	const argMaxSafe = 128 * 1024
+	if len(prompt) > argMaxSafe {
+		cmd.Stdin = strings.NewReader(prompt)
+	} else {
+		cmd.Args = append(cmd.Args, prompt)
+	}
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		detail := ""
+		if len(output) > 0 {
+			detail = ": " + truncateBytes(output, 200)
+		}
+		return nil, fmt.Errorf("subprocess failed for collective review%s: %w", detail, err)
+	}
+
+	expertIDs := make([]string, len(experts))
+	for i, e := range experts {
+		expertIDs[i] = e.ID
+	}
+
+	return ParseCollectiveResult(output, expertIDs), nil
 }
 
 // truncateBytes returns a string of at most maxLen bytes from b.

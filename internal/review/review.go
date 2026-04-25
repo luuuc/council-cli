@@ -1,4 +1,4 @@
-// Package review implements the council review engine: blind parallel expert
+// Package review implements the council review engine: collective expert
 // reviews with structured verdict parsing and tension-aware synthesis.
 package review
 

@@ -146,3 +146,191 @@ func truncate(s string, maxLen int) string {
 	}
 	return s[:maxLen] + "..."
 }
+
+// collectiveJSONStartRe matches the opening of a collective JSON object containing a "perspectives" array.
+var collectiveJSONStartRe = regexp.MustCompile(`\{[^{}]*"perspectives"\s*:\s*\[`)
+
+// ParseCollectiveResult extracts a SynthesizedResult from raw LLM output.
+// expectedExperts is the list of expert IDs that should be in the response.
+func ParseCollectiveResult(raw []byte, expectedExperts []string) *SynthesizedResult {
+	text := strings.TrimSpace(string(raw))
+
+	if text == "" {
+		return collectiveFallback("empty response", expectedExperts)
+	}
+
+	// Strategy 1: direct JSON unmarshal
+	if r, ok := tryUnmarshalCollective(text, expectedExperts); ok {
+		return r
+	}
+
+	// Strategy 2: extract from code fences
+	if extracted := extractFromCodeFence(text); extracted != "" {
+		if r, ok := tryUnmarshalCollective(extracted, expectedExperts); ok {
+			return r
+		}
+	}
+
+	// Strategy 3: find JSON object containing "perspectives" array
+	if loc := collectiveJSONStartRe.FindStringIndex(text); loc != nil {
+		candidate := extractBalancedJSON(text[loc[0]:])
+		if candidate != "" {
+			if r, ok := tryUnmarshalCollective(candidate, expectedExperts); ok {
+				return r
+			}
+		}
+	}
+
+	// Strategy 4: fallback
+	return collectiveFallback(truncate(text, 200), expectedExperts)
+}
+
+// tryUnmarshalCollective attempts to parse JSON into a SynthesizedResult.
+func tryUnmarshalCollective(text string, expectedExperts []string) (*SynthesizedResult, bool) {
+	var raw struct {
+		Verdict      Verdict `json:"verdict"`
+		Blocking     bool    `json:"blocking"`
+		Perspectives []struct {
+			Expert     string      `json:"expert"`
+			Verdict    Verdict     `json:"verdict"`
+			Confidence float64     `json:"confidence"`
+			Notes      interface{} `json:"notes"`
+			Blocking   bool        `json:"blocking"`
+		} `json:"perspectives"`
+		Agreements []string `json:"agreements"`
+		Tension    string   `json:"tension"`
+		Summary    string   `json:"summary"`
+	}
+
+	if err := json.Unmarshal([]byte(text), &raw); err != nil {
+		return nil, false
+	}
+
+	if len(raw.Perspectives) == 0 {
+		return nil, false
+	}
+
+	expected := make(map[string]bool, len(expectedExperts))
+	for _, id := range expectedExperts {
+		expected[id] = true
+	}
+
+	var perspectives []ExpertVerdict
+	seen := make(map[string]bool)
+	for _, p := range raw.Perspectives {
+		if !expected[p.Expert] {
+			continue
+		}
+		if seen[p.Expert] {
+			continue
+		}
+		seen[p.Expert] = true
+
+		verdict := p.Verdict
+		if !ValidVerdicts[verdict] {
+			verdict = VerdictComment
+		}
+
+		conf := p.Confidence
+		if conf < 0 {
+			conf = 0
+		}
+		if conf > 1 {
+			conf = 1
+		}
+
+		perspectives = append(perspectives, ExpertVerdict{
+			Expert:     p.Expert,
+			Verdict:    verdict,
+			Confidence: conf,
+			Notes:      normalizeNotes(p.Notes),
+			Blocking:   p.Blocking,
+		})
+	}
+
+	// Fill in missing experts
+	for _, id := range expectedExperts {
+		if !seen[id] {
+			perspectives = append(perspectives, ExpertVerdict{
+				Expert:     id,
+				Verdict:    VerdictComment,
+				Confidence: 0,
+				Notes:      []string{"No perspective provided by model"},
+				Error:      "missing from collective response",
+			})
+		}
+	}
+
+	overall := raw.Verdict
+	if !ValidVerdicts[overall] {
+		overall = VerdictComment
+	}
+
+	return &SynthesizedResult{
+		Verdict:      overall,
+		Blocking:     raw.Blocking,
+		Perspectives: perspectives,
+		Agreements:   raw.Agreements,
+		Tension:      raw.Tension,
+		Summary:      raw.Summary,
+	}, true
+}
+
+// extractBalancedJSON extracts a complete JSON object from text starting at '{'.
+func extractBalancedJSON(text string) string {
+	if len(text) == 0 || text[0] != '{' {
+		return ""
+	}
+
+	depth := 0
+	inString := false
+	escape := false
+
+	for i, ch := range text {
+		if escape {
+			escape = false
+			continue
+		}
+		if ch == '\\' && inString {
+			escape = true
+			continue
+		}
+		if ch == '"' {
+			inString = !inString
+			continue
+		}
+		if inString {
+			continue
+		}
+		switch ch {
+		case '{':
+			depth++
+		case '}':
+			depth--
+			if depth == 0 {
+				return text[:i+1]
+			}
+		}
+	}
+	return ""
+}
+
+// collectiveFallback creates a minimal SynthesizedResult when parsing fails.
+func collectiveFallback(rawSnippet string, expectedExperts []string) *SynthesizedResult {
+	perspectives := make([]ExpertVerdict, len(expectedExperts))
+	for i, id := range expectedExperts {
+		perspectives[i] = ExpertVerdict{
+			Expert:     id,
+			Verdict:    VerdictComment,
+			Confidence: 0,
+			Notes:      []string{"Response could not be parsed: " + rawSnippet},
+			Error:      "unparseable collective response",
+		}
+	}
+
+	return &SynthesizedResult{
+		Verdict:      VerdictComment,
+		Perspectives: perspectives,
+		Summary:      "Collective response could not be parsed.",
+	}
+}

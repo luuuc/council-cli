@@ -300,6 +300,149 @@ func TestAPIBackendMalformedJSON(t *testing.T) {
 	}
 }
 
+func TestAPIBackendCollectiveAnthropic(t *testing.T) {
+	collectiveJSON := `{"verdict":"comment","blocking":false,"perspectives":[{"expert":"expert-a","verdict":"comment","confidence":0.8,"notes":["Add test"],"blocking":false},{"expert":"expert-b","verdict":"pass","confidence":0.9,"notes":[],"blocking":false}],"agreements":["Clean code"],"tension":"A wants tests, B is satisfied","summary":"Ship with comments."}`
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("failed to decode request body: %v", err)
+		}
+
+		// Verify max_tokens is increased for collective calls
+		maxTokens, ok := body["max_tokens"].(float64)
+		if !ok {
+			t.Fatal("expected max_tokens in request body")
+		}
+		if maxTokens != 4096 {
+			t.Errorf("expected max_tokens=4096 for collective, got %v", maxTokens)
+		}
+
+		// Verify prompt contains all experts
+		messages := body["messages"].([]any)
+		content := messages[0].(map[string]any)["content"].(string)
+		if !strings.Contains(content, "Expert A") {
+			t.Error("collective prompt missing Expert A")
+		}
+		if !strings.Contains(content, "Expert B") {
+			t.Error("collective prompt missing Expert B")
+		}
+		if !strings.Contains(content, "council of expert reviewers") {
+			t.Error("collective prompt missing council header")
+		}
+
+		resp := map[string]any{
+			"content": []map[string]string{
+				{"type": "text", "text": collectiveJSON},
+			},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	t.Setenv("ANTHROPIC_API_KEY", "test-key-123")
+
+	backend, err := newAPIBackendWithClient("anthropic", "claude-sonnet-4-6", server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	backend.SetBaseURL(server.URL)
+
+	experts := []*expert.Expert{
+		{ID: "expert-a", Name: "Expert A", Focus: "Testing", Body: "Test expert."},
+		{ID: "expert-b", Name: "Expert B", Focus: "Security", Body: "Security expert."},
+	}
+
+	result, err := backend.ReviewCollective(context.Background(), experts, testSubmission())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Verdict != VerdictComment {
+		t.Errorf("expected comment verdict, got %s", result.Verdict)
+	}
+	if len(result.Perspectives) != 2 {
+		t.Errorf("expected 2 perspectives, got %d", len(result.Perspectives))
+	}
+	if result.Tension == "" {
+		t.Error("expected tension to be set")
+	}
+}
+
+func TestAPIBackendCollectiveOpenAI(t *testing.T) {
+	collectiveJSON := `{"verdict":"pass","blocking":false,"perspectives":[{"expert":"expert-a","verdict":"pass","confidence":0.9,"notes":[],"blocking":false}],"agreements":[],"tension":"","summary":"Ship it."}`
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatalf("failed to decode request body: %v", err)
+		}
+
+		// OpenAI should NOT have max_tokens overridden (no explicit max_tokens in openai provider)
+		if _, ok := body["max_tokens"]; ok {
+			t.Error("openai collective should not have max_tokens override")
+		}
+
+		resp := map[string]any{
+			"choices": []map[string]any{
+				{"message": map[string]string{"content": collectiveJSON}},
+			},
+		}
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	t.Setenv("OPENAI_API_KEY", "test-openai-key")
+
+	backend, err := newAPIBackendWithClient("openai", "gpt-4o", server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	backend.SetBaseURL(server.URL)
+
+	experts := []*expert.Expert{
+		{ID: "expert-a", Name: "Expert A", Focus: "Testing", Body: "Test expert."},
+	}
+
+	result, err := backend.ReviewCollective(context.Background(), experts, testSubmission())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if result.Verdict != VerdictPass {
+		t.Errorf("expected pass, got %s", result.Verdict)
+	}
+}
+
+func TestAPIBackendCollectiveHTTPError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusTooManyRequests)
+		_, _ = io.WriteString(w, `{"error":{"message":"rate limit exceeded"}}`)
+	}))
+	defer server.Close()
+
+	t.Setenv("ANTHROPIC_API_KEY", "test-key")
+
+	backend, err := newAPIBackendWithClient("anthropic", "claude-sonnet-4-6", server.Client())
+	if err != nil {
+		t.Fatal(err)
+	}
+	backend.SetBaseURL(server.URL)
+
+	experts := []*expert.Expert{
+		{ID: "expert-a", Name: "Expert A", Focus: "Testing", Body: "Test expert."},
+	}
+
+	_, err = backend.ReviewCollective(context.Background(), experts, testSubmission())
+	if err == nil {
+		t.Fatal("expected error for 429 response")
+	}
+	if !strings.Contains(err.Error(), "429") {
+		t.Errorf("error should mention status code 429, got: %s", err.Error())
+	}
+}
+
 // TestAPIBackendRunnerIntegration verifies APIBackend works with the Runner.
 func TestAPIBackendRunnerIntegration(t *testing.T) {
 	verdictJSON := `{"expert":"test-expert","verdict":"pass","confidence":0.95,"notes":["Clean code"],"blocking":false}`

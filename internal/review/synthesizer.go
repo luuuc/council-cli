@@ -32,10 +32,10 @@ func Synthesize(verdicts []ExpertVerdict, experts []*expert.Expert, errors []str
 	}
 
 	// Determine overall verdict: highest severity wins, weighted by hierarchy
-	result.Verdict = resolveOverallVerdict(verdicts, byID)
+	result.Verdict = ResolveOverallVerdict(verdicts, byID)
 
 	// Determine blocking status
-	result.Blocking = resolveBlocking(verdicts)
+	result.Blocking = ResolveBlocking(verdicts)
 
 	// Find agreements
 	result.Agreements = findAgreements(verdicts)
@@ -49,9 +49,9 @@ func Synthesize(verdicts []ExpertVerdict, experts []*expert.Expert, errors []str
 	return result
 }
 
-// resolveOverallVerdict determines the aggregate verdict.
+// ResolveOverallVerdict determines the aggregate verdict.
 // A block from a higher-priority domain outweighs a pass from lower ones.
-func resolveOverallVerdict(verdicts []ExpertVerdict, experts map[string]*expert.Expert) Verdict {
+func ResolveOverallVerdict(verdicts []ExpertVerdict, experts map[string]*expert.Expert) Verdict {
 	highest := VerdictPass
 	highestDomain := DomainQuality
 
@@ -81,8 +81,8 @@ func resolveOverallVerdict(verdicts []ExpertVerdict, experts map[string]*expert.
 	return highest
 }
 
-// resolveBlocking checks if any blocking expert issued a block or escalate.
-func resolveBlocking(verdicts []ExpertVerdict) bool {
+// ResolveBlocking checks if any blocking expert issued a block or escalate.
+func ResolveBlocking(verdicts []ExpertVerdict) bool {
 	for _, v := range verdicts {
 		if v.Blocking && (v.Verdict == VerdictBlock || v.Verdict == VerdictEscalate) {
 			return true

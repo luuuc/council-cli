@@ -131,6 +131,97 @@ func TestSynthesize(t *testing.T) {
 	}
 }
 
+func TestResolveOverallVerdict(t *testing.T) {
+	securityExpert := &expert.Expert{ID: "sec", Name: "Sec", Focus: "Application security"}
+	qualityExpert := &expert.Expert{ID: "qual", Name: "Qual", Focus: "Test-driven development"}
+
+	byID := map[string]*expert.Expert{
+		"sec":  securityExpert,
+		"qual": qualityExpert,
+	}
+
+	tests := []struct {
+		name     string
+		verdicts []ExpertVerdict
+		want     Verdict
+	}{
+		{
+			name: "correct LLM verdict passes through",
+			verdicts: []ExpertVerdict{
+				{Expert: "sec", Verdict: VerdictBlock},
+				{Expert: "qual", Verdict: VerdictPass},
+			},
+			want: VerdictBlock,
+		},
+		{
+			name: "all pass",
+			verdicts: []ExpertVerdict{
+				{Expert: "sec", Verdict: VerdictPass},
+				{Expert: "qual", Verdict: VerdictPass},
+			},
+			want: VerdictPass,
+		},
+		{
+			name: "escalate wins over block",
+			verdicts: []ExpertVerdict{
+				{Expert: "sec", Verdict: VerdictEscalate},
+				{Expert: "qual", Verdict: VerdictBlock},
+			},
+			want: VerdictEscalate,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ResolveOverallVerdict(tt.verdicts, byID)
+			if got != tt.want {
+				t.Errorf("ResolveOverallVerdict = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestResolveBlocking(t *testing.T) {
+	tests := []struct {
+		name     string
+		verdicts []ExpertVerdict
+		want     bool
+	}{
+		{
+			name: "blocking expert with block verdict",
+			verdicts: []ExpertVerdict{
+				{Expert: "sec", Verdict: VerdictBlock, Blocking: true},
+				{Expert: "qual", Verdict: VerdictPass, Blocking: false},
+			},
+			want: true,
+		},
+		{
+			name: "blocking expert with pass verdict",
+			verdicts: []ExpertVerdict{
+				{Expert: "sec", Verdict: VerdictPass, Blocking: true},
+				{Expert: "qual", Verdict: VerdictBlock, Blocking: false},
+			},
+			want: false,
+		},
+		{
+			name: "no blocking experts",
+			verdicts: []ExpertVerdict{
+				{Expert: "sec", Verdict: VerdictBlock, Blocking: false},
+			},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := ResolveBlocking(tt.verdicts)
+			if got != tt.want {
+				t.Errorf("ResolveBlocking = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestBuildSummary(t *testing.T) {
 	summary := buildSummary(
 		[]ExpertVerdict{

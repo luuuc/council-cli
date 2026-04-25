@@ -51,3 +51,52 @@ func BuildPrompt(e *expert.Expert, sub Submission) string {
 	}
 	return buf.String()
 }
+
+var collectiveTemplate = template.Must(template.New("collective-prompt").Parse(`You are a council of expert reviewers. Review the submission below from each expert's perspective independently, then synthesize.
+
+## Experts
+{{range .Experts}}
+### {{.Name}} — {{.Focus}}
+
+{{.Body}}
+{{end}}
+## Submission
+
+` + "```" + `
+{{.Submission.Content}}
+` + "```" + `
+{{if .Submission.Context}}
+## Context
+
+{{.Submission.Context}}
+{{end}}
+## Instructions
+
+Review the submission from each expert's perspective. Experts should react to each other — if one expert raises a concern that another would challenge, say so. The tension between perspectives is the most valuable part.
+
+Respond with ONLY a JSON object matching this exact schema. No markdown, no code fences, no explanation before or after.
+
+{"verdict":"<pass|comment|block|escalate>","blocking":false,"perspectives":[{"expert":"<expert-id>","verdict":"<pass|comment|block|escalate>","confidence":<0.0-1.0>,"notes":["<observation>"],"blocking":false}],"agreements":["<things all experts agree on>"],"tension":"<where experts disagree and why>","summary":"<one-line recommendation>"}
+
+Field definitions:
+- verdict: overall recommendation — "pass" (no issues), "comment" (suggestions), "block" (must fix), "escalate" (beyond expertise)
+- perspectives: one entry per expert with their individual assessment
+- agreements: observations that all experts share
+- tension: where experts disagree — articulate both sides
+- summary: one-line recommendation for the author
+
+Each perspective must be substantive — skip an expert rather than produce a generic observation. Respond with ONLY the JSON object. Nothing else.`))
+
+type collectivePromptData struct {
+	Experts    []*expert.Expert
+	Submission Submission
+}
+
+// BuildCollectivePrompt constructs a single prompt for all experts to review together.
+func BuildCollectivePrompt(experts []*expert.Expert, sub Submission) string {
+	var buf bytes.Buffer
+	if err := collectiveTemplate.Execute(&buf, collectivePromptData{Experts: experts, Submission: sub}); err != nil {
+		return "Review this code as a council of experts:\n\n" + sub.Content
+	}
+	return buf.String()
+}
