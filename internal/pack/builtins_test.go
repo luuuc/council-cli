@@ -31,9 +31,9 @@ func TestBuiltinsSpecificMembers(t *testing.T) {
 		pack    string
 		members []string
 	}{
-		{"rails", []string{"ada-redgrave", "diego-valdez", "nadia-kowalski", "marcus-torrent", "tara-mishkin", "luc-perussault-diallo"}},
-		{"go", []string{"sable-okoro", "ada-redgrave", "nadia-kowalski", "niall-cassidy", "elara-nygaard", "luc-perussault-diallo"}},
-		{"writing", []string{"luc-perussault-diallo", "marcus-torrent", "elara-nygaard", "colette-marsh"}},
+		{"rails", []string{"the-tdd-advocate", "the-rails-monolith", "the-threat-modeler", "the-scope-cutter", "the-ruby-crafter", "luc-perussault-diallo"}},
+		{"go", []string{"the-go-purist", "the-tdd-advocate", "the-threat-modeler", "the-flow-optimizer", "the-design-minimalist", "luc-perussault-diallo"}},
+		{"writing", []string{"luc-perussault-diallo", "the-scope-cutter", "the-design-minimalist", "the-revision-hawk"}},
 	}
 
 	for _, tt := range tests {

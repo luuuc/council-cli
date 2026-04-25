@@ -293,7 +293,7 @@ func selectFromSuggestionBank(d *detect.Detection) []*expert.Expert {
 // selectGeneralists returns default generalists when detection finds nothing
 func selectGeneralists() []*expert.Expert {
 	var selected []*expert.Expert
-	ids := []string{"ada-redgrave", "elara-nygaard", "marcus-torrent", "nadia-kowalski", "iris-vance"}
+	ids := []string{"the-tdd-advocate", "the-design-minimalist", "the-scope-cutter", "the-threat-modeler", "the-deep-worker"}
 
 	for _, id := range ids {
 		if len(selected) >= maxTotalExperts {

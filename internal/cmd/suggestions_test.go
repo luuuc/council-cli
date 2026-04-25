@@ -100,10 +100,10 @@ func TestSuggestSimilar(t *testing.T) {
 		input    string
 		wantName string // empty means expect nil
 	}{
-		// Single character typos (matches against IDs)
+		// Single character typos (matches against IDs and names)
 		{"Luc Perussault-Diall", "Luc Perussault-Diallo"},
-		{"ada-redgrav", "The TDD Advocate"},
-		{"Sable Okor", "The Go Purist"},
+		{"the-tdd-advocat", "The TDD Advocate"},
+		{"The Go Puris", "The Go Purist"},
 
 		// Case insensitive - exact matches should return nil (use LookupPersona)
 		{"THE GO PURIST", ""},
@@ -153,22 +153,22 @@ func TestLookupPersona(t *testing.T) {
 		wantNil bool
 	}{
 		// Exact matches by name
-		{"The Go Purist", "sable-okoro", false},
-		{"THE GO PURIST", "sable-okoro", false},
-		{"  The Go Purist  ", "sable-okoro", false},
-		{"The TDD Advocate", "ada-redgrave", false},
+		{"The Go Purist", "the-go-purist", false},
+		{"THE GO PURIST", "the-go-purist", false},
+		{"  The Go Purist  ", "the-go-purist", false},
+		{"The TDD Advocate", "the-tdd-advocate", false},
 
 		// Exact match by ID
-		{"sable-okoro", "sable-okoro", false},
-		{"ada-redgrave", "ada-redgrave", false},
+		{"the-go-purist", "the-go-purist", false},
+		{"the-tdd-advocate", "the-tdd-advocate", false},
 
 		// First-name matching (only Luc has a non-"The" first name)
 		{"Luc", "luc-perussault-diallo", false},
 		{"luc", "luc-perussault-diallo", false},
 
 		// Legacy alias resolution
-		{"kent-beck", "ada-redgrave", false},
-		{"rob-pike", "sable-okoro", false},
+		{"kent-beck", "the-tdd-advocate", false},
+		{"rob-pike", "the-go-purist", false},
 
 		// Unknown
 		{"Unknown Person", "", true},
@@ -195,10 +195,10 @@ func TestLookupPersona(t *testing.T) {
 
 func TestFilterPersonasByCategory(t *testing.T) {
 	personas := []PersonaJSON{
-		{ID: "sable-okoro", Name: "The Go Purist", Category: "go", Focus: "Go systems programming"},
-		{ID: "nolan-chambers", Name: "The Pythonista", Category: "python", Focus: "Python idioms"},
-		{ID: "ada-redgrave", Name: "The TDD Advocate", Category: "general", Focus: "TDD"},
-		{ID: "diego-valdez", Name: "The Rails Monolith", Category: "rails", Focus: "Rails conventions"},
+		{ID: "the-go-purist", Name: "The Go Purist", Category: "go", Focus: "Go systems programming"},
+		{ID: "the-pythonista", Name: "The Pythonista", Category: "python", Focus: "Python idioms"},
+		{ID: "the-tdd-advocate", Name: "The TDD Advocate", Category: "general", Focus: "TDD"},
+		{ID: "the-rails-monolith", Name: "The Rails Monolith", Category: "rails", Focus: "Rails conventions"},
 	}
 
 	tests := []struct {
@@ -224,9 +224,9 @@ func TestFilterPersonasByCategory(t *testing.T) {
 
 func TestFilterPersonasBySearch(t *testing.T) {
 	personas := []PersonaJSON{
-		{ID: "sable-okoro", Name: "The Go Purist", Category: "go", Focus: "Go systems programming"},
-		{ID: "ada-redgrave", Name: "The TDD Advocate", Category: "general", Focus: "Test-driven development"},
-		{ID: "nadia-kowalski", Name: "The Threat Modeler", Category: "security", Focus: "Application security"},
+		{ID: "the-go-purist", Name: "The Go Purist", Category: "go", Focus: "Go systems programming"},
+		{ID: "the-tdd-advocate", Name: "The TDD Advocate", Category: "general", Focus: "Test-driven development"},
+		{ID: "the-threat-modeler", Name: "The Threat Modeler", Category: "security", Focus: "Application security"},
 	}
 
 	tests := []struct {

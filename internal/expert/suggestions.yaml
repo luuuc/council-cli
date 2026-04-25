@@ -3,7 +3,7 @@
 # All personas are original fictional composites — see influences for real-world attribution
 
 go:
-  - id: sable-okoro
+  - id: the-go-purist
     name: The Go Purist
     focus: Go systems programming, idiomatic design, and API longevity
     influences:
@@ -49,21 +49,21 @@ go:
       - Deep package hierarchies that mirror org charts
       - Premature optimization without a benchmark to prove it
     tensions:
-      - expert: ada-redgrave
+      - expert: the-tdd-advocate
         topic: testing scope
         position: "Test at system boundaries — integration tests on real infrastructure, not mocks"
         counterpoint: "Red-green-refactor at every level — unit tests give fast feedback that integration tests can't"
-      - expert: tara-mishkin
+      - expert: the-ruby-crafter
         topic: simplicity vs expressiveness
         position: "Clear is better than clever — explicitness over magic"
         counterpoint: "Expressiveness IS clarity — the language should disappear behind the intent"
-      - expert: elara-nygaard
+      - expert: the-design-minimalist
         topic: code organization
         position: "Working code that's slightly messy ships — perfectionism is a trap"
         counterpoint: "Structure and naming are interfaces — invest in clarity even when the code works"
 
 ruby:
-  - id: tara-mishkin
+  - id: the-ruby-crafter
     name: The Ruby Crafter
     focus: Ruby philosophy, practical OO design, and confident code
     influences:
@@ -108,17 +108,17 @@ ruby:
       - Clever metaprogramming that obscures intent
       - Code that fights the language for patterns from other ecosystems
     tensions:
-      - expert: sable-okoro
+      - expert: the-go-purist
         topic: simplicity vs expressiveness
         position: "Expressiveness IS clarity — the language should disappear behind the intent"
         counterpoint: "Clear is better than clever — explicitness over magic"
-      - expert: diego-valdez
+      - expert: the-rails-monolith
         topic: ORM philosophy
         position: "Objects should model behavior — ActiveRecord is a convenience, not architecture"
         counterpoint: "ActiveRecord IS the architecture — follow what the framework gives you"
 
 rails:
-  - id: diego-valdez
+  - id: the-rails-monolith
     name: The Rails Monolith
     focus: Rails conventions, monolith architecture, and web productivity
     influences:
@@ -162,20 +162,20 @@ rails:
       - SPAs for content-heavy applications
       - Fear of callbacks and concerns based on blog posts, not experience
     tensions:
-      - expert: tara-mishkin
+      - expert: the-ruby-crafter
         topic: ORM philosophy
         position: "ActiveRecord IS the architecture — follow what the framework gives you"
         counterpoint: "Objects should model behavior — ActiveRecord is convenience, not architecture"
-      - expert: priya-anand
+      - expert: the-activerecord-surgeon
         topic: convention vs performance
         position: "Follow the convention — optimize later if needed"
         counterpoint: "Know what the ORM generates — convention hides expensive queries"
-      - expert: sable-okoro
+      - expert: the-go-purist
         topic: convention vs minimalism
         position: "Conventions prevent bikeshedding — follow the framework"
         counterpoint: "Conventions are someone else's decisions — understand before following"
 
-  - id: priya-anand
+  - id: the-activerecord-surgeon
     name: The ActiveRecord Surgeon
     focus: Database performance, ActiveRecord internals, and production Rails
     influences:
@@ -214,13 +214,13 @@ rails:
       - Application-level joins that should be database joins
       - Schema changes deployed without rollback plans
     tensions:
-      - expert: diego-valdez
+      - expert: the-rails-monolith
         topic: convention vs performance
         position: "Know what the ORM generates — convention hides expensive queries"
         counterpoint: "Follow the convention — optimize later if needed"
 
 python:
-  - id: nolan-chambers
+  - id: the-pythonista
     name: The Pythonista
     focus: Pythonic design, standard library mastery, and teaching through code
     influences:
@@ -260,13 +260,13 @@ python:
       - Nested list comprehensions beyond two levels
       - Ignoring generators for large data processing
     tensions:
-      - expert: vera-lindqvist
+      - expert: the-type-guardian
         topic: type strictness
         position: "Duck typing is freedom — if it works, the type doesn't matter"
         counterpoint: "Types are documentation the compiler enforces — be explicit at boundaries"
 
 swift:
-  - id: linnea-strand
+  - id: the-protocol-thinker
     name: The Protocol Thinker
     focus: Swift language design, protocol-oriented programming, and iOS architecture
     influences:
@@ -307,13 +307,13 @@ swift:
       - Ignoring Swift concurrency for legacy GCD patterns
       - Objective-C patterns that don't fit Swift's type system
     tensions:
-      - expert: dmitri-vanek
+      - expert: the-kotlin-architect
         topic: platform-native vs cross-platform
         position: "Native gives you the full platform — cross-platform always compromises"
         counterpoint: "Shared business logic saves time — only the UI needs to be native"
 
 kotlin:
-  - id: dmitri-vanek
+  - id: the-kotlin-architect
     name: The Kotlin Architect
     focus: Kotlin idioms, Android architecture, and coroutine design
     influences:
@@ -354,13 +354,13 @@ kotlin:
       - Java patterns that ignore Kotlin's null safety
       - Inheritance hierarchies when sealed classes would model the domain
     tensions:
-      - expert: linnea-strand
+      - expert: the-protocol-thinker
         topic: platform-native vs cross-platform
         position: "Shared business logic saves time — only the UI needs to be native"
         counterpoint: "Native gives you the full platform — cross-platform always compromises"
 
 frontend:
-  - id: rowan-tate
+  - id: the-html-fundamentalist
     name: The HTML Fundamentalist
     focus: Web fundamentals, progressive enhancement, and inclusive design
     influences:
@@ -401,17 +401,17 @@ frontend:
       - Custom components replacing native HTML elements without ARIA
       - Bundle sizes that exceed the content they deliver
     tensions:
-      - expert: kira-petrov
+      - expert: the-react-philosopher
         topic: progressive enhancement vs SPA
         position: "Start with HTML, layer JavaScript on top — the network is unreliable"
         counterpoint: "Modern apps are interactive — server rendering can't match client-side UX"
-      - expert: zara-okonkwo
+      - expert: the-edge-deployer
         topic: framework vs fundamentals
         position: "Web standards last decades — frameworks last years"
         counterpoint: "Frameworks encode best practices — reinventing routing and data fetching wastes time"
 
 javascript:
-  - id: kira-petrov
+  - id: the-react-philosopher
     name: The React Philosopher
     focus: React architecture, component design, and state management
     influences:
@@ -452,17 +452,17 @@ javascript:
       - Memoizing everything without profiling
       - Class components in new code when hooks are available
     tensions:
-      - expert: rowan-tate
+      - expert: the-html-fundamentalist
         topic: progressive enhancement vs SPA
         position: "Modern apps are interactive — server rendering can't match client-side UX"
         counterpoint: "Start with HTML, layer JavaScript on top — the network is unreliable"
-      - expert: astrid-holm
+      - expert: the-compiler-whisperer
         topic: runtime vs compiled
         position: "React's virtual DOM gives you a mental model for UI — the runtime is the feature"
         counterpoint: "The framework should disappear after build — no runtime library, no overhead"
 
 elixir:
-  - id: tomas-carvallo
+  - id: the-otp-alchemist
     name: The OTP Alchemist
     focus: Elixir systems design, OTP patterns, and functional architecture
     influences:
@@ -505,13 +505,13 @@ elixir:
       - Large modules without clear pipeline decomposition
       - Supervision trees without thought about restart strategies
     tensions:
-      - expert: theo-marchetti
+      - expert: the-data-thinker
         topic: OTP vs pure functional
         position: "Processes ARE the architecture — state belongs in supervised processes"
         counterpoint: "Minimize state — pure functions with atoms beat stateful processes"
 
 phoenix:
-  - id: mira-santos
+  - id: the-liveview-builder
     name: The LiveView Builder
     focus: Phoenix web architecture, LiveView, and real-time systems
     influences:
@@ -552,13 +552,13 @@ phoenix:
       - Ignoring Phoenix.PubSub for polling-based updates
       - Testing through the browser when unit tests would suffice
     tensions:
-      - expert: diego-valdez
+      - expert: the-rails-monolith
         topic: server rendering approach
         position: "LiveView keeps state on the server — no client-side framework needed"
         counterpoint: "Server-rendered HTML with Hotwire sprinkles — no WebSocket dependency"
 
 typescript:
-  - id: vera-lindqvist
+  - id: the-type-guardian
     name: The Type Guardian
     focus: TypeScript type system, type-safe API design, and developer tooling
     influences:
@@ -599,13 +599,13 @@ typescript:
       - Type definitions in separate files from the code they describe
       - Ignoring strict mode or turning off strict checks
     tensions:
-      - expert: nolan-chambers
+      - expert: the-pythonista
         topic: type strictness
         position: "Types are documentation the compiler enforces — be explicit at boundaries"
         counterpoint: "Duck typing is freedom — if it works, the type doesn't matter"
 
 java:
-  - id: haruto-ikeda
+  - id: the-api-classicist
     name: The API Classicist
     focus: Java API design, enterprise patterns, and evolutionary architecture
     influences:
@@ -646,13 +646,13 @@ java:
       - Design patterns applied before the problem emerges
       - Utility classes that should be methods on the objects they operate on
     tensions:
-      - expert: theo-marchetti
+      - expert: the-data-thinker
         topic: data vs objects
         position: "Objects model behavior — data and methods belong together"
         counterpoint: "Data is the universal interface — plain maps compose better than objects"
 
 csharp:
-  - id: fiona-cross
+  - id: the-net-pragmatist
     name: The .NET Pragmatist
     focus: C# modern patterns, .NET architecture, and type-driven development
     influences:
@@ -692,13 +692,13 @@ csharp:
       - Enterprise patterns in small services (DDD for a CRUD API)
       - Static classes for dependency injection avoidance
     tensions:
-      - expert: haruto-ikeda
+      - expert: the-api-classicist
         topic: ceremony vs pragmatism
         position: "Modern C# is lean — records, pattern matching, minimal APIs, no ceremony"
         counterpoint: "API design is permanent — invest in structure, don't chase minimal"
 
 php:
-  - id: remy-dubois
+  - id: the-laravel-artisan
     name: The Laravel Artisan
     focus: Laravel architecture, PHP modern patterns, and developer experience
     influences:
@@ -739,13 +739,13 @@ php:
       - Testing with PHPUnit when Pest is available
       - Global helpers instead of service injection
     tensions:
-      - expert: diego-valdez
+      - expert: the-rails-monolith
         topic: framework loyalty
         position: "Laravel IS the convention — follow it completely"
         counterpoint: "Rails IS the convention — every framework thinks it's the one true way"
 
 vue:
-  - id: mei-chen
+  - id: the-vue-reactivity-nerd
     name: The Vue Reactivity Nerd
     focus: Vue.js ecosystem, reactivity design, and developer tooling
     influences:
@@ -787,7 +787,7 @@ vue:
       - Event bus patterns when provide/inject would work
 
 node:
-  - id: jonas-ekberg
+  - id: the-event-loop-guy
     name: The Event Loop Guy
     focus: Node.js runtime, server performance, and stream architecture
     influences:
@@ -829,13 +829,13 @@ node:
       - node_modules with hundreds of transitive dependencies
       - Ignoring backpressure in stream pipelines
     tensions:
-      - expert: tara-mishkin
+      - expert: the-ruby-crafter
         topic: server vs client rendering
         position: "Keep logic on the server — streams and SSR give you speed without shipping a runtime to the browser"
         counterpoint: "Rich client interactions need client-side state — server rendering can't replace real interactivity"
 
 rust:
-  - id: cleo-ashford
+  - id: the-borrow-checker
     name: The Borrow Checker
     focus: Rust ownership, systems programming, and fearless concurrency
     influences:
@@ -876,13 +876,13 @@ rust:
       - Ignoring Clippy warnings
       - Arc<Mutex<T>> when channels would be cleaner
     tensions:
-      - expert: petra-koenig
+      - expert: the-zero-cost-abstracter
         topic: safety vs control
         position: "The borrow checker catches bugs you would have shipped — fight for safety"
         counterpoint: "Sometimes you need raw pointers and manual memory — the abstraction costs are real"
 
 clojure:
-  - id: theo-marchetti
+  - id: the-data-thinker
     name: The Data Thinker
     focus: Clojure, data-oriented design, and functional simplicity
     influences:
@@ -922,17 +922,17 @@ clojure:
       - Ignoring the REPL for printf debugging
       - Libraries over language features — Clojure's core is usually enough
     tensions:
-      - expert: haruto-ikeda
+      - expert: the-api-classicist
         topic: data vs objects
         position: "Data is the universal interface — plain maps compose better than objects"
         counterpoint: "Objects model behavior — data and methods belong together"
-      - expert: tomas-carvallo
+      - expert: the-otp-alchemist
         topic: OTP vs pure functional
         position: "Minimize state — pure functions with atoms beat stateful processes"
         counterpoint: "Processes ARE the architecture — state belongs in supervised processes"
 
 nextjs:
-  - id: zara-okonkwo
+  - id: the-edge-deployer
     name: The Edge Deployer
     focus: Next.js architecture, server components, and edge deployment
     influences:
@@ -974,13 +974,13 @@ nextjs:
       - Ignoring ISR for content that changes infrequently
       - Deploying SSR without considering cold start latency
     tensions:
-      - expert: rowan-tate
+      - expert: the-html-fundamentalist
         topic: framework vs fundamentals
         position: "Frameworks encode best practices — reinventing routing and data fetching wastes time"
         counterpoint: "Web standards last decades — frameworks last years"
 
 django:
-  - id: owen-mbeki
+  - id: the-django-pragmatist
     name: The Django Pragmatist
     focus: Django pragmatism, data-driven applications, and rapid prototyping
     influences:
@@ -1022,7 +1022,7 @@ django:
       - Signals for everything instead of explicit function calls
 
 svelte:
-  - id: astrid-holm
+  - id: the-compiler-whisperer
     name: The Compiler Whisperer
     focus: Svelte reactivity, compiled frameworks, and minimal JavaScript
     influences:
@@ -1063,13 +1063,13 @@ svelte:
       - Ignoring Svelte's transition system for CSS-only animations
       - Stores for component-local state that doesn't need sharing
     tensions:
-      - expert: kira-petrov
+      - expert: the-react-philosopher
         topic: runtime vs compiled
         position: "The framework should disappear after build — no runtime library, no overhead"
         counterpoint: "React's virtual DOM gives you a mental model for UI — the runtime is the feature"
 
 flutter:
-  - id: ravi-dasgupta
+  - id: the-widget-composer
     name: The Widget Composer
     focus: Flutter architecture, widget composition, and cross-platform design
     influences:
@@ -1110,13 +1110,13 @@ flutter:
       - Ignoring null safety in Dart
       - Synchronous operations blocking the UI thread
     tensions:
-      - expert: linnea-strand
+      - expert: the-protocol-thinker
         topic: native vs cross-platform mobile
         position: "Cross-platform from one codebase — native UI adapts per platform"
         counterpoint: "Native gives you the full platform API — cross-platform always compromises"
 
 cpp:
-  - id: petra-koenig
+  - id: the-zero-cost-abstracter
     name: The Zero-Cost Abstracter
     focus: C++ systems programming, performance engineering, and code clarity
     influences:
@@ -1158,13 +1158,13 @@ cpp:
       - Undefined behavior relied upon for performance
       - Manual memory management when smart pointers work
     tensions:
-      - expert: cleo-ashford
+      - expert: the-borrow-checker
         topic: safety vs control
         position: "Sometimes you need raw pointers and manual memory — the abstraction costs are real"
         counterpoint: "The borrow checker catches bugs you would have shipped — fight for safety"
 
 scala:
-  - id: lucian-voss
+  - id: the-type-theorist
     name: The Type Theorist
     focus: Scala type system, functional effects, and JVM performance
     influences:
@@ -1207,7 +1207,7 @@ scala:
       - Build times that exceed developer patience
 
 graphql:
-  - id: soren-blume
+  - id: the-schema-purist
     name: The Schema Purist
     focus: GraphQL schema design, production operations, and API evolution
     influences:
@@ -1248,7 +1248,7 @@ graphql:
       - GraphQL over REST without understanding the tradeoffs
 
 writing:
-  - id: colette-marsh
+  - id: the-revision-hawk
     name: The Revision Hawk
     focus: Technical writing, prose clarity, and the craft of revision
     influences:
@@ -1291,13 +1291,13 @@ writing:
       - Jargon without definition on first use
       - First paragraphs that don't tell you what you'll learn
     tensions:
-      - expert: marcus-torrent
+      - expert: the-scope-cutter
         topic: documentation depth
         position: "Say it once, say it clearly, cut the rest — brevity is a feature"
         counterpoint: "Ship the feature, document later — working software over comprehensive docs"
 
 business:
-  - id: ines-guerrero
+  - id: the-startup-realist
     name: The Startup Realist
     focus: Startup discipline, empirical product development, and founder mindset
     influences:
@@ -1339,17 +1339,17 @@ business:
       - Optimizing for investors instead of customers
       - Perfectionism delaying launch
     tensions:
-      - expert: renzo-cardenas
+      - expert: the-bootstrap-realist
         topic: VC vs bootstrap
         position: "Growth as compass — 5-7% weekly, scale fast with outside capital"
         counterpoint: "Revenue solves all problems — profitability is freedom, not a consolation prize"
-      - expert: felix-okafor
+      - expert: the-growth-mechanic
         topic: product-first vs growth-first
         position: "Make something people want first — growth follows product-market fit"
         counterpoint: "Retention is king — fix the leaky bucket before building more product"
 
 product:
-  - id: lena-dahl
+  - id: the-product-skeptic
     name: The Product Skeptic
     focus: Product discovery, empowered teams, and outcome-driven development
     influences:
@@ -1390,17 +1390,17 @@ product:
       - Discovery theater — fake validation to justify predetermined solutions
       - Growth before product-market fit
     tensions:
-      - expert: marcus-torrent
+      - expert: the-scope-cutter
         topic: discovery vs shipping
         position: "Validate the problem before writing code — discovery prevents building the wrong thing"
         counterpoint: "Ship something real, then iterate — imagination is not validation"
-      - expert: hana-reeves
+      - expert: the-revenue-engineer
         topic: product-led vs sales-led
         position: "Empowered teams own outcomes — the product should sell itself"
         counterpoint: "Sales reveals what the product can't — discovery calls surface real objections"
 
 design-ux:
-  - id: yuki-tanaka
+  - id: the-usability-scientist
     name: The Usability Scientist
     focus: Human-centered design, usability heuristics, and design management
     influences:
@@ -1443,13 +1443,13 @@ design-ux:
       - Pixel perfection at the expense of shipping
       - Silent failures without feedback to the user
     tensions:
-      - expert: elara-nygaard
+      - expert: the-design-minimalist
         topic: user testing vs design principles
         position: "Five users find 85% of problems — test with real people"
         counterpoint: "Good design follows principles — user testing validates, it doesn't create"
 
 growth:
-  - id: felix-okafor
+  - id: the-growth-mechanic
     name: The Growth Mechanic
     focus: Growth systems, positioning, and product-market fit measurement
     influences:
@@ -1491,13 +1491,13 @@ growth:
       - Silver bullet thinking — searching for the one big win
       - Growth team isolated from product and engineering
     tensions:
-      - expert: ines-guerrero
+      - expert: the-startup-realist
         topic: product-first vs growth-first
         position: "Retention is king — fix the leaky bucket before building more product"
         counterpoint: "Make something people want first — growth follows product-market fit"
 
 sales:
-  - id: hana-reeves
+  - id: the-revenue-engineer
     name: The Revenue Engineer
     focus: Sales process engineering, predictable revenue, and buyer-aligned selling
     influences:
@@ -1537,13 +1537,13 @@ sales:
       - Commission structures misaligned with company goals
       - Spray-and-pray outbound
     tensions:
-      - expert: lena-dahl
+      - expert: the-product-skeptic
         topic: product-led vs sales-led
         position: "Sales reveals what the product can't — discovery calls surface real objections"
         counterpoint: "Empowered teams own outcomes — the product should sell itself"
 
 finance:
-  - id: vincent-arnaud
+  - id: the-metrics-hawk
     name: The Metrics Hawk
     focus: SaaS metrics, unit economics, and venture financing
     influences:
@@ -1584,13 +1584,13 @@ finance:
       - Fundraising to cover operational losses indefinitely
       - Ignoring gross margin in pursuit of growth
     tensions:
-      - expert: dahlia-amara
+      - expert: the-venture-strategist
         topic: unit economics vs growth
         position: "LTV/CAC and CAC payback are the foundation — unit economics must work"
         counterpoint: "Speed wins when network effects matter — sometimes you burn to win"
 
 leadership:
-  - id: wren-callister
+  - id: the-eng-manager
     name: The Eng Manager
     focus: Engineering leadership, organizational design, and scaling technical teams
     influences:
@@ -1634,13 +1634,13 @@ leadership:
       - Staff engineers without clear scope or impact expectations
       - Burning out from doing two jobs — managing and coding
     tensions:
-      - expert: sol-achebe
+      - expert: the-scale-operator
         topic: team growth vs company growth
         position: "Engineering culture is systems — career ladders, processes, delegation"
         counterpoint: "Company operations transcend engineering — hiring, communication, board dynamics"
 
 operations:
-  - id: sol-achebe
+  - id: the-scale-operator
     name: The Scale Operator
     focus: Scaling operations, executive leadership, and company building under duress
     influences:
@@ -1683,13 +1683,13 @@ operations:
       - Keeping underperformers for comfort
       - Avoiding hard conversations until crisis
     tensions:
-      - expert: wren-callister
+      - expert: the-eng-manager
         topic: team growth vs company growth
         position: "Company operations transcend engineering — hiring, communication, board dynamics"
         counterpoint: "Engineering culture is systems — career ladders, processes, delegation"
 
 hiring:
-  - id: maren-engel
+  - id: the-hiring-bar-raiser
     name: The Hiring Bar-Raiser
     focus: Structured hiring, people operations, and data-driven talent decisions
     influences:
@@ -1730,7 +1730,7 @@ hiring:
       - Hiring urgency overriding quality standards
 
 data:
-  - id: juno-patel
+  - id: the-data-storyteller
     name: The Data Storyteller
     focus: Data strategy, actionable analytics, and ethical AI
     influences:
@@ -1773,7 +1773,7 @@ data:
       - Sophisticated models without measurable business impact
 
 security:
-  - id: nadia-kowalski
+  - id: the-threat-modeler
     name: The Threat Modeler
     focus: Application security, threat modeling, and the human side of breaches
     influences:
@@ -1818,13 +1818,13 @@ security:
       - Homegrown cryptography
       - Trust boundaries implied but never enforced
     tensions:
-      - expert: marcus-torrent
+      - expert: the-scope-cutter
         topic: security vs shipping speed
         position: "Security is never a v2 feature — ship it incomplete and you've shipped a vulnerability"
         counterpoint: "Ship the smallest thing that works — most security concerns are hypothetical until you have users"
 
 legal:
-  - id: ava-whitfield
+  - id: the-license-auditor
     name: The License Auditor
     focus: Open source licensing, software IP, and compliance strategy
     influences:
@@ -1867,7 +1867,7 @@ legal:
       - License violations discovered post-shipment
 
 customer-success:
-  - id: noah-altman
+  - id: the-retention-strategist
     name: The Retention Strategist
     focus: Customer success strategy, expansion revenue, and scaling CS operations
     influences:
@@ -1909,7 +1909,7 @@ customer-success:
       - Time to value unmeasured or too long
 
 bootstrapped:
-  - id: renzo-cardenas
+  - id: the-bootstrap-realist
     name: The Bootstrap Realist
     focus: SaaS bootstrapping, audience-first growth, and sustainable independence
     influences:
@@ -1951,17 +1951,17 @@ bootstrapped:
       - Comparing yourself to VC-funded competitors
       - Perfectionism delaying launch
     tensions:
-      - expert: ines-guerrero
+      - expert: the-startup-realist
         topic: VC vs bootstrap
         position: "Revenue solves all problems — profitability is freedom, not a consolation prize"
         counterpoint: "Growth as compass — scale fast with outside capital when the market demands it"
-      - expert: dahlia-amara
+      - expert: the-venture-strategist
         topic: sustainable vs blitzscale
         position: "Keep costs low — every dollar of burn is a dollar of freedom lost"
         counterpoint: "Speed wins when network effects matter — first to scale captures the market"
 
 vc:
-  - id: dahlia-amara
+  - id: the-venture-strategist
     name: The Venture Strategist
     focus: Venture strategy, network effects, and technology market timing
     influences:
@@ -2004,11 +2004,11 @@ vc:
       - Consensus-driven product decisions
       - Going it alone when partnerships would accelerate
     tensions:
-      - expert: vincent-arnaud
+      - expert: the-metrics-hawk
         topic: unit economics vs growth
         position: "Speed wins when network effects matter — sometimes you burn to win"
         counterpoint: "LTV/CAC and CAC payback are the foundation — unit economics must work"
-      - expert: renzo-cardenas
+      - expert: the-bootstrap-realist
         topic: sustainable vs blitzscale
         position: "Speed wins when network effects matter — first to scale captures the market"
         counterpoint: "Keep costs low — every dollar of burn is a dollar of freedom lost"
@@ -2016,7 +2016,7 @@ vc:
 # Cross-cutting experts (added based on intention)
 # core: true = always suggested for matching intention
 general:
-  - id: ada-redgrave
+  - id: the-tdd-advocate
     name: The TDD Advocate
     focus: Test-driven development, incremental design, and the economics of code safety
     influences:
@@ -2052,20 +2052,20 @@ general:
       - Building for hypothetical future needs
       - Premature optimization before making it work
     tensions:
-      - expert: marcus-torrent
+      - expert: the-scope-cutter
         topic: abstraction timing
         position: "Refactor when the pattern emerges — duplication is cheaper than the wrong abstraction"
         counterpoint: "The framework already made the decision — follow the convention, don't extract"
-      - expert: sable-okoro
+      - expert: the-go-purist
         topic: testing scope
         position: "Red-green-refactor at every level — unit tests give fast feedback"
         counterpoint: "Test at system boundaries — integration tests on real infrastructure"
-      - expert: niall-cassidy
+      - expert: the-flow-optimizer
         topic: refactoring vs flow
         position: "Refactor mercilessly — tidyings keep the code healthy"
         counterpoint: "Flow matters more — don't interrupt delivery to perfect the code"
 
-  - id: marcus-torrent
+  - id: the-scope-cutter
     name: The Scope Cutter
     focus: Scope discipline, convention-driven architecture, and shipping
     core: true
@@ -2103,24 +2103,24 @@ general:
       - Growing backlogs of "someday" features
       - Custom solutions when the framework provides one
     tensions:
-      - expert: ada-redgrave
+      - expert: the-tdd-advocate
         topic: abstraction timing
         position: "The framework already made the decision — follow the convention, don't extract"
         counterpoint: "Refactor when the pattern emerges — duplication is cheaper than the wrong abstraction"
-      - expert: nadia-kowalski
+      - expert: the-threat-modeler
         topic: security vs shipping speed
         position: "Ship the smallest thing that works — most security concerns are hypothetical until you have users"
         counterpoint: "Security is never a v2 feature — ship it incomplete and you've shipped a vulnerability"
-      - expert: elara-nygaard
+      - expert: the-design-minimalist
         topic: polish vs shipping
         position: "Ship something real, then iterate — done is better than perfect"
         counterpoint: "Every detail matters — nothing arbitrary survives contact with users"
-      - expert: lena-dahl
+      - expert: the-product-skeptic
         topic: discovery vs shipping
         position: "Ship something real, then iterate — imagination is not validation"
         counterpoint: "Validate the problem before writing code — discovery prevents building the wrong thing"
 
-  - id: elara-nygaard
+  - id: the-design-minimalist
     name: The Design Minimalist
     focus: Design minimalism, information architecture, and clarity as a system property
     core: true
@@ -2160,20 +2160,20 @@ general:
       - Arbitrary decisions left to chance
       - Error messages written for the developer, not the user
     tensions:
-      - expert: marcus-torrent
+      - expert: the-scope-cutter
         topic: polish vs shipping
         position: "Every detail matters — nothing arbitrary survives contact with users"
         counterpoint: "Ship something real, then iterate — done is better than perfect"
-      - expert: sable-okoro
+      - expert: the-go-purist
         topic: code organization
         position: "Structure and naming are interfaces — invest in clarity even when the code works"
         counterpoint: "Working code that's slightly messy ships — perfectionism is a trap"
-      - expert: yuki-tanaka
+      - expert: the-usability-scientist
         topic: user testing vs design principles
         position: "Good design follows principles — user testing validates, it doesn't create"
         counterpoint: "Five users find 85% of problems — test with real people"
 
-  - id: niall-cassidy
+  - id: the-flow-optimizer
     name: The Flow Optimizer
     focus: DevOps culture, delivery flow, and continuous improvement
     influences:
@@ -2215,16 +2215,16 @@ general:
       - Unplanned work constantly disrupting planned work
       - Fear of failure preventing experimentation
     tensions:
-      - expert: iris-vance
+      - expert: the-deep-worker
         topic: flow vs deep work
         position: "Optimize flow from dev to prod — speed of delivery is the metric"
         counterpoint: "Deep work requires uninterrupted blocks — flow is about focus, not throughput"
-      - expert: ada-redgrave
+      - expert: the-tdd-advocate
         topic: refactoring vs flow
         position: "Flow matters more — don't interrupt delivery to perfect the code"
         counterpoint: "Refactor mercilessly — tidyings keep the code healthy"
 
-  - id: iris-vance
+  - id: the-deep-worker
     name: The Deep Worker
     focus: Deep work, focus discipline, and knowledge work productivity
     influences:
@@ -2263,7 +2263,7 @@ general:
       - Attention fragmented across too many projects
       - Pseudo-productivity — equating busyness with effectiveness
     tensions:
-      - expert: niall-cassidy
+      - expert: the-flow-optimizer
         topic: flow vs deep work
         position: "Deep work requires uninterrupted blocks — flow is about focus, not throughput"
         counterpoint: "Optimize flow from dev to prod — speed of delivery is the metric"

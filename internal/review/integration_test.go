@@ -60,7 +60,7 @@ index 0000000..abc1234
 func testExperts() []*expert.Expert {
 	return []*expert.Expert{
 		{
-			ID:    "ada-redgrave",
+			ID:    "the-tdd-advocate",
 			Name:  "Ada Redgrave",
 			Focus: "Testing and quality assurance",
 			Body:  "You care about edge cases, test coverage, and correctness.",
@@ -81,7 +81,7 @@ func TestEndToEndPRReview(t *testing.T) {
 		"blocking": false,
 		"perspectives": [
 			{
-				"expert": "ada-redgrave",
+				"expert": "the-tdd-advocate",
 				"verdict": "comment",
 				"confidence": 0.8,
 				"notes": ["internal/handler/export.go:24: No error handling on writer.Write — CSV write errors are silently dropped"],
@@ -167,8 +167,8 @@ func TestEndToEndPRReview(t *testing.T) {
 		if c.Position <= 0 {
 			t.Errorf("comment position should be positive, got %d", c.Position)
 		}
-		if !strings.Contains(c.Body, "**ada-redgrave**") {
-			t.Error("comment should attribute to ada-redgrave")
+		if !strings.Contains(c.Body, "**the-tdd-advocate**") {
+			t.Error("comment should attribute to the-tdd-advocate")
 		}
 	}
 
@@ -198,7 +198,7 @@ func TestEndToEndBlockingReview(t *testing.T) {
 		"blocking": true,
 		"perspectives": [
 			{
-				"expert": "ada-redgrave",
+				"expert": "the-tdd-advocate",
 				"verdict": "block",
 				"confidence": 0.95,
 				"notes": ["internal/handler/export.go:12: SQL injection risk in query builder"],

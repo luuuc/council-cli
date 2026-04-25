@@ -15,12 +15,12 @@ import (
 func TestGenerateCouncilCommand(t *testing.T) {
 	experts := []*expert.Expert{
 		{
-			ID:    "ada-redgrave",
+			ID:    "the-tdd-advocate",
 			Name:  "The TDD Advocate",
 			Focus: "Test-driven development",
 		},
 		{
-			ID:    "diego-valdez",
+			ID:    "the-rails-monolith",
 			Name:  "The Rails Monolith",
 			Focus: "Rails and productivity",
 		},
@@ -399,7 +399,7 @@ func TestSyncToAdapterOpenCode(t *testing.T) {
 
 func TestOpenCodeFormatAgent(t *testing.T) {
 	e := &expert.Expert{
-		ID:         "ada-redgrave",
+		ID:         "the-tdd-advocate",
 		Name:       "The TDD Advocate",
 		Focus:      "TDD and clean code",
 		Philosophy: "Test-driven development leads to better design.",

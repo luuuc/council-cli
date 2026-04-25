@@ -6,15 +6,15 @@ import "testing"
 func testBank() SuggestionBank {
 	return SuggestionBank{
 		"general": {
-			{ID: "sable-okoro", Name: "Sable Okoro", Focus: "Go"},
-			{ID: "ada-redgrave", Name: "Ada Redgrave", Focus: "Testing"},
-			{ID: "elara-nygaard", Name: "Elara Nygaard", Focus: "Design"},
-			{ID: "iris-vance", Name: "Iris Vance", Focus: "Deep Work"},
+			{ID: "the-go-purist", Name: "The Go Purist", Focus: "Go"},
+			{ID: "the-tdd-advocate", Name: "The TDD Advocate", Focus: "Testing"},
+			{ID: "the-design-minimalist", Name: "The Design Minimalist", Focus: "Design"},
+			{ID: "the-deep-worker", Name: "The Deep Worker", Focus: "Deep Work"},
 		},
 		"custom": {
 			{ID: "luc-perussault-diallo", Name: "Luc Perussault-Diallo", Focus: "Simplicity"},
-			{ID: "renzo-cardenas", Name: "Renzo Cardenas", Focus: "SaaS"},
-			{ID: "sable-variant", Name: "Sable Tanaka", Focus: "UX"},
+			{ID: "the-bootstrap-realist", Name: "The Bootstrap Realist", Focus: "SaaS"},
+			{ID: "the-go-purist-variant", Name: "The Go Purist Variant", Focus: "UX"},
 		},
 	}
 }
@@ -52,20 +52,18 @@ func TestLookupPersona(t *testing.T) {
 		wantNil bool
 	}{
 		// Exact matches
-		{"Sable Okoro", "sable-okoro", false},
-		{"sable-okoro", "sable-okoro", false},
-		{"SABLE OKORO", "sable-okoro", false},
-		{"  Sable Okoro  ", "sable-okoro", false},
-		{"Ada Redgrave", "ada-redgrave", false},
+		{"The Go Purist", "the-go-purist", false},
+		{"the-go-purist", "the-go-purist", false},
+		{"THE GO PURIST", "the-go-purist", false},
+		{"  The Go Purist  ", "the-go-purist", false},
+		{"The TDD Advocate", "the-tdd-advocate", false},
 
 		// First-name matching (unique first names)
 		{"Luc", "luc-perussault-diallo", false},
 		{"luc", "luc-perussault-diallo", false},
-		{"Elara", "elara-nygaard", false},
 
-		// First-name matching should NOT work for ambiguous names
-		// "Sable" matches both "Sable Okoro" and "Sable Tanaka"
-		{"Sable", "", true},
+		// Ambiguous prefix — "The Go Purist" and "The Go Purist Variant" both start with "The"
+		{"The", "", true},
 
 		// Unknown
 		{"Unknown Person", "", true},
@@ -98,21 +96,16 @@ func TestSuggestSimilar(t *testing.T) {
 		wantName string // empty means expect nil
 	}{
 		// Single character typos
-		{"ada-redgrav", "Ada Redgrave"},
-		{"Sable Okor", "Sable Okoro"},
+		{"the-tdd-advocat", "The TDD Advocate"},
+		{"The Go Puris", "The Go Purist"},
 
 		// Case insensitive - exact matches should return nil (use LookupPersona)
-		{"SABLE OKORO", ""},
-		{"sable okoro", ""},
+		{"THE GO PURIST", ""},
+		{"the go purist", ""},
 
 		// First-name found by LookupPersona - should return nil
 		{"Luc", ""},
 		{"luc", ""},
-		{"Elara", ""},
-		{"Iris", ""},
-
-		// Prefix matching for short inputs (2-3 chars) - unique prefix
-		{"El", "Elara Nygaard"},
 
 		// No close match
 		{"xyz", ""},
@@ -149,17 +142,17 @@ func TestSuggestSimilar_DistanceBoundaries(t *testing.T) {
 		wantNonNilResult bool
 	}{
 		// Distance 1 - high confidence
-		{"Sable Okor", 1, true},
-		{"ada-redgrav", 1, true},
+		{"The Go Puris", 1, true},
+		{"the-tdd-advocat", 1, true},
 
 		// Distance 2 - still prompts
-		{"Sable Oko", 2, true},
+		{"The Go Puri", 2, true},
 
 		// Distance 3 - still matches
-		{"Sable Ok", 3, true},
+		{"The Go Pur", 3, true},
 
 		// Exact match - returns nil (use LookupPersona instead)
-		{"Sable Okoro", 0, false},
+		{"The Go Purist", 0, false},
 	}
 
 	for _, tt := range tests {

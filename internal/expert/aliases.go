@@ -8,186 +8,186 @@ import (
 // Deprecated: Remove in v2.0.
 var legacyAliases = map[string]string{
 	// Go
-	"rob-pike":    "sable-okoro",
-	"dave-cheney": "sable-okoro",
-	"antirez":     "sable-okoro",
+	"rob-pike":    "the-go-purist",
+	"dave-cheney": "the-go-purist",
+	"antirez":     "the-go-purist",
 
 	// Ruby
-	"matz":       "tara-mishkin",
-	"sandi-metz": "tara-mishkin",
-	"avdi-grimm": "tara-mishkin",
+	"matz":       "the-ruby-crafter",
+	"sandi-metz": "the-ruby-crafter",
+	"avdi-grimm": "the-ruby-crafter",
 
 	// Rails
-	"dhh":             "diego-valdez",
-	"jorge-manrubia":  "diego-valdez",
-	"rafael-franca":   "diego-valdez",
-	"eileen-uchitelle": "priya-anand",
-	"tenderlove":       "priya-anand",
+	"dhh":             "the-rails-monolith",
+	"jorge-manrubia":  "the-rails-monolith",
+	"rafael-franca":   "the-rails-monolith",
+	"eileen-uchitelle": "the-activerecord-surgeon",
+	"tenderlove":       "the-activerecord-surgeon",
 
 	// Python
-	"raymond-hettinger": "nolan-chambers",
-	"simon-willison":    "owen-mbeki",
-	"carlton-gibson":    "owen-mbeki",
+	"raymond-hettinger": "the-pythonista",
+	"simon-willison":    "the-django-pragmatist",
+	"carlton-gibson":    "the-django-pragmatist",
 
 	// Swift
-	"chris-lattner":    "linnea-strand",
-	"john-sundell":     "linnea-strand",
-	"soroush-khanlou": "linnea-strand",
+	"chris-lattner":    "the-protocol-thinker",
+	"john-sundell":     "the-protocol-thinker",
+	"soroush-khanlou": "the-protocol-thinker",
 
 	// Kotlin/Android
-	"jake-wharton":    "dmitri-vanek",
-	"roman-elizarov":  "dmitri-vanek",
-	"gabor-varadi":    "dmitri-vanek",
+	"jake-wharton":    "the-kotlin-architect",
+	"roman-elizarov":  "the-kotlin-architect",
+	"gabor-varadi":    "the-kotlin-architect",
 
 	// Frontend
-	"jeremy-keith":     "rowan-tate",
-	"luke-wroblewski":  "rowan-tate",
+	"jeremy-keith":     "the-html-fundamentalist",
+	"luke-wroblewski":  "the-html-fundamentalist",
 
 	// JavaScript/React
-	"dan-abramov": "kira-petrov",
+	"dan-abramov": "the-react-philosopher",
 
 	// Elixir
-	"jose-valim":  "tomas-carvallo",
-	"sasa-juric":  "tomas-carvallo",
+	"jose-valim":  "the-otp-alchemist",
+	"sasa-juric":  "the-otp-alchemist",
 
 	// Phoenix
-	"jose-valim-phoenix":   "mira-santos",
-	"sophie-debenedetto":   "mira-santos",
-	"chris-mccord":         "mira-santos",
+	"jose-valim-phoenix":   "the-liveview-builder",
+	"sophie-debenedetto":   "the-liveview-builder",
+	"chris-mccord":         "the-liveview-builder",
 
 	// TypeScript
-	"anders-hejlsberg": "vera-lindqvist",
-	"matt-pocock":      "vera-lindqvist",
+	"anders-hejlsberg": "the-type-guardian",
+	"matt-pocock":      "the-type-guardian",
 
 	// Java
-	"joshua-bloch":  "haruto-ikeda",
-	"martin-fowler": "haruto-ikeda",
+	"joshua-bloch":  "the-api-classicist",
+	"martin-fowler": "the-api-classicist",
 
 	// C#
-	"anders-hejlsberg-csharp": "fiona-cross",
-	"nick-chapsas":            "fiona-cross",
+	"anders-hejlsberg-csharp": "the-net-pragmatist",
+	"nick-chapsas":            "the-net-pragmatist",
 
 	// PHP
-	"taylor-otwell": "remy-dubois",
-	"nuno-maduro":   "remy-dubois",
+	"taylor-otwell": "the-laravel-artisan",
+	"nuno-maduro":   "the-laravel-artisan",
 
 	// Vue
-	"evan-you":    "mei-chen",
-	"anthony-fu":  "mei-chen",
+	"evan-you":    "the-vue-reactivity-nerd",
+	"anthony-fu":  "the-vue-reactivity-nerd",
 
 	// Node
-	"ryan-dahl":       "jonas-ekberg",
-	"matteo-collina":  "jonas-ekberg",
+	"ryan-dahl":       "the-event-loop-guy",
+	"matteo-collina":  "the-event-loop-guy",
 
 	// Rust
-	"steve-klabnik": "cleo-ashford",
+	"steve-klabnik": "the-borrow-checker",
 
 	// Clojure
-	"rich-hickey":  "theo-marchetti",
-	"alex-miller":  "theo-marchetti",
+	"rich-hickey":  "the-data-thinker",
+	"alex-miller":  "the-data-thinker",
 
 	// Next.js
-	"guillermo-rauch": "zara-okonkwo",
-	"lee-robinson":    "zara-okonkwo",
+	"guillermo-rauch": "the-edge-deployer",
+	"lee-robinson":    "the-edge-deployer",
 
 	// Django
-	// simon-willison already mapped above to owen-mbeki
+	// simon-willison already mapped above to the-django-pragmatist
 
 	// Svelte
-	"rich-harris": "astrid-holm",
-	"tan-li-hau":  "astrid-holm",
+	"rich-harris": "the-compiler-whisperer",
+	"tan-li-hau":  "the-compiler-whisperer",
 
 	// Flutter
-	"eric-seidel":     "ravi-dasgupta",
-	"remi-rousselet":  "ravi-dasgupta",
+	"eric-seidel":     "the-widget-composer",
+	"remi-rousselet":  "the-widget-composer",
 
 	// C++
-	"bjarne-stroustrup": "petra-koenig",
-	"john-carmack":      "petra-koenig",
+	"bjarne-stroustrup": "the-zero-cost-abstracter",
+	"john-carmack":      "the-zero-cost-abstracter",
 
 	// Scala
-	"martin-odersky": "lucian-voss",
-	"john-de-goes":   "lucian-voss",
+	"martin-odersky": "the-type-theorist",
+	"john-de-goes":   "the-type-theorist",
 
 	// GraphQL
-	"lee-byron":          "soren-blume",
-	"marc-andre-giroux":  "soren-blume",
+	"lee-byron":          "the-schema-purist",
+	"marc-andre-giroux":  "the-schema-purist",
 
 	// Writing
-	"william-zinsser": "colette-marsh",
-	"stephen-king":    "colette-marsh",
+	"william-zinsser": "the-revision-hawk",
+	"stephen-king":    "the-revision-hawk",
 
 	// Business
-	"paul-graham": "ines-guerrero",
+	"paul-graham": "the-startup-realist",
 
 	// Product
-	"marty-cagan":    "lena-dahl",
-	"teresa-torres":  "lena-dahl",
-	"des-traynor":    "lena-dahl",
+	"marty-cagan":    "the-product-skeptic",
+	"teresa-torres":  "the-product-skeptic",
+	"des-traynor":    "the-product-skeptic",
 
 	// Design/UX
-	"don-norman":    "yuki-tanaka",
-	"jakob-nielsen": "yuki-tanaka",
-	"julie-zhuo":    "yuki-tanaka",
+	"don-norman":    "the-usability-scientist",
+	"jakob-nielsen": "the-usability-scientist",
+	"julie-zhuo":    "the-usability-scientist",
 
 	// Growth
-	"brian-balfour":  "felix-okafor",
-	"april-dunford": "felix-okafor",
-	"sean-ellis":    "felix-okafor",
+	"brian-balfour":  "the-growth-mechanic",
+	"april-dunford": "the-growth-mechanic",
+	"sean-ellis":    "the-growth-mechanic",
 
 	// Sales
-	"mark-roberge": "hana-reeves",
-	"aaron-ross":   "hana-reeves",
+	"mark-roberge": "the-revenue-engineer",
+	"aaron-ross":   "the-revenue-engineer",
 
 	// Finance
-	"david-skok": "vincent-arnaud",
-	"brad-feld":  "vincent-arnaud",
+	"david-skok": "the-metrics-hawk",
+	"brad-feld":  "the-metrics-hawk",
 
 	// Leadership
-	"andy-grove":           "wren-callister",
-	"camille-fournier":     "wren-callister",
-	"will-larson":          "wren-callister",
+	"andy-grove":           "the-eng-manager",
+	"camille-fournier":     "the-eng-manager",
+	"will-larson":          "the-eng-manager",
 
 	// Operations
-	"elad-gil":              "sol-achebe",
-	"ben-horowitz":          "sol-achebe",
-	"claire-hughes-johnson": "sol-achebe",
+	"elad-gil":              "the-scale-operator",
+	"ben-horowitz":          "the-scale-operator",
+	"claire-hughes-johnson": "the-scale-operator",
 
 	// Hiring
-	"geoff-smart": "maren-engel",
-	"laszlo-bock": "maren-engel",
+	"geoff-smart": "the-hiring-bar-raiser",
+	"laszlo-bock": "the-hiring-bar-raiser",
 
 	// Data
-	"avinash-kaushik": "juno-patel",
-	"dj-patil":        "juno-patel",
+	"avinash-kaushik": "the-data-storyteller",
+	"dj-patil":        "the-data-storyteller",
 
 	// Security
-	"bruce-schneier": "nadia-kowalski",
+	"bruce-schneier": "the-threat-modeler",
 
 	// Legal
-	"heather-meeker": "ava-whitfield",
+	"heather-meeker": "the-license-auditor",
 
 	// Customer Success
-	"lincoln-murphy": "noah-altman",
-	"nick-mehta":     "noah-altman",
+	"lincoln-murphy": "the-retention-strategist",
+	"nick-mehta":     "the-retention-strategist",
 
 	// Bootstrapped
-	"rob-walling":   "renzo-cardenas",
-	"sahil-lavingia": "renzo-cardenas",
-	"arvid-kahl":     "renzo-cardenas",
+	"rob-walling":   "the-bootstrap-realist",
+	"sahil-lavingia": "the-bootstrap-realist",
+	"arvid-kahl":     "the-bootstrap-realist",
 
 	// VC
-	"reid-hoffman":    "dahlia-amara",
-	"keith-rabois":    "dahlia-amara",
-	"marc-andreessen": "dahlia-amara",
+	"reid-hoffman":    "the-venture-strategist",
+	"keith-rabois":    "the-venture-strategist",
+	"marc-andreessen": "the-venture-strategist",
 
 	// General
-	"kent-beck":    "ada-redgrave",
-	"jason-fried":  "marcus-torrent",
-	"dieter-rams":  "elara-nygaard",
-	"gene-kim":     "niall-cassidy",
-	"cal-newport":  "iris-vance",
-	"taiichi-ohno": "niall-cassidy",
+	"kent-beck":    "the-tdd-advocate",
+	"jason-fried":  "the-scope-cutter",
+	"dieter-rams":  "the-design-minimalist",
+	"gene-kim":     "the-flow-optimizer",
+	"cal-newport":  "the-deep-worker",
+	"taiichi-ohno": "the-flow-optimizer",
 }
 
 // LegacyAlias resolves a deprecated real-name ID to its composite replacement.

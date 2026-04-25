@@ -54,7 +54,7 @@ func TestAddCmd_Success(t *testing.T) {
 		}
 
 		// Verify file was created
-		expertPath := config.Path(config.ExpertsDir, "sable-okoro.md")
+		expertPath := config.Path(config.ExpertsDir, "the-go-purist.md")
 		if _, err := os.Stat(expertPath); os.IsNotExist(err) {
 			t.Errorf("expert file not created at %s", expertPath)
 		}
@@ -69,8 +69,8 @@ func TestAddCmd_Success(t *testing.T) {
 		if !strings.Contains(content, "The Go Purist") {
 			t.Error("expert file does not contain 'The Go Purist'")
 		}
-		if !strings.Contains(content, "id: sable-okoro") {
-			t.Error("expert file does not contain 'id: sable-okoro'")
+		if !strings.Contains(content, "id: the-go-purist") {
+			t.Error("expert file does not contain 'id: the-go-purist'")
 		}
 	})
 }
@@ -121,7 +121,7 @@ func TestAddCmd_FuzzySuggestion(t *testing.T) {
 
 		if err == nil {
 			// Expert was added (interactive mode with auto-confirm)
-			expertPath := config.Path(config.ExpertsDir, "sable-okoro.md")
+			expertPath := config.Path(config.ExpertsDir, "the-go-purist.md")
 			if _, statErr := os.Stat(expertPath); os.IsNotExist(statErr) {
 				t.Errorf("expert should have been added at %s", expertPath)
 			}
@@ -160,7 +160,7 @@ func TestAddCmd_CaseInsensitive(t *testing.T) {
 		}
 
 		// Verify file was created with correct ID
-		expertPath := config.Path(config.ExpertsDir, "sable-okoro.md")
+		expertPath := config.Path(config.ExpertsDir, "the-go-purist.md")
 		if _, err := os.Stat(expertPath); os.IsNotExist(err) {
 			t.Errorf("expert file not created at %s", expertPath)
 		}
@@ -170,12 +170,12 @@ func TestAddCmd_CaseInsensitive(t *testing.T) {
 func TestAddCmd_IDFormat(t *testing.T) {
 	testInTempDir(t, func(t *testing.T, dir string) {
 		// Test using ID format directly
-		err := addCmd.RunE(addCmd, []string{"ada-redgrave"})
+		err := addCmd.RunE(addCmd, []string{"the-tdd-advocate"})
 		if err != nil {
 			t.Fatalf("addCmd failed: %v", err)
 		}
 
-		expertPath := config.Path(config.ExpertsDir, "ada-redgrave.md")
+		expertPath := config.Path(config.ExpertsDir, "the-tdd-advocate.md")
 		if _, err := os.Stat(expertPath); os.IsNotExist(err) {
 			t.Errorf("expert file not created at %s", expertPath)
 		}
@@ -225,7 +225,7 @@ func TestAddCmd_YesFlag(t *testing.T) {
 		}
 
 		// Verify The Go Purist was added
-		expertPath := config.Path(config.ExpertsDir, "sable-okoro.md")
+		expertPath := config.Path(config.ExpertsDir, "the-go-purist.md")
 		if _, err := os.Stat(expertPath); os.IsNotExist(err) {
 			t.Errorf("expert file not created at %s", expertPath)
 		}

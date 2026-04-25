@@ -95,7 +95,7 @@ func TestResolve(t *testing.T) {
 func TestResolveFallsBackToSuggestionBank(t *testing.T) {
 	p := &Pack{
 		Name:    "go",
-		Members: []Member{{ID: "sable-okoro"}},
+		Members: []Member{{ID: "the-go-purist"}},
 	}
 
 	// No experts on disk — should fall back to embedded suggestions
@@ -106,8 +106,8 @@ func TestResolveFallsBackToSuggestionBank(t *testing.T) {
 	if len(resolved) != 1 {
 		t.Fatalf("resolved count = %d, want 1", len(resolved))
 	}
-	if resolved[0].Expert.ID != "sable-okoro" {
-		t.Errorf("resolved[0].ID = %q, want sable-okoro", resolved[0].Expert.ID)
+	if resolved[0].Expert.ID != "the-go-purist" {
+		t.Errorf("resolved[0].ID = %q, want the-go-purist", resolved[0].Expert.ID)
 	}
 	if resolved[0].Expert.Body == "" {
 		t.Error("expected expert body to be generated")
@@ -115,11 +115,11 @@ func TestResolveFallsBackToSuggestionBank(t *testing.T) {
 }
 
 func TestResolveDiskExpertTakesPrecedence(t *testing.T) {
-	diskExpert := &expert.Expert{ID: "sable-okoro", Name: "Custom Override", Priority: "normal"}
+	diskExpert := &expert.Expert{ID: "the-go-purist", Name: "Custom Override", Priority: "normal"}
 
 	p := &Pack{
 		Name:    "test",
-		Members: []Member{{ID: "sable-okoro"}},
+		Members: []Member{{ID: "the-go-purist"}},
 	}
 
 	resolved, warnings := Resolve(p, []*expert.Expert{diskExpert})

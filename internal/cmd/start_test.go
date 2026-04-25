@@ -100,7 +100,7 @@ func TestSelectExperts_GoProject(t *testing.T) {
 	// Should include The Go Purist for Go projects
 	hasSable := false
 	for _, e := range experts {
-		if e.ID == "sable-okoro" {
+		if e.ID == "the-go-purist" {
 			hasSable = true
 			break
 		}
@@ -128,15 +128,15 @@ func TestSelectExperts_RailsProject(t *testing.T) {
 	}
 
 	// Should include The Rails Monolith for Rails projects
-	hasDiego := false
+	hasRailsMonolith := false
 	for _, e := range experts {
-		if e.ID == "diego-valdez" {
-			hasDiego = true
+		if e.ID == "the-rails-monolith" {
+			hasRailsMonolith = true
 			break
 		}
 	}
 
-	if !hasDiego {
+	if !hasRailsMonolith {
 		t.Error("expected The Rails Monolith to be selected for Rails project")
 	}
 }
@@ -152,7 +152,7 @@ func TestSelectExperts_FallbackToGeneralists(t *testing.T) {
 	// Should include The TDD Advocate as a generalist
 	hasAda := false
 	for _, e := range generalists {
-		if e.ID == "ada-redgrave" {
+		if e.ID == "the-tdd-advocate" {
 			hasAda = true
 			break
 		}

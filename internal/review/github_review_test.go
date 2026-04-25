@@ -189,7 +189,7 @@ func TestFormatGitHubReviewPerspectivesTable(t *testing.T) {
 	result := &SynthesizedResult{
 		Verdict: VerdictComment,
 		Perspectives: []ExpertVerdict{
-			{Expert: "ada-redgrave", Verdict: VerdictComment, Notes: []string{"No test for empty-state CSV"}},
+			{Expert: "the-tdd-advocate", Verdict: VerdictComment, Notes: []string{"No test for empty-state CSV"}},
 			{Expert: "sentinel-nyx", Verdict: VerdictPass},
 			{Expert: "kai-westbrook", Verdict: VerdictComment, Notes: []string{"Skip the column picker for now"}},
 		},
@@ -197,7 +197,7 @@ func TestFormatGitHubReviewPerspectivesTable(t *testing.T) {
 
 	output := FormatGitHubReview(result, "rails", 3, nil)
 
-	if !strings.Contains(output.Review.Body, "| ada-redgrave | comment |") {
+	if !strings.Contains(output.Review.Body, "| the-tdd-advocate | comment |") {
 		t.Error("body should contain perspectives table with ada")
 	}
 	if !strings.Contains(output.Review.Body, "| sentinel-nyx | pass | — |") {
