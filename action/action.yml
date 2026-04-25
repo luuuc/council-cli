@@ -60,15 +60,15 @@ runs:
       run: |
         set -euo pipefail
 
-        DOWNLOAD_URL=$(gh api "repos/luuuc/council/releases/tags/${COUNCIL_VERSION}" --jq '.assets[] | select(.name | test("linux-amd64")) | .browser_download_url')
+        DOWNLOAD_URL=$(gh api "repos/luuuc/council/releases/tags/${COUNCIL_VERSION}" --jq '.assets[] | select(.name | test("linux.amd64.*\\.tar\\.gz$")) | .browser_download_url')
 
         if [ -z "$DOWNLOAD_URL" ]; then
-          echo "::error::Could not find council binary for linux-amd64 at version ${COUNCIL_VERSION}"
+          echo "::error::Could not find council binary for linux amd64 at version ${COUNCIL_VERSION}"
           exit 1
         fi
 
         mkdir -p "$HOME/.local/bin"
-        curl -sL "$DOWNLOAD_URL" -o "$HOME/.local/bin/council"
+        curl -sL "$DOWNLOAD_URL" | tar xz -C "$HOME/.local/bin" council
         chmod +x "$HOME/.local/bin/council"
 
     - name: Add council to PATH
